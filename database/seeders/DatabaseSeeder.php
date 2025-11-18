@@ -18,19 +18,22 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@alumni.com',
             'password' => Hash::make('password'), // Passwordnya: password
             'role' => 'admin',
+            'email_verified_at' => now(), // Langsung verifikasi
         ]);
 
-        // 2. Bikin Akun ALUMNI Dummy
+        // 2. Bikin Akun ALUMNI (Untuk tes login)
         $alumniUser = User::create([
             'name' => 'Budi Santoso',
             'email' => 'alumni@alumni.com',
             'password' => Hash::make('password'),
             'role' => 'alumni',
+            'email_verified_at' => now(), // Langsung verifikasi
         ]);
 
         // Isi data detail alumninya (Wajib ada karena relasi)
         Alumni::create([
-            'user_id' => $alumniUser->id,
+            'user_id' => $alumniUser->id, // Langsung ditautkan
+            'name' => 'Budi Santoso', // Tambahkan nama
             'nim' => 'J3D119001',
             'graduation_year' => '2023',
             'major' => 'Teknologi Rekayasa Perangkat Lunak',
@@ -42,7 +45,23 @@ class DatabaseSeeder extends Seeder
             'linkedin_url' => 'https://linkedin.com/in/budisantoso',
         ]);
 
-        // 3. Bikin Data Master SKILL
+        // 3. Bikin Data Alumni TANPA AKUN (Untuk tes registrasi)
+        Alumni::create([
+            'user_id' => null, // <-- PENTING: user_id-nya NULL
+            'name' => 'Siti Aminah', // Tambahkan nama
+            'nim' => 'J3D119002', // NIM untuk tes registrasi
+            'graduation_year' => '2023',
+            'major' => 'Manajemen Informatika',
+            'phone_number' => '08987654321',
+            'gender' => 'P',
+            'address' => 'Jl. Pajajaran No. 10, Bogor',
+            'current_job' => null,
+            'company_name' => null,
+            'linkedin_url' => null,
+        ]);
+
+
+        // 4. Bikin Data Master SKILL
         $skills = [
             ['name' => 'Laravel', 'category' => 'hardskill'],
             ['name' => 'React.js', 'category' => 'hardskill'],
