@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            // KOLOM PENTING: Membedakan Admin & Alumni
+            $table->enum('role', ['admin', 'alumni'])->default('alumni');
             $table->rememberToken();
             $table->timestamps();
         });
