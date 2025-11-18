@@ -6,11 +6,8 @@
     <title>@yield('title', 'Admin Dashboard')</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
@@ -21,7 +18,7 @@
                         brand: {
                            50: '#FFF0F7',
                            100: '#FFE0F0',
-                           500: '#F52A91', // Warna Utama
+                           500: '#F52A91', 
                            600: '#D9117A',
                            900: '#830042',
                         },
@@ -35,7 +32,6 @@
         }
     </script>
     <style>
-        /* Custom Scrollbar biar cantik */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -58,12 +54,17 @@
                 <nav class="p-4 space-y-1">
                     <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-2">Main Menu</p>
                     
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ Request::is('admin/dashboard') ? 'bg-brand-50 text-brand-600 font-semibold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ Request::routeIs('admin.dashboard') ? 'bg-brand-50 text-brand-600 font-semibold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
                         <i class="fa-solid fa-grid-2 w-5"></i> Dashboard
                     </a>
 
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all duration-200">
+                    {{-- UPDATED LINK: Data Alumni --}}
+                    <a href="{{ route('admin.alumni.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ Request::routeIs('admin.alumni.*') ? 'bg-brand-50 text-brand-600 font-semibold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
                         <i class="fa-solid fa-users w-5"></i> Data Alumni
+                    </a>
+
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all duration-200">
+                        <i class="fa-solid fa-newspaper w-5"></i> Berita & Kabar
                     </a>
 
                     <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all duration-200">
@@ -88,21 +89,21 @@
 
         <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
             
-            <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-10">
-                <div class="w-96">
+            <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-4 md:px-8 sticky top-0 z-10">
+                <div class="w-full max-w-xs md:max-w-md">
                     <div class="relative">
                         <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400"></i>
-                        <input type="text" placeholder="Cari alumni, pekerjaan, event..." class="w-full pl-12 pr-4 py-2.5 bg-slate-50 border-none rounded-full focus:ring-2 focus:ring-brand-100 focus:bg-white transition-all text-sm">
+                        <input type="text" placeholder="Cari..." class="w-full pl-12 pr-4 py-2.5 bg-slate-50 border-none rounded-full focus:ring-2 focus:ring-brand-100 focus:bg-white transition-all text-sm">
                     </div>
                 </div>
 
-                <div class="flex items-center gap-6">
+                <div class="flex items-center gap-4 md:gap-6">
                     <button class="relative p-2 text-slate-400 hover:text-brand-500 transition-colors">
                         <i class="fa-solid fa-bell text-xl"></i>
                         <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                     </button>
                     
-                    <div class="flex items-center gap-3 pl-6 border-l border-slate-100">
+                    <div class="flex items-center gap-3 pl-4 md:pl-6 border-l border-slate-100">
                         <div class="text-right hidden md:block">
                             <p class="text-sm font-bold text-slate-800">{{ Auth::user()->name }}</p>
                             <p class="text-xs text-slate-500">Administrator</p>
@@ -114,12 +115,32 @@
                 </div>
             </header>
 
-            <main class="flex-1 overflow-y-auto bg-[#F7F8FC] p-8">
+            {{-- Dynamic Content --}}
+            <main class="flex-1 overflow-y-auto bg-[#F7F8FC] p-4 md:p-8 pb-24 md:pb-8">
+                {{-- Flash Message for Success --}}
+                @if(session('success'))
+                <div class="mb-4 p-4 bg-green-100 text-green-700 rounded-xl border border-green-200">
+                    {{ session('success') }}
+                </div>
+                @endif
+
                 @yield('content')
             </main>
 
         </div>
     </div>
+
+    <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 flex justify-around items-center p-3 md:hidden z-50 safe-area-pb">
+        <a href="{{ route('admin.dashboard') }}" class="flex flex-col items-center gap-1 {{ Request::routeIs('admin.dashboard') ? 'text-brand-500' : 'text-slate-400 hover:text-brand-500' }}">
+            <i class="fa-solid fa-grid-2 text-xl"></i>
+            <span class="text-[10px] font-medium">Home</span>
+        </a>
+        <a href="{{ route('admin.alumni.index') }}" class="flex flex-col items-center gap-1 {{ Request::routeIs('admin.alumni.*') ? 'text-brand-500' : 'text-slate-400 hover:text-brand-500' }}">
+            <i class="fa-solid fa-users text-xl"></i>
+            <span class="text-[10px] font-medium">Alumni</span>
+        </a>
+        {{-- ... other mobile links ... --}}
+    </nav>
 
     @stack('scripts')
 </body>
