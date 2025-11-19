@@ -19,7 +19,7 @@ use Inertia\Inertia;
 class AuthController extends Controller
 {
     // =========================================
-    // LOGIN ALUMNI (Bagian yang hilang sebelumnya)
+    // LOGIN ALUMNI
     // =========================================
     public function showLogin()
     {
@@ -33,13 +33,12 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        // Paksa role alumni
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password, 'role' => 'alumni'], $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended('/');
+            // Redirect to intended or the smart alumni root
+            return redirect()->intended(route('alumni.root'));
         }
 
-        // Jika gagal
         return back()->withErrors([
             'email' => 'Email/Password salah atau akun bukan Alumni.',
         ]);
@@ -51,7 +50,7 @@ class AuthController extends Controller
     public function showVerifyNotice(Request $request)
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->intended('/');
+            return redirect()->route('alumni.root');
         }
 
         return Inertia::render('Auth/VerifyEmail', [
@@ -63,18 +62,18 @@ class AuthController extends Controller
     {
         $request->fulfill();
 
-        // Redirect admin ke dashboard, alumni ke home
         if ($request->user()->role === 'admin') {
             return redirect()->route('admin.dashboard')->with('verified', true);
         }
 
-        return redirect()->route('alumni.home')->with('verified', true);
+        // CRITICAL FIX: Redirect to 'alumni.root' so the Setup Wizard logic runs
+        return redirect()->route('alumni.root')->with('verified', true);
     }
 
     public function resendVerifyEmail(Request $request)
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->intended('/');
+            return redirect()->route('alumni.root');
         }
 
         $request->user()->sendEmailVerificationNotification();
@@ -159,7 +158,8 @@ class AuthController extends Controller
 
         Session::forget(['nim_untuk_register', 'nama_untuk_register']);
 
-        return redirect('/');
+        // Redirect to verification notice
+        return redirect()->route('verification.notice');
     }
 
     // =========================================
@@ -174,7 +174,7 @@ class AuthController extends Controller
     }
 
     // =========================================
-    // PASSWORD RESET (LUPA PASSWORD)
+    // PASSWORD RESET
     // =========================================
     public function showForgotPassword()
     {
@@ -230,7 +230,7 @@ class AuthController extends Controller
     }
     
     // =========================================
-    // ADMIN LOGIN (Masih menggunakan Blade View Lama)
+    // ADMIN LOGIN
     // =========================================
     public function showAdminLoginForm()
     {

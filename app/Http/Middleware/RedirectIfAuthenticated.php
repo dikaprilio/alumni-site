@@ -23,15 +23,14 @@ class RedirectIfAuthenticated
                 
                 $user = Auth::user();
                 
-                // 1. Admin Redirect (Keep logic: Go to Admin Dashboard)
+                // 1. Admin Redirect
                 if ($user->role === 'admin') {
-                    return redirect(route('admin.dashboard'));
+                    return redirect()->route('admin.dashboard');
                 }
 
-                // 2. Alumni Redirect (FIX: Go to Landing Page '/')
-                // Previously: return redirect(route('alumni.home'));
-                // Now: Redirect to landing page so they see the "Profile" button in the header
-                return redirect('/');
+                // 2. Alumni Redirect -> Smart Root
+                // This lets the controller decide if they need to do Setup first
+                return redirect()->route('alumni.root');
             }
         }
 

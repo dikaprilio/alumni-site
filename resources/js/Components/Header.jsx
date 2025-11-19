@@ -4,7 +4,7 @@ import { Link, usePage } from '@inertiajs/react';
 export default function Header() {
     // 1. Ambil props 'auth' dari Inertia untuk cek status login
     const { url, props } = usePage();
-    const { auth } = props; // auth.user akan berisi data user jika login, atau null jika tidak
+    const { auth } = props; 
 
     const [isScrolled, setIsScrolled] = useState(false);
     const [isDark, setIsDark] = useState(false);
@@ -41,7 +41,6 @@ export default function Header() {
         }
     };
 
-    // Helper untuk inisial nama (Misal: "Budi Santoso" -> "BS")
     const getInitials = (name) => {
         if (!name) return 'U';
         return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -56,9 +55,7 @@ export default function Header() {
                         pointer-events-auto flex items-center justify-between
                         transition-all duration-500 ease-in-out border
                         ${isScrolled 
-                            /* Scrolled State */
                             ? 'w-[95%] md:w-[85%] max-w-6xl py-3 px-6 rounded-full shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-slate-700' 
-                            /* Top State */
                             : 'w-full max-w-[1920px] py-5 px-6 md:px-12 bg-white/0 dark:bg-slate-900/0 border-white/0 dark:border-slate-700/0 shadow-none' 
                         }
                     `}
@@ -124,7 +121,7 @@ export default function Header() {
                         {/* KONDISIONAL AUTH BUTTON (Desktop) */}
                         {auth?.user ? (
                             <Link
-                                href="/alumni/home"
+                                href="/alumni" // FIX: Point to /alumni root
                                 className={`
                                     hidden md:flex items-center gap-3 px-2 py-1.5 pr-4 rounded-full transition-all duration-300 border group
                                     ${isScrolled
@@ -164,9 +161,9 @@ export default function Header() {
                     {/* KONDISIONAL AUTH BUTTON (Mobile) */}
                     {auth?.user ? (
                         <MobileLink 
-                            href="/alumni/home" 
-                            active={url.startsWith('/alumni/home')} 
-                            icon="fa-user-circle" // Ikon user solid
+                            href="/alumni" // FIX: Point to /alumni root
+                            active={url.startsWith('/alumni')} 
+                            icon="fa-user-circle"
                             isProfile={true}
                             customClass="text-brand-600 dark:text-brand-400"
                         >
@@ -176,7 +173,7 @@ export default function Header() {
                         <MobileLink 
                             href="/login" 
                             active={url.startsWith('/login')} 
-                            icon="fa-right-to-bracket" // Ikon masuk
+                            icon="fa-right-to-bracket"
                             isProfile={true}
                         >
                             Masuk
