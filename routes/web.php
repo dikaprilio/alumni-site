@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
@@ -17,7 +18,7 @@ Route::get('/', function () {
         }
         return redirect()->route('alumni.home');
     }
-    return view('pages.public.home');
+    return Inertia::render('Welcome');
 })->name('home');
 
 // 2. Guest Routes (Login & Register)
