@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Import the separated animations file */
+@import './animations.css';
 
 @import 'tailwindcss';
 
@@ -8,18 +11,23 @@
 @source '../**/*.js';
 @source '../**/*.jsx'; 
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
     --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     
     --color-brand-50: #FFF0F7;
     --color-brand-100: #FFE0F0;
+    --color-brand-300: #F782B8;
     --color-brand-500: #F52A91;
     --color-brand-600: #D9117A;
     --color-brand-700: #BE0060;
     --color-brand-900: #830042;
 }
 
-/* Custom Animations */
+/* --- COMPONENTS & UTILITIES --- */
+
+/* Navbar Glass Effect */
 .navbar-transition {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -31,23 +39,80 @@
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.dark .navbar-glass {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.animate-fade-in-up {
-    animation: fadeInUp 0.8s ease-out forwards;
-    opacity: 0; 
+/* Engineering/Tech Grid Pattern */
+.bg-grid-white {
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
 }
 
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-500 { animation-delay: 0.5s; }
+.bg-grid-slate {
+    background-image: linear-gradient(to right, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+/* Vignette Overlay */
+.vignette {
+    background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+}
+
+/* Professional Hover Effect (Lift) */
+.hover-lift {
+    transition: all 0.3s ease-out;
+}
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+.hover-lift:active {
+    transform: translateY(0);
+}
+/* ... existing code ... */
+
+/* --- NEW INTERACTIVE HERO ANIMATIONS --- */
+
+/* 1. Cinematic Spacing (For Top/Bottom Text) */
+.hover-tracking-expand {
+    transition: letter-spacing 0.5s cubic-bezier(0.25, 1, 0.5, 1), color 0.3s ease;
+}
+.hover-tracking-expand:hover {
+    letter-spacing: 0.05em; /* Expands subtly */
+    color: var(--color-brand-600); /* Slight tint change */
+}
+/* Dark mode adjustment */
+.dark .hover-tracking-expand:hover {
+    color: var(--color-brand-300);
+}
+
+/* 2. Tech Snap/Glitch (For "REKAYASA") */
+@keyframes tech-snap {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02) skewX(-2deg); text-shadow: 2px 2px 0px rgba(217, 17, 122, 0.2); }
+    100% { transform: scale(1); }
+}
+
+.hover-tech-snap {
+    display: inline-block; /* Required for transform */
+    transition: all 0.3s ease;
+}
+.hover-tech-snap:hover {
+    animation: tech-snap 0.4s ease-out;
+    text-shadow: 0 0 20px rgba(217, 17, 122, 0.4); /* Brand glow */
+}
+
+/* 3. Idle Float (Subtle movement for "REKAYASA") */
+@keyframes float-idle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* We use a wrapper for float so it doesn't conflict with entrance animations */
+.animate-float-idle {
+    animation: float-idle 6s ease-in-out infinite;
+}

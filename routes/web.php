@@ -12,30 +12,31 @@ use App\Http\Controllers\AdminJobController;
 
 // 1. Halaman Beranda Publik
 Route::get('/', function () {
-    if (Auth::check()) {
-        if (Auth::user()->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        }
-        return redirect()->route('alumni.home');
+    // FIX: Don't redirect alumni away! Let them see the landing page.
+    // Only redirect admins because they have a separate panel.
+    if (Auth::check() && Auth::user()->role === 'admin') {
+        return redirect()->route('admin.dashboard');
     }
+
     return Inertia::render('Welcome');
 })->name('home');
 
 // 2. Guest Routes (Login & Register)
 Route::middleware('guest')->group(function () {
-    // Login Alumni
-    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    
+    // --- LOGIN ---
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login'); 
     Route::post('/login', [AuthController::class, 'login'])
         ->middleware('throttle:5,1')
         ->name('login.process');
 
-    // Login Admin
+    // --- ADMIN LOGIN ---
     Route::get('/admin/login', [AuthController::class, 'showAdminLoginForm'])->name('admin.login');
     Route::post('/admin/login', [AuthController::class, 'adminLogin'])
         ->middleware('throttle:5,1')
         ->name('admin.login.process');
     
-    // Register
+    // --- REGISTER ---
     Route::get('/register', [AuthController::class, 'showRegisterStep1'])->name('register.step1');
     Route::post('/register/check-nim', [AuthController::class, 'checkNim'])
         ->middleware('throttle:10,1')
@@ -44,70 +45,42 @@ Route::middleware('guest')->group(function () {
     Route::get('/register/create', [AuthController::class, 'showRegisterStep2'])->name('register.step2');
     Route::post('/register', [AuthController::class, 'register'])->name('register.process');
 
-    // Password Reset
-    Route::get('/forgot-password', [AuthController::class, 'showLinkRequestForm'])->name('password.request');
-    Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
-    Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+    // --- PASSWORD RESET ---
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
-// 3. Verification Routes (Requires Auth)
+// 3. Verification Routes
 Route::middleware(['auth'])->group(function () {
-    // Halaman Notice "Please Verify Email"
-    Route::get('/email/verify', [AuthController::class, 'showVerifyNotice'])
-        ->name('verification.notice');
-
-    // Link di Email yang diklik User
+    Route::get('/email/verify', [AuthController::class, 'showVerifyNotice'])->name('verification.notice');
     Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
-
-    // Tombol "Resend Verification Email"
+        ->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
     Route::post('/email/verification-notification', [AuthController::class, 'resendVerifyEmail'])
-        ->middleware('throttle:6,1')
-        ->name('verification.send');
+        ->middleware('throttle:6,1')->name('verification.send');
 });
 
-// 4. ADMIN ROUTES (Requires Auth, Admin Role, Verified Email)
+// 4. ADMIN ROUTES
 Route::middleware(['auth', 'admin', 'verified'])->group(function () {
-    
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-
-    // --- MANAJEMEN ALUMNI ---
-    Route::get('/admin/alumni', [AdminAlumniController::class, 'index'])->name('admin.alumni.index');
+    Route::resource('/admin/alumni', AdminAlumniController::class)->names('admin.alumni');
     Route::get('/admin/alumni/export', [AdminAlumniController::class, 'export'])->name('admin.alumni.export');
-    Route::post('/admin/alumni', [AdminAlumniController::class, 'store'])->name('admin.alumni.store');
-    Route::put('/admin/alumni/{id}', [AdminAlumniController::class, 'update'])->name('admin.alumni.update');
-    Route::delete('/admin/alumni/{id}', [AdminAlumniController::class, 'destroy'])->name('admin.alumni.destroy');
-
-    // --- MANAJEMEN BERITA ---
-    Route::get('/admin/news', [AdminNewsController::class, 'index'])->name('admin.news.index');
-    Route::post('/admin/news', [AdminNewsController::class, 'store'])->name('admin.news.store');
-    Route::put('/admin/news/{id}', [AdminNewsController::class, 'update'])->name('admin.news.update');
-    Route::delete('/admin/news/{id}', [AdminNewsController::class, 'destroy'])->name('admin.news.destroy');
-
-    // --- MANAJEMEN EVENT ---
-    Route::get('/admin/events', [AdminEventController::class, 'index'])->name('admin.events.index');
-    Route::post('/admin/events', [AdminEventController::class, 'store'])->name('admin.events.store');
-    Route::put('/admin/events/{id}', [AdminEventController::class, 'update'])->name('admin.events.update');
-    Route::delete('/admin/events/{id}', [AdminEventController::class, 'destroy'])->name('admin.events.destroy');
-
-    // --- MANAJEMEN LOWONGAN KERJA ---
-    Route::get('/admin/jobs', [AdminJobController::class, 'index'])->name('admin.jobs.index');
-    Route::post('/admin/jobs', [AdminJobController::class, 'store'])->name('admin.jobs.store');
-    Route::put('/admin/jobs/{id}', [AdminJobController::class, 'update'])->name('admin.jobs.update');
-    Route::delete('/admin/jobs/{id}', [AdminJobController::class, 'destroy'])->name('admin.jobs.destroy');
-
+    Route::resource('/admin/news', AdminNewsController::class)->names('admin.news');
+    Route::resource('/admin/events', AdminEventController::class)->names('admin.events');
+    Route::resource('/admin/jobs', AdminJobController::class)->names('admin.jobs');
 });
 
-// 5. Alumni Routes (Requires Auth, Verified Email)
+// 5. Alumni Routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/alumni/home', function() {
-        return view('pages.user.home');
+        // TEMPORARY: Just redirect back to landing for now, or show a "Coming Soon"
+        // This prevents the "Blank Page" error if they click Profile
+        return redirect('/')->with('message', 'Dashboard Alumni coming soon!'); 
     })->name('alumni.home');
 });
 
-// 6. Logout (Requires Auth)
+// 6. Logout
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

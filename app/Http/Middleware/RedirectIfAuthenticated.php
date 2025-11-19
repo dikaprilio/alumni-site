@@ -21,16 +21,17 @@ class RedirectIfAuthenticated
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
                 
-                // INI ADALAH LOGIKA PENTINGNYA
                 $user = Auth::user();
                 
+                // 1. Admin Redirect (Keep logic: Go to Admin Dashboard)
                 if ($user->role === 'admin') {
-                    // Jika admin, lempar ke dashboard admin
                     return redirect(route('admin.dashboard'));
                 }
 
-                // Jika alumni, lempar ke beranda alumni
-                return redirect(route('alumni.home'));
+                // 2. Alumni Redirect (FIX: Go to Landing Page '/')
+                // Previously: return redirect(route('alumni.home'));
+                // Now: Redirect to landing page so they see the "Profile" button in the header
+                return redirect('/');
             }
         }
 
