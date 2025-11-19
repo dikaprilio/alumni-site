@@ -11,6 +11,7 @@ class Alumni extends Model
 
     protected $fillable = [
         'user_id',
+        'name', // Kolom nama alumni
         'nim',
         'graduation_year',
         'major',

@@ -13,9 +13,8 @@
                 <i class="fa-solid fa-file-export"></i>
                 <span>Ekspor CSV</span>
             </a>
-            <button onclick="openAddModal()" class="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg font-semibold hover:bg-brand-700 transition-colors">
-                <i class="fa-solid fa-plus"></i>
-                <span>Tambah Alumni</span>
+            <button onclick="openAddModal()" class="bg-brand-500 hover:bg-brand-600 text-white px-6 py-2.5 rounded-full font-medium shadow-lg shadow-brand-500/30 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Tambah Alumni
             </button>
         </div>
     </header>

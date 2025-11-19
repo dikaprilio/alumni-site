@@ -36,13 +36,19 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Safe area padding for mobile bottom nav */
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
     </style>
 </head>
 <body class="bg-[#F7F8FC] text-slate-800 font-sans antialiased">
 
     <div class="flex h-screen overflow-hidden">
         
-        <aside class="w-64 bg-white border-r border-slate-100 hidden md:flex flex-col justify-between">
+        {{-- DESKTOP SIDEBAR --}}
+        <aside class="w-64 bg-white border-r border-slate-100 hidden md:flex flex-col justify-between transition-all duration-300">
             <div>
                 <div class="h-20 flex items-center px-8 border-b border-slate-50">
                     <div class="flex items-center gap-3 text-brand-500">
@@ -55,23 +61,24 @@
                     <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-2">Main Menu</p>
                     
                     <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ Request::routeIs('admin.dashboard') ? 'bg-brand-50 text-brand-600 font-semibold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
-                        <i class="fa-solid fa-grid-2 w-5"></i> Dashboard
+                        <i class="fa-solid fa-tachometer w-5"></i> Dashboard
                     </a>
 
-                    {{-- UPDATED LINK: Data Alumni --}}
                     <a href="{{ route('admin.alumni.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ Request::routeIs('admin.alumni.*') ? 'bg-brand-50 text-brand-600 font-semibold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
                         <i class="fa-solid fa-users w-5"></i> Data Alumni
                     </a>
 
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all duration-200">
+                    {{-- UPDATE: Link Berita --}}
+                    <a href="{{ route('admin.news.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ Request::routeIs('admin.news.*') ? 'bg-brand-50 text-brand-600 font-semibold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
                         <i class="fa-solid fa-newspaper w-5"></i> Berita & Kabar
                     </a>
 
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all duration-200">
+                    <a href="{{ route('admin.jobs.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ Request::routeIs('admin.jobs.*') ? 'bg-brand-50 text-brand-600 font-semibold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
                         <i class="fa-solid fa-briefcase w-5"></i> Lowongan Kerja
                     </a>
 
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all duration-200">
+                    {{-- UPDATE: Link Event --}}
+                    <a href="{{ route('admin.events.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ Request::routeIs('admin.events.*') ? 'bg-brand-50 text-brand-600 font-semibold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
                         <i class="fa-solid fa-calendar-day w-5"></i> Event & Reuni
                     </a>
                 </nav>
@@ -87,8 +94,10 @@
             </div>
         </aside>
 
+        {{-- MAIN CONTENT AREA --}}
         <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
             
+            {{-- TOP HEADER --}}
             <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-4 md:px-8 sticky top-0 z-10">
                 <div class="w-full max-w-xs md:max-w-md">
                     <div class="relative">
@@ -115,12 +124,12 @@
                 </div>
             </header>
 
-            {{-- Dynamic Content --}}
-            <main class="flex-1 overflow-y-auto bg-[#F7F8FC] p-4 md:p-8 pb-24 md:pb-8">
+            {{-- SCROLLABLE CONTENT --}}
+            <main class="flex-1 overflow-y-auto bg-[#F7F8FC] p-4 md:p-8 pb-24 md:pb-8 scroll-smooth">
                 {{-- Flash Message for Success --}}
                 @if(session('success'))
-                <div class="mb-4 p-4 bg-green-100 text-green-700 rounded-xl border border-green-200">
-                    {{ session('success') }}
+                <div class="mb-4 p-4 bg-green-100 text-green-700 rounded-xl border border-green-200 shadow-sm">
+                    <i class="fa-solid fa-check-circle mr-2"></i> {{ session('success') }}
                 </div>
                 @endif
 
@@ -130,17 +139,77 @@
         </div>
     </div>
 
-    <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 flex justify-around items-center p-3 md:hidden z-50 safe-area-pb">
-        <a href="{{ route('admin.dashboard') }}" class="flex flex-col items-center gap-1 {{ Request::routeIs('admin.dashboard') ? 'text-brand-500' : 'text-slate-400 hover:text-brand-500' }}">
-            <i class="fa-solid fa-grid-2 text-xl"></i>
+    {{-- MOBILE BOTTOM NAVBAR --}}
+    <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 flex justify-around items-center px-2 py-3 md:hidden z-50 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        
+        <a href="{{ route('admin.dashboard') }}" class="flex flex-col items-center gap-1 min-w-[60px] p-1 rounded-lg transition-colors {{ Request::routeIs('admin.dashboard') ? 'text-brand-600' : 'text-slate-400 hover:text-brand-500' }}">
+            <i class="fa-solid fa-tachometer text-xl mb-0.5"></i>
             <span class="text-[10px] font-medium">Home</span>
         </a>
-        <a href="{{ route('admin.alumni.index') }}" class="flex flex-col items-center gap-1 {{ Request::routeIs('admin.alumni.*') ? 'text-brand-500' : 'text-slate-400 hover:text-brand-500' }}">
-            <i class="fa-solid fa-users text-xl"></i>
+
+        <a href="{{ route('admin.alumni.index') }}" class="flex flex-col items-center gap-1 min-w-[60px] p-1 rounded-lg transition-colors {{ Request::routeIs('admin.alumni.*') ? 'text-brand-600' : 'text-slate-400 hover:text-brand-500' }}">
+            <i class="fa-solid fa-users text-xl mb-0.5"></i>
             <span class="text-[10px] font-medium">Alumni</span>
         </a>
-        {{-- ... other mobile links ... --}}
+
+        {{-- UPDATE: Link Berita di Mobile --}}
+        <a href="{{ route('admin.news.index') }}" class="flex flex-col items-center gap-1 min-w-[60px] p-1 rounded-lg transition-colors {{ Request::routeIs('admin.news.*') ? 'text-brand-600' : 'text-slate-400 hover:text-brand-500' }}">
+            <i class="fa-solid fa-newspaper text-xl mb-0.5"></i>
+            <span class="text-[10px] font-medium">Berita</span>
+        </a>
+
+        {{-- Placeholder Loker (Belum ada route) --}}
+        <a href="{{ route('admin.jobs.index') }}" class="flex flex-col items-center gap-1 min-w-[60px] p-1 rounded-lg transition-colors {{ Request::routeIs('admin.jobs.*') ? 'text-brand-600' : 'text-slate-400 hover:text-brand-500' }}">
+            <i class="fa-solid fa-briefcase text-xl mb-0.5"></i>
+            <span class="text-[10px] font-medium">Loker</span>
+        </a>
+
+        {{-- Menu Lainnya (Trigger Modal) --}}
+        <button onclick="document.getElementById('mobileMenuModal').classList.remove('hidden')" class="flex flex-col items-center gap-1 min-w-[60px] p-1 rounded-lg transition-colors text-slate-400 hover:text-brand-500">
+            <i class="fa-solid fa-bars text-xl mb-0.5"></i>
+            <span class="text-[10px] font-medium">Menu</span>
+        </button>
     </nav>
+
+    {{-- MOBILE MENU MODAL --}}
+    <div id="mobileMenuModal" class="fixed inset-0 bg-slate-900/50 z-[60] hidden flex items-end justify-center md:hidden backdrop-blur-sm" onclick="this.classList.add('hidden')">
+        <div class="bg-white w-full rounded-t-2xl p-6 pb-safe" onclick="event.stopPropagation()">
+            <div class="flex justify-center mb-4">
+                <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+            </div>
+            
+            <div class="grid grid-cols-4 gap-4 mb-6">
+                {{-- UPDATE: Link Event di Menu Tambahan --}}
+                <a href="{{ route('admin.events.index') }}" class="flex flex-col items-center gap-2 p-3 bg-slate-50 rounded-xl hover:bg-brand-50 hover:text-brand-600 transition-colors {{ Request::routeIs('admin.events.*') ? 'bg-brand-50 text-brand-600' : '' }}">
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-brand-500 shadow-sm">
+                        <i class="fa-solid fa-calendar-day"></i>
+                    </div>
+                    <span class="text-xs font-medium text-center">Event</span>
+                </a>
+                
+                {{-- Bisa tambah menu lain di sini --}}
+            </div>
+
+            <div class="border-t border-slate-100 pt-4">
+                <div class="flex items-center gap-3 mb-4 p-3 bg-slate-50 rounded-xl">
+                    <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold">
+                        {{ substr(Auth::user()->name, 0, 1) }}
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-800">{{ Auth::user()->name }}</p>
+                        <p class="text-xs text-slate-500">{{ Auth::user()->email }}</p>
+                    </div>
+                </div>
+
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="flex w-full items-center justify-center gap-2 px-4 py-3 bg-red-50 text-red-600 rounded-xl font-semibold hover:bg-red-100 transition-all">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     @stack('scripts')
 </body>

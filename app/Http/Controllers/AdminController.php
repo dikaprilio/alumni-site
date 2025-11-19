@@ -8,31 +8,40 @@ use App\Models\Event;
 use App\Models\News;
 use App\Models\JobHistory;
 use Carbon\Carbon;
-use Illuminate\Support\Str; // Tambahkan helper Str
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
     public function dashboard()
     {
-        // --- 1. KARTU STATISTIK ---
+        // --- 1. KARTU STATISTIK UTAMA ---
         
         $totalAlumni = Alumni::count();
 
         $alreadyWorking = Alumni::whereNotNull('current_job')
                                 ->where('current_job', '!=', '')
                                 ->count();
-
         $workingPercentage = $totalAlumni > 0 ? round(($alreadyWorking / $totalAlumni) * 100, 1) : 0;
 
         $activeEvents = Event::where('status', 'upcoming')->count();
-
         $totalNews = News::count();
 
+        // --- STATISTIK BARU ---
+        
+        $newAlumniThisMonth = Alumni::whereYear('created_at', Carbon::now()->year)
+                                    ->whereMonth('created_at', Carbon::now()->month)
+                                    ->count();
 
-        // --- 2. DATA CHART (Statistik Bulanan) ---
+        $companyPartners = Alumni::whereNotNull('company_name')
+                                 ->where('company_name', '!=', '')
+                                 ->distinct('company_name')
+                                 ->count('company_name');
+
+
+        // --- 2. DATA CHART 1 (Line Chart: Statistik Bulanan) ---
         
         $currentYear = date('Y');
-        
         $monthlyAlumni = Alumni::select('created_at')
                             ->whereYear('created_at', $currentYear)
                             ->get()
@@ -48,58 +57,64 @@ class AdminController extends Controller
             $chartData[] = isset($monthlyAlumni[$i]) ? $monthlyAlumni[$i]->count() : 0;
         }
 
+        // --- 3. DATA CHART 2 (Pie Chart: Status Pekerjaan) ---
+        
+        $notWorking = $totalAlumni - $alreadyWorking;
+        $statusLabels = ['Sudah Bekerja', 'Belum Bekerja / Tidak Ada Data'];
+        $statusData = [$alreadyWorking, $notWorking];
 
-        // --- 3. AKTIVITAS TERBARU (Updated) ---
-
-        // A. Ambil Alumni baru bergabung
-        $recentAlumni = Alumni::latest()
+        // --- 4. DATA CHART 3 (Pie Chart: Distribusi Bidang Kerja) ---
+        // Mengambil top 5 pekerjaan terbanyak
+        $topJobs = Alumni::select('current_job', DB::raw('count(*) as total'))
+            ->whereNotNull('current_job')
+            ->where('current_job', '!=', '')
+            ->groupBy('current_job')
+            ->orderByDesc('total')
             ->take(5)
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'type' => 'join',
-                    'name' => $item->name,
-                    'description' => 'Baru saja bergabung sebagai alumni',
-                    'time' => $item->created_at,
-                    'initial' => substr($item->name, 0, 2)
-                ];
-            });
+            ->get();
 
-        // B. Ambil Riwayat Pekerjaan baru
-        $recentJobs = JobHistory::with('alumni')
-            ->latest()
-            ->take(5)
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'type' => 'job',
-                    'name' => $item->alumni->name ?? 'Alumni',
-                    'description' => 'Menambahkan riwayat kerja di <span class="font-medium text-brand-600">' . Str::limit($item->company_name, 30) . '</span>',
-                    'time' => $item->created_at,
-                    'initial' => substr($item->alumni->name ?? 'Al', 0, 2)
-                ];
-            });
+        $jobDistributionLabels = $topJobs->pluck('current_job');
+        $jobDistributionData = $topJobs->pluck('total');
 
-        // C. Ambil Berita Terbaru (NEW)
-        $recentNewsList = News::with('author')
-            ->latest()
-            ->take(5)
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'type' => 'news',
-                    'name' => $item->author->name ?? 'Admin', // Penulis berita
-                    'description' => 'Menerbitkan berita: <span class="font-medium text-brand-600">' . Str::limit($item->title, 40) . '</span>',
-                    'time' => $item->created_at,
-                    'initial' => substr($item->author->name ?? 'Ad', 0, 2)
-                ];
-            });
 
-        // D. Gabung semua dan urutkan berdasarkan waktu terbaru
-        $recentActivities = $recentAlumni->merge($recentJobs)
-            ->merge($recentNewsList) // Gabungkan berita
+        // --- 5. AKTIVITAS TERBARU ---
+
+        $mapActivity = function($item, $type) {
+            $data = [
+                'type' => $type,
+                'time' => $item->created_at,
+            ];
+
+            if ($type === 'join') {
+                $data['name'] = $item->name;
+                $data['description'] = 'Bergabung sebagai alumni baru';
+                $data['initial'] = substr($item->name, 0, 2);
+            } elseif ($type === 'job') {
+                $data['name'] = $item->alumni->name ?? 'Alumni';
+                $data['description'] = 'Update karir di <span class="font-medium text-brand-600">' . Str::limit($item->company_name, 20) . '</span>';
+                $data['initial'] = substr($item->alumni->name ?? 'Al', 0, 2);
+            } elseif ($type === 'news') {
+                $data['name'] = $item->author->name ?? 'Admin';
+                $data['description'] = 'Memposting berita: <span class="font-medium text-brand-600">' . Str::limit($item->title, 30) . '</span>';
+                $data['initial'] = substr($item->author->name ?? 'Ad', 0, 2);
+            }
+
+            return $data;
+        };
+
+        $rawAlumni = Alumni::latest()->take(10)->get();
+        $rawJobs = JobHistory::with('alumni')->latest()->take(10)->get();
+        $rawNews = News::with('author')->latest()->take(10)->get();
+
+        $activities = collect()
+            ->merge($rawAlumni->map(fn($i) => $mapActivity($i, 'join')))
+            ->merge($rawJobs->map(fn($i) => $mapActivity($i, 'job')))
+            ->merge($rawNews->map(fn($i) => $mapActivity($i, 'news')))
             ->sortByDesc('time')
-            ->take(6); // Ambil 6 aktivitas teratas agar list lebih panjang dikit
+            ->values();
+
+        $recentActivities = $activities->take(8);
+        $allActivities = $activities->take(20);
 
 
         return view('admin.dashboard', compact(
@@ -108,10 +123,17 @@ class AdminController extends Controller
             'workingPercentage', 
             'activeEvents', 
             'totalNews',
+            'newAlumniThisMonth',
+            'companyPartners',
             'chartData',
             'chartLabels',
             'currentYear',
-            'recentActivities'
+            'statusLabels',
+            'statusData',
+            'jobDistributionLabels', // Baru
+            'jobDistributionData',   // Baru
+            'recentActivities',
+            'allActivities'
         ));
     }
 }

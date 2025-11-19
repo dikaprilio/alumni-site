@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminAlumniController;
+use App\Http\Controllers\AdminNewsController;
+use App\Http\Controllers\AdminEventController;
+use App\Http\Controllers\AdminJobController;
 
 // 1. Halaman Beranda Publik
 Route::get('/', function () {
@@ -47,13 +50,30 @@ Route::middleware(['auth', 'admin', 'verified'])->group(function () {
     
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 
-    // --- MANAJEMEN ALUMNI ROUTES (UPDATED) ---
+    // --- MANAJEMEN ALUMNI ---
     Route::get('/admin/alumni', [AdminAlumniController::class, 'index'])->name('admin.alumni.index');
     Route::get('/admin/alumni/export', [AdminAlumniController::class, 'export'])->name('admin.alumni.export');
-    Route::post('/admin/alumni', [AdminAlumniController::class, 'store'])->name('admin.alumni.store'); // NEW: Create
-    Route::put('/admin/alumni/{id}', [AdminAlumniController::class, 'update'])->name('admin.alumni.update'); // NEW: Update
+    Route::post('/admin/alumni', [AdminAlumniController::class, 'store'])->name('admin.alumni.store');
+    Route::put('/admin/alumni/{id}', [AdminAlumniController::class, 'update'])->name('admin.alumni.update');
     Route::delete('/admin/alumni/{id}', [AdminAlumniController::class, 'destroy'])->name('admin.alumni.destroy');
-    // Note: show (Read) is implied in index table load or handled by JS modal population.
+
+    // --- MANAJEMEN BERITA ---
+    Route::get('/admin/news', [AdminNewsController::class, 'index'])->name('admin.news.index');
+    Route::post('/admin/news', [AdminNewsController::class, 'store'])->name('admin.news.store');
+    Route::put('/admin/news/{id}', [AdminNewsController::class, 'update'])->name('admin.news.update');
+    Route::delete('/admin/news/{id}', [AdminNewsController::class, 'destroy'])->name('admin.news.destroy');
+
+    // --- MANAJEMEN EVENT ---
+    Route::get('/admin/events', [AdminEventController::class, 'index'])->name('admin.events.index');
+    Route::post('/admin/events', [AdminEventController::class, 'store'])->name('admin.events.store');
+    Route::put('/admin/events/{id}', [AdminEventController::class, 'update'])->name('admin.events.update');
+    Route::delete('/admin/events/{id}', [AdminEventController::class, 'destroy'])->name('admin.events.destroy');
+
+    // --- MANAJEMEN LOWONGAN KERJA (BARU) ---
+    Route::get('/admin/jobs', [AdminJobController::class, 'index'])->name('admin.jobs.index');
+    Route::post('/admin/jobs', [AdminJobController::class, 'store'])->name('admin.jobs.store');
+    Route::put('/admin/jobs/{id}', [AdminJobController::class, 'update'])->name('admin.jobs.update');
+    Route::delete('/admin/jobs/{id}', [AdminJobController::class, 'destroy'])->name('admin.jobs.destroy');
 
 });
 
