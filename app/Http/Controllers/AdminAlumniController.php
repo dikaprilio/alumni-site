@@ -107,9 +107,9 @@ class AdminAlumniController extends Controller
             'name' => 'required|string|max:255',
             'nim' => 'required|string|max:20|unique:alumnis,nim',
             'email' => 'nullable|email|unique:users,email',
-            'password' => 'nullable|string|min:8',
+            'password' => 'nullable|string|min:8', // Enforce min length
             'graduation_year' => 'required|integer|digits:4|max:' . date('Y'),
-            'major' => 'required|string|max:100', // Assuming major is part of Alumni model
+            'major' => 'required|string|max:100', 
             'phone_number' => 'nullable|string|max:15',
             'gender' => 'required|in:L,P',
             'address' => 'nullable|string|max:255',
@@ -127,17 +127,16 @@ class AdminAlumniController extends Controller
                 'email_verified_at' => now(), // Assume manually added user is verified
             ]);
         }
-        // 2. Create Alumni record (FIXED: Pass 'name' explicitly)
+        // 2. Create Alumni record
         Alumni::create([
             'user_id' => $user->id ?? null,
-            'name' => $data['name'], // <-- THIS WAS MISSING
+            'name' => $data['name'], 
             'nim' => $data['nim'],
             'graduation_year' => $data['graduation_year'],
             'major' => $data['major'],
             'phone_number' => $data['phone_number'],
             'gender' => $data['gender'],
             'address' => $data['address'],
-            // Karir fields can be updated later by the user or admin via edit
         ]);
 
         return redirect()->route('admin.alumni.index')->with('success', 'Data alumni baru berhasil ditambahkan.');
@@ -150,15 +149,10 @@ class AdminAlumniController extends Controller
     {
         $alumni = Alumni::findOrFail($id);
 
+        // Removed 'email' validation from here as admins shouldn't update it directly
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => [
-                'nullable', 
-                'email', 
-                // Ignore current user's email if it exists
-                Rule::unique('users', 'email')->ignore($alumni->user ? $alumni->user->id : null)
-            ],
-            'status' => 'required|in:Terverifikasi,Menunggu Verifikasi', // Used for verification status
+            'status' => 'required|in:Terverifikasi,Menunggu Verifikasi', 
             'graduation_year' => 'required|integer|digits:4',
             'current_job' => 'nullable|string|max:255',
             'company_name' => 'nullable|string|max:255',
@@ -170,51 +164,40 @@ class AdminAlumniController extends Controller
             'graduation_year' => $data['graduation_year'],
             'current_job' => $data['current_job'],
             'company_name' => $data['company_name'],
-            // NIM cannot be changed via update for simplicity/integrity
         ]);
 
-        // 2. Update User/Verification Status
+        // 2. Update User/Verification Status Only
         if ($alumni->user) {
              // Update User's name if they have an account
             $alumni->user->update(['name' => $data['name']]); 
 
             // Update Email Verification Status
             if ($data['status'] === 'Terverifikasi') {
-                $alumni->user->email_verified_at = $alumni->user->email_verified_at ?? now();
+                if (!$alumni->user->email_verified_at) {
+                    $alumni->user->email_verified_at = now();
+                }
             } else {
                 $alumni->user->email_verified_at = null;
             }
-             // Update email if provided
-            if($request->filled('email')) {
-                 $alumni->user->email = $data['email'];
-            }
+            
+            // NOTE: Email update removed for security. 
+            // If user needs to change email, they should do it from their profile
+            // or request a specific admin intervention (not bulk/quick edit).
 
             $alumni->user->save();
 
-        } elseif ($request->filled('email') && $data['status'] === 'Terverifikasi') {
-            // Case: Alumni had no account, but admin provided email and set status to verified.
-            // Create a new un-set user account. The user will need to use "Forgot Password" later.
-            $newUser = User::create([
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => Hash::make('changeme'), // Placeholder password
-                'role' => 'alumni',
-                'email_verified_at' => now(), 
-            ]);
-            $alumni->user_id = $newUser->id;
-            $alumni->save();
-        }
-
+        } 
+        // Removed the "create new user if verified" logic in update to prevent accidental account creation with potentially wrong emails.
+        // Users should register themselves or be created explicitly via "Add Alumni".
 
         return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil diperbarui.');
     }
 
     /**
-     * Export data to CSV. (Unchanged)
+     * Export data to CSV.
      */
     public function export()
     {
-        // ... (Export logic remains the same) ...
         $filename = "alumni-data-" . date('Y-m-d') . ".csv";
         $alumnis = Alumni::with('user')->get();
 
@@ -253,11 +236,16 @@ class AdminAlumniController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage. (Unchanged)
+     * Remove the specified resource from storage.
      */
     public function destroy($id)
     {
         $alumni = Alumni::findOrFail($id);
+        
+        // Security check: Prevent deleting self or other admins if they happen to be in alumni list (rare but safe)
+        if ($alumni->user && $alumni->user->role === 'admin') {
+             return redirect()->back()->with('error', 'Tidak dapat menghapus data administrator.');
+        }
         
         if ($alumni->user) {
             $alumni->user->delete();

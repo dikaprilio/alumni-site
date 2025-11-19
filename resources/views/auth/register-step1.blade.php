@@ -14,18 +14,22 @@
             <p class="text-muted">Langkah 1: Validasi NIM</p>
         </div>
 
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                {{ $errors->first() }}
-            </div>
-        @endif
-
         <form action="{{ route('register.checkNim') }}" method="POST">
             @csrf
             <div class="mb-3">
                 <label class="form-label">NIM (Nomor Induk Mahasiswa)</label>
-                <input type="text" name="nim" class="form-control" placeholder="Contoh: J3D119002" value="{{ old('nim') }}" required>
-                <div class="form-text">Masukkan NIM Anda untuk memvalidasi data alumni.</div>
+                {{-- PERBAIKAN DI SINI: Pastikan value menggunakan old('nim') --}}
+                <input type="text" name="nim" 
+                       class="form-control @error('nim') is-invalid @enderror" 
+                       placeholder="Contoh: J3D119002" 
+                       value="{{ old('nim') }}" required>
+                
+                @error('nim')
+                    <div class="invalid-feedback">
+                        {{ $message }}
+                    </div>
+                @enderror
+                <div class="form-text">Masukkan NIM Anda untuk memvalidasi data.</div>
             </div>
 
             <button type="submit" class="btn btn-primary w-100 py-2">Cek NIM</button>

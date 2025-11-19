@@ -10,14 +10,14 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Models\User;
 use App\Models\Alumni;
-// --- TAMBAHKAN USE STATEMENTS INI ---
 use Illuminate\Support\Facades\Password;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Str;
-// -------------------------------------
+use Illuminate\Auth\Events\Registered; // Import Registered event
 
 class AuthController extends Controller
 {
+    // ... (Login & Admin Login methods remain the same) ...
     // =========================================
     // LOGIN ALUMNI
     // =========================================
@@ -33,26 +33,15 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        // --- TAMBAHKAN BARIS INI ---
         // Paksa agar form ini HANYA bisa untuk role 'alumni'
         $credentials['role'] = 'alumni';
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            // $user = Auth::user(); // <-- Tidak perlu cek role lagi di sini
-
-            // --- HAPUS BLOK IF INI ---
-            // if ($user->role === 'admin') {
-            //     // Admin salah login di form alumni, arahkan ke dashboard admin
-            //     return redirect()->intended(route('admin.dashboard'));
-            // }
-
-            // Sukses login sebagai alumni
             return redirect()->intended(route('alumni.home'));
         }
 
         return back()->withErrors([
-            // --- GANTI PESAN ERRORNYA ---
             'email' => 'Email atau password salah, atau akun Anda bukan akun alumni.',
         ])->onlyInput('email');
     }
@@ -103,28 +92,26 @@ class AuthController extends Controller
 
     public function checkNim(Request $request)
     {
-        $request->validate(['nim' => 'required|string']);
+        $request->validate([
+            'nim' => 'required|string',
+        ]);
 
+        // Cek apakah NIM ada di database alumni
         $alumni = Alumni::where('nim', $request->nim)->first();
 
         if (!$alumni) {
-            return back()->withErrors(['nim' => 'NIM tidak terdaftar. Hubungi admin.'])->onlyInput('nim');
+            // Kasus 1: NIM tidak ditemukan sama sekali
+            return back()->withErrors(['nim' => 'NIM tidak ditemukan dalam database alumni.'])->withInput();
         }
 
         if ($alumni->user_id !== null) {
-            return back()->withErrors(['nim' => 'NIM ini sudah terhubung dengan akun lain.'])->onlyInput('nim');
+            // Kasus 2: NIM sudah punya akun user (sudah register sebelumnya)
+            return back()->withErrors(['nim' => 'Akun untuk NIM ini sudah terdaftar. Silakan login.'])->withInput();
         }
 
-        // Simpan NIM yang valid di session dan lanjut ke step 2
-        Session::flash('nim_untuk_register', $alumni->nim);
-        Session::flash('nama_untuk_register', $alumni->user ? $alumni->user->name : 'Calon Alumni'); // Ambil nama jika ada, atau default
-        
-        // Ambil nama dari relasi user jika sudah ada, atau dari data alumni jika ada kolom nama
-        // Untuk seeder, kita pakai nama dari user
-        $alumniData = Alumni::with('user')->where('nim', $request->nim)->first();
-        $nama = $alumni->name ?? 'Data Alumni'; // Ganti 'name' dengan kolom nama di tabel alumni jika ada
-
-        Session::flash('nama_untuk_register', $nama);
+        // Jika lolos semua, simpan data ke session untuk step selanjutnya
+        Session::put('nim_untuk_register', $alumni->nim);
+        Session::put('nama_untuk_register', $alumni->name);
 
         return redirect()->route('register.step2');
     }
@@ -134,89 +121,113 @@ class AuthController extends Controller
     // =========================================
     public function showRegisterStep2()
     {
-        $nim = Session::get('nim_untuk_register');
-        $nama = Session::get('nama_untuk_register');
-
-        if (!$nim) {
-            // Jika tidak ada NIM di session, tendang balik ke langkah 1
+        // Pastikan session masih ada, kalau tidak kembalikan ke step 1
+        if (!Session::has('nim_untuk_register')) {
             return redirect()->route('register.step1');
         }
+
+        $nim = Session::get('nim_untuk_register');
+        $nama = Session::get('nama_untuk_register');
 
         return view('auth.register-step2', compact('nim', 'nama'));
     }
 
     public function register(Request $request)
     {
-        $request->validate([
-            'nim' => 'required|string|exists:alumnis,nim',
-            'email' => 'required|string|email|max:255|unique:users',
+        // Validasi input dari form Step 2
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email|max:255|unique:users', // Cek email unik di tabel users
             'password' => 'required|string|min:8|confirmed',
+            // NIM diambil dari hidden input, pastikan konsisten dengan session (opsional tapi aman)
+            'nim' => 'required|exists:alumnis,nim' 
+        ], [
+            'email.unique' => 'Alamat email ini sudah digunakan oleh akun lain.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'password.min' => 'Password minimal 8 karakter.'
         ]);
 
-        // Cek ulang untuk keamanan
-        $alumni = Alumni::where('nim', $request->nim)->first();
-        if (!$alumni || $alumni->user_id !== null) {
-            return redirect()->route('register.step1')->withErrors(['nim' => 'Terjadi kesalahan. Silakan ulangi.']);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
         }
 
-        // 1. Buat User baru
+        $nim = $request->nim;
+        
+        // Cek ulang (security layer)
+        $alumni = Alumni::where('nim', $nim)->first();
+        if (!$alumni || $alumni->user_id !== null) {
+            return redirect()->route('register.step1')
+                ->withErrors(['nim' => 'Terjadi kesalahan data atau akun sudah terdaftar.']);
+        }
+
+        // Buat User Baru
         $user = User::create([
-            'name' => $alumni->name ?? $request->email, // Ambil nama dari data alumni jika ada
+            'name' => $alumni->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'alumni', // Paksa role jadi alumni
+            'role' => 'alumni',
         ]);
 
-        // 2. Tautkan User baru ke data Alumni
-        $alumni->user_id = $user->id;
-        $alumni->save();
+        // Link User ke Alumni
+        $alumni->update(['user_id' => $user->id]);
 
-        // 3. Kirim email verifikasi
-        $user->sendEmailVerificationNotification();
+        // Trigger verifikasi email
+        event(new Registered($user));
 
-        // 4. Login-kan user
+        // Login otomatis
         Auth::login($user);
 
-        // 5. Arahkan ke halaman home alumni
-        return redirect()->route('alumni.home')->with('status', 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi.');
+        return redirect()->route('verification.notice');
     }
+
 
 
     // =========================================
     // PROSES VERIFIKASI EMAIL
     // =========================================
 
-    public function showVerifyNotice()
+    /**
+     * Tampilkan halaman pemberitahuan verifikasi email.
+     */
+    public function showVerifyNotice(Request $request)
     {
-        // Tampilkan halaman "cek email Anda"
+        // Jika user sudah terverifikasi, langsung ke home
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->intended(route('alumni.home'));
+        }
+
         return view('auth.verify-email');
     }
 
+    /**
+     * Proses verifikasi email ketika user klik link di email.
+     */
     public function verifyEmail(EmailVerificationRequest $request)
     {
-        // Tandai email sebagai terverifikasi
         $request->fulfill();
 
-        $user = $request->user();
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard')->with('status', 'Email berhasil diverifikasi!');
+        // Redirect sesuai role setelah verifikasi sukses
+        if ($request->user()->role === 'admin') {
+            return redirect()->route('admin.dashboard')->with('verified', true);
         }
 
-        return redirect()->route('alumni.home')->with('status', 'Email berhasil diverifikasi!');
+        return redirect()->route('alumni.home')->with('verified', true);
     }
 
+    /**
+     * Kirim ulang email verifikasi.
+     */
     public function resendVerifyEmail(Request $request)
     {
-        // Kirim ulang link
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('alumni.home');
+            return redirect()->intended(route('alumni.home'));
         }
 
         $request->user()->sendEmailVerificationNotification();
 
-        return back()->with('status', 'Link verifikasi baru telah dikirim ke email Anda.');
+        return back()->with('status', 'verification-link-sent');
     }
 
+    // ... (Forgot Password & Reset Password & Logout methods remain the same) ...
     // =========================================
     // LUPA PASSWORD (BARU)
     // =========================================

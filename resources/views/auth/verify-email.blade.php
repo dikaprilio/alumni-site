@@ -12,17 +12,20 @@
         <div class="text-center mb-4">
             <h3 class="fw-bold">Satu Langkah Lagi!</h3>
             <p class="text-muted fs-6">
-                Terima kasih telah mendaftar. Silakan cek email Anda untuk link verifikasi.
+                Terima kasih telah mendaftar. Sebelum memulai, mohon verifikasi alamat email Anda dengan mengklik link yang baru saja kami kirimkan ke email Anda.
+            </p>
+            <p class="text-muted small">
+                Jika Anda tidak menerima email tersebut, kami dengan senang hati akan mengirimkan yang baru.
             </p>
         </div>
 
         @if (session('status') == 'verification-link-sent')
-            <div class="alert alert-success">
-                Link verifikasi baru telah dikirim ke alamat email Anda.
+            <div class="alert alert-success text-center">
+                Link verifikasi baru telah dikirim ke alamat email yang Anda berikan saat pendaftaran.
             </div>
         @endif
 
-        <div class="d-flex justify-content-center gap-3">
+        <div class="d-flex justify-content-center gap-3 mt-4">
             {{-- Form untuk kirim ulang email --}}
             <form action="{{ route('verification.send') }}" method="POST" class="d-inline">
                 @csrf
