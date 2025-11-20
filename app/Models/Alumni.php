@@ -21,6 +21,8 @@ class Alumni extends Model
         'current_job',
         'company_name',
         'linkedin_url',
+        'avatar',
+        'bio',
         'private_email', // Added
         'private_phone', // Added
     ];

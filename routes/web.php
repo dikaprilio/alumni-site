@@ -10,14 +10,72 @@ use App\Http\Controllers\AdminNewsController;
 use App\Http\Controllers\AdminEventController;
 use App\Http\Controllers\AdminJobController;
 use App\Http\Controllers\AlumniProfileController;
+use App\Models\Alumni;
+use App\Models\News;
+use App\Models\Event;
+use Illuminate\Support\Facades\DB;
 
-// 1. Halaman Beranda Publik
+
 Route::get('/', function () {
+
+    // Jika login sebagai admin → redirect ke dashboard admin
     if (Auth::check() && Auth::user()->role === 'admin') {
         return redirect()->route('admin.dashboard');
     }
-    return Inertia::render('Welcome');
+
+    // 1. Fetch Alumni Acak untuk Card
+    $alumniList = Alumni::whereNotNull('avatar')
+        ->inRandomOrder()
+        ->limit(8)
+        ->get(['id', 'name', 'current_job', 'company_name', 'avatar', 'graduation_year']);
+
+    // 2. Statistik Pekerjaan (Top 5)
+    $jobStats = Alumni::select('current_job', DB::raw('count(*) as total'))
+        ->whereNotNull('current_job')
+        ->where('current_job', '!=', '')
+        ->groupBy('current_job')
+        ->orderByDesc('total')
+        ->limit(5)
+        ->get();
+
+    // 3. Total Alumni
+    $totalAlumni = Alumni::count();
+    // 1. Fetch News (Ambil 4 terbaru)
+    $news = News::latest()
+        ->limit(4)
+        ->get(['id', 'title', 'image', 'created_at', 'category'])
+        ->map(function ($item) {
+            $item->type = 'NEWS'; // Label tipe
+            $item->date = $item->created_at;
+            return $item;
+        });
+
+    // 2. Fetch Events (Ambil 3 terbaru)
+    // Asumsi tabel events punya kolom 'event_date'
+    $events = Event::latest()
+        ->limit(3)
+        ->get(['id', 'title', 'image', 'event_date', 'category']) // Sesuaikan nama kolom tanggal event
+        ->map(function ($item) {
+            $item->type = 'EVENT'; // Label tipe
+            $item->date = $item->event_date; // Standardisasi kolom tanggal
+            return $item;
+        });
+
+    // 3. Merge & Sort
+    // Gabung jadi satu koleksi, urutkan dari yang paling baru
+    $latestUpdates = $news->concat($events)->sortByDesc('date')->take(6)->values();
+    return Inertia::render('Welcome', [
+        'canLogin'     => Route::has('login'),
+        'canRegister'  => Route::has('register'),
+        'alumniList'   => $alumniList,
+        'jobStats'     => $jobStats,
+        'totalAlumni'  => $totalAlumni,
+        'alumniList' => $alumniList,
+        'latestUpdates' => $latestUpdates,
+    ]);
+
 })->name('home');
+
 
 // 2. Guest Routes
 Route::middleware('guest')->group(function () {
@@ -75,8 +133,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/alumni/jobs', [AlumniProfileController::class, 'addJobHistory'])->name('alumni.jobs.add');
     Route::delete('/alumni/jobs/{id}', [AlumniProfileController::class, 'deleteJobHistory'])->name('alumni.jobs.delete');
+    Route::post('/alumni/update-profile', [AlumniProfileController::class, 'updateProfile'])->name('alumni.update.profile');
+    Route::post('/alumni/update-avatar', [AlumniProfileController::class, 'updateAvatar'])->name('alumni.update.avatar');
+    Route::post('/alumni/settings/password', [AlumniProfileController::class, 'updatePassword'])->name('alumni.settings.password');
+    Route::post('/alumni/settings/email', [AlumniProfileController::class, 'updateEmail'])->name('alumni.settings.email');
 });
-
 // 6. Logout
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

@@ -11,10 +11,12 @@ class News extends Model
 
     protected $fillable = [
         'title',
+        'category',
         'slug',
         'content',
         'image',
-        'user_id'
+        'user_id',
+        'created_at',
     ];
 
     // Berita ditulis oleh satu User (Admin)
