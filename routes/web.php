@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\PublicAlumniController;
+use App\Http\Controllers\PublicNewsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminAlumniController;
@@ -16,6 +18,12 @@ use App\Models\Event;
 use Illuminate\Support\Facades\DB;
 
 
+// PUBLIC WARTA ROUTES
+Route::get('/news', [PublicNewsController::class, 'index'])->name('public.news');
+Route::get('/news/{id}', [PublicNewsController::class, 'showNews'])->name('public.news.show');
+Route::get('/events/{id}', [PublicNewsController::class, 'showEvent'])->name('public.events.show');
+Route::get('/directory', [PublicAlumniController::class, 'index'])->name('public.alumni');
+Route::get('/directory/{id}', [PublicAlumniController::class, 'show'])->name('public.alumni.show');
 Route::get('/', function () {
 
     // Jika login sebagai admin → redirect ke dashboard admin
@@ -24,7 +32,8 @@ Route::get('/', function () {
     }
 
     // 1. Fetch Alumni Acak untuk Card
-    $alumniList = Alumni::whereNotNull('avatar')
+    $alumniList = Alumni::with('skills')
+        ->whereNotNull('avatar')
         ->inRandomOrder()
         ->limit(8)
         ->get(['id', 'name', 'current_job', 'company_name', 'avatar', 'graduation_year']);

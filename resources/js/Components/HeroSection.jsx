@@ -14,12 +14,12 @@ export default function HeroSection() {
         <div className="relative h-screen flex items-center justify-center overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-500">
             
             {/* --- 1. ENTRANCE CURTAIN --- */}
-            <div className="fixed inset-0 z-[100] bg-brand-600 flex items-center justify-center animate-curtain-fun pointer-events-none">
+            {/* <div className="fixed inset-0 z-[100] bg-brand-600 flex items-center justify-center animate-curtain-fun pointer-events-none">
                 <div className="flex flex-col items-center gap-3 animate-pulse">
                     <i className="fa-solid fa-graduation-cap text-4xl text-white"></i>
                     <span className="text-white font-bold tracking-widest text-lg uppercase">Alumni TPL</span>
                 </div>
-            </div>
+            </div> */}
 
             {/* --- 2. BACKGROUND LAYERS --- */}
             <div className="absolute inset-0 z-0 overflow-hidden">

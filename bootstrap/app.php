@@ -3,8 +3,9 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\IsAdmin;
-use App\Http\Middleware\HandleInertiaRequests; // <--- Import this
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,15 +13,27 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
+    ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
-            HandleInertiaRequests::class, // <--- Add this line
+            \App\Http\Middleware\HandleInertiaRequests::class,
+            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
-
-        $middleware->alias([
-            'admin' => IsAdmin::class,
-        ]);    
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
-        //
+    ->withExceptions(function (Exceptions $exceptions) {
+        // TAMBAHKAN LOGIKA INI:
+        $exceptions->respond(function (Response $response, Throwable $exception, Request $request) {
+            // Hanya handle request Inertia & Status Code valid (404, 500, etc)
+            if (! app()->environment(['local', 'testing']) && in_array($response->getStatusCode(), [500, 503, 404, 403])) {
+                return Inertia::render('Error', ['status' => $response->getStatusCode()])
+                    ->toResponse($request)
+                    ->setStatusCode($response->getStatusCode());
+            } elseif ($response->getStatusCode() === 404) {
+                // Khusus 404 di environment apa saja (termasuk local biar bisa ditest)
+                return Inertia::render('Error', ['status' => 404])
+                    ->toResponse($request)
+                    ->setStatusCode(404);
+            }
+
+            return $response;
+        });
     })->create();

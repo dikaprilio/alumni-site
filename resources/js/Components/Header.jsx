@@ -93,7 +93,7 @@ export default function Header() {
                         <div className="relative z-10 flex items-center gap-1 px-2 py-1.5">
                             <NavLink href="/" active={url === '/'} isScrolled={isScrolled} isDark={isDark}>Home</NavLink>
                             <NavLink href="/study" active={url.startsWith('/study')} isScrolled={isScrolled} isDark={isDark}>Program Studi</NavLink>
-                            <NavLink href="/alumni" active={url.startsWith('/alumni')} isScrolled={isScrolled} isDark={isDark}>Alumni</NavLink>
+                            <NavLink href="/directory" active={url.startsWith('/directory')} isScrolled={isScrolled} isDark={isDark}>Alumni</NavLink>
                             <NavLink href="/news" active={url.startsWith('/news')} isScrolled={isScrolled} isDark={isDark}>Berita</NavLink>
                         </div>
                     </div>
@@ -155,7 +155,7 @@ export default function Header() {
                     
                     <MobileLink href="/" active={url === '/'} icon="fa-house">Home</MobileLink>
                     <MobileLink href="/study" active={url.startsWith('/study')} icon="fa-laptop-code">Studi</MobileLink>
-                    <MobileLink href="/alumni" active={url.startsWith('/alumni')} icon="fa-user-graduate">Alumni</MobileLink>
+                    <MobileLink href="/directory" active={url.startsWith('/directory')} icon="fa-user-graduate">Alumni</MobileLink>
                     <MobileLink href="/news" active={url.startsWith('/news')} icon="fa-newspaper">Berita</MobileLink>
 
                     {/* KONDISIONAL AUTH BUTTON (Mobile) */}

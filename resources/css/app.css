@@ -1,9 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 
-/* Import the separated animations file */
+/* Import Tailwind Framework */
+@import 'tailwindcss';
+
+/* Import animations AFTER Tailwind to prevent conflicts */
 @import './animations.css';
 
-@import 'tailwindcss';
+/* --- TAILWIND CONFIGURATION (V4) --- */
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -16,16 +19,115 @@
 @theme {
     --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     
+    /* --- BRAND COLORS --- */
+    /* Menambahkan default 'brand' agar 'bg-brand', 'text-brand' bekerja */
+    --color-brand: #F52A91; 
+
     --color-brand-50: #FFF0F7;
     --color-brand-100: #FFE0F0;
+    --color-brand-200: #FCC2D7; /* Added missing shade useful for hover states */
     --color-brand-300: #F782B8;
-    --color-brand-500: #F52A91;
+    --color-brand-400: #F055A2; /* Added missing shade */
+    --color-brand-500: #F52A91; /* Primary Brand Color */
     --color-brand-600: #D9117A;
     --color-brand-700: #BE0060;
+    --color-brand-800: #9F0050; /* Added missing shade */
     --color-brand-900: #830042;
+    --color-brand-950: #500028; /* Added darker shade for dark mode backgrounds */
 }
 
-/* --- COMPONENTS & UTILITIES --- */
+/* =========================================
+   GLOBAL SETTINGS & UTILITIES
+   ========================================= */
+html {
+    scroll-behavior: smooth;
+    overscroll-behavior-y: none; 
+}
+
+body {
+    @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white;
+    
+    /* Custom Cursor (Optional) */
+    cursor: crosshair; 
+}
+
+::selection {
+    /* Sekarang bisa pakai bg-brand karena default sudah didefinisikan */
+    @apply bg-brand text-white;
+}
+
+/* =========================================
+   CUSTOM SCROLLBAR
+   ========================================= */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-brand-400; /* Brand color on hover */
+}
+
+/* =========================================
+   COMPONENT CLASSES
+   ========================================= */
+
+/* Navbar Glass */
+.navbar-glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark .navbar-glass {
+    background: rgba(15, 23, 42, 0.8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Utility: Hide Scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Noise Texture */
+.bg-noise {
+    position: relative;
+    isolation: isolate;
+}
+.bg-noise::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 100%; 
+    height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Marquee Animation */
+@keyframes scrollLeft {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+@keyframes scrollRight {
+    from { transform: translateX(-50%); }
+    to { transform: translateX(0); }
+}
 
 /* Navbar Glass Effect */
 .navbar-transition {
@@ -131,4 +233,60 @@
 .text-vertical {
     writing-mode: vertical-rl;
     text-orientation: mixed;
+}
+
+
+/* ... import lainnya ... */
+
+/* =========================================
+   1. SHUTTER WIPE TRANSITION (The Curtain)
+   ========================================= */
+
+@keyframes curtain-drop {
+    0% { transform: translateY(-100%); } /* Mulai di atas layar */
+    100% { transform: translateY(0%); }   /* Jatuh menutup layar */
+}
+
+@keyframes curtain-lift {
+    0% { transform: translateY(0%); }     /* Posisi menutup */
+    100% { transform: translateY(-100%); }/* Naik kembali ke atas */
+}
+
+.animate-curtain-sequence {
+    /* Trik CSS Animation Chaining:
+       Kita gabungkan DROP (0.4s) + diam sebentar + LIFT (0.6s)
+       Total durasi = 1.2s (tapi user hanya merasakan sebentar)
+    */
+    animation: curtain-sequence 1.2s cubic-bezier(0.87, 0, 0.13, 1) forwards;
+}
+
+/* Kita definisikan keyframe gabungan agar lebih smooth di React */
+@keyframes curtain-sequence {
+    0% { transform: translateY(-100%); border-radius: 0 0 50% 50%; } /* Atas */
+    30% { transform: translateY(0%); border-radius: 0; }             /* Tutup (Drop) */
+    50% { transform: translateY(0%); border-radius: 0; }             /* Tahan (Wait) */
+    100% { transform: translateY(-100%); border-radius: 50% 50% 0 0; } /* Buka (Lift) */
+}
+
+/* =========================================
+   2. CONTENT DELAY (Agar tidak bocor)
+   ========================================= */
+.animate-content-delayed {
+    opacity: 0; /* Wajib hidden di awal */
+    animation: content-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: 0.5s; /* Tunggu sampai tirai mulai naik */
+}
+
+/* Animasi Content Enter (Slide Up halus + Blur) */
+@keyframes content-enter {
+    from { 
+        opacity: 0; 
+        filter: blur(10px); 
+        transform: scale(0.98) translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        filter: blur(0); 
+        transform: scale(1) translateY(0); 
+    }
 }

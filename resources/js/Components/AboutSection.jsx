@@ -33,26 +33,25 @@ export default function AboutSection() {
     return (
         <section className="relative py-20 md:py-32 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-hidden transition-colors duration-500">
             
-            {/* --- BACKGROUND TEXTURE (Custom Noise CSS recommended) --- */}
+            {/* --- BACKGROUND TEXTURE --- */}
             <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-noise mix-blend-overlay"></div>
 
             {/* --- DECORATIVE BLOBS --- */}
             <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-brand-200/40 dark:bg-brand-600/10 rounded-full blur-[120px] pointer-events-none"></div>
             <div className="absolute bottom-0 left-20 w-[300px] h-[300px] bg-purple-300/40 dark:bg-purple-600/10 rounded-full blur-[100px] pointer-events-none"></div>
 
-            <div className="container mx-auto px-4 md:px-8 relative z-10">
+            {/* UPDATED CONTAINER: Consistent Breathing Room */}
+            <div className="max-w-[1440px] mx-auto px-8 md:px-20 lg:px-32 relative z-10">
                 
-                {/* --- HEADER: REFINED LAYOUT --- */}
+                {/* --- HEADER --- */}
                 <div className="mb-16 md:mb-24">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
                         
-                        {/* Left: Massive Headline */}
+                        {/* Left: Headline */}
                         <div className="lg:col-span-7 relative">
-                            {/* Decorative Line visible on Desktop */}
                             <div className="hidden lg:block absolute -left-8 top-4 w-1 h-32 bg-brand-600"></div>
                             
                             <h2 className="text-6xl sm:text-7xl md:text-8xl font-black tracking-tighter leading-[0.9] relative z-10">
-                                {/* PERBAIKAN KONTRAS DISINI: text-slate-500 untuk kedua mode agar terbaca jelas */}
                                 <span className="block text-slate-500 dark:text-slate-500 transform -translate-x-1 lg:-translate-x-2">
                                     BEYOND
                                 </span>
@@ -62,7 +61,7 @@ export default function AboutSection() {
                             </h2>
                         </div>
 
-                        {/* Right: Context Description (Fixed Layout) */}
+                        {/* Right: Description */}
                         <div className="lg:col-span-5 flex flex-col justify-center">
                             <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border-l-4 border-brand-600 shadow-sm dark:shadow-none">
                                 <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
@@ -76,7 +75,7 @@ export default function AboutSection() {
                     </div>
                 </div>
 
-                {/* --- CONTENT: EXPANDING CARDS (THE WILD PART) --- */}
+                {/* --- CARDS --- */}
                 <div className="flex flex-col lg:flex-row h-[800px] lg:h-[550px] gap-4 w-full select-none">
                     {cards.map((card, index) => (
                         <div 
@@ -98,18 +97,12 @@ export default function AboutSection() {
                                     alt={card.title} 
                                     className={`w-full h-full object-cover transition-transform duration-1000 ${activeCard === index ? 'scale-100' : 'scale-110'}`}
                                 />
-                                
-                                {/* Dark Gradient Overlay (Always dark to ensure text readability) */}
                                 <div className={`absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent transition-opacity duration-500 ${activeCard === index ? 'opacity-90' : 'opacity-60'}`}></div>
-                                
-                                {/* Color Tint Expanding */}
                                 <div className={`absolute inset-0 bg-gradient-to-br ${card.color} mix-blend-overlay transition-opacity duration-500 ${activeCard === index ? 'opacity-80' : 'opacity-0'}`}></div>
                             </div>
 
-                            {/* Content Wrapper */}
+                            {/* Content */}
                             <div className="absolute inset-0 p-6 md:p-10 flex flex-col justify-end z-20">
-                                
-                                {/* Expanded Content */}
                                 <div className={`transition-all duration-500 transform ${activeCard === index ? 'translate-y-0 opacity-100 delay-100' : 'translate-y-8 opacity-0'}`}>
                                     <div className="flex items-center gap-3 mb-3">
                                         <span className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 backdrop-blur-md text-white border border-white/20 font-mono text-xs">
@@ -119,11 +112,9 @@ export default function AboutSection() {
                                             {card.subtitle}
                                         </span>
                                     </div>
-                                    
                                     <h3 className="text-3xl md:text-5xl font-black text-white mb-4 leading-none tracking-tight drop-shadow-lg">
                                         {card.title}
                                     </h3>
-                                    
                                     <div className="relative pl-5">
                                         <div className="absolute left-0 top-1 bottom-1 w-1 bg-gradient-to-b from-brand-400 to-transparent rounded-full"></div>
                                         <p className="text-slate-200 text-base md:text-lg leading-relaxed font-light max-w-lg">
@@ -132,7 +123,6 @@ export default function AboutSection() {
                                     </div>
                                 </div>
 
-                                {/* Collapsed Label (Vertical Text for Desktop) */}
                                 <div className={`absolute bottom-10 left-1/2 -translate-x-1/2 lg:left-auto lg:right-1/2 lg:translate-x-1/2 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 transition-all duration-500 ${activeCard === index ? 'opacity-0 scale-90' : 'opacity-100 scale-100 delay-200'}`}>
                                     <h3 className="text-2xl md:text-4xl font-black text-white/50 tracking-widest uppercase lg:rotate-90 whitespace-nowrap drop-shadow-md hover:text-white transition-colors">
                                         {card.title}

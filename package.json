@@ -19,6 +19,7 @@
         "@tsparticles/react": "^3.0.0",
         "@tsparticles/slim": "^3.9.1",
         "@vitejs/plugin-react": "^5.1.1",
+        "lodash": "^4.17.21",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "ziggy-js": "^2.6.0"
