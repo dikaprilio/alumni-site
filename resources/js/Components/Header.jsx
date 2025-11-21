@@ -60,8 +60,8 @@ export default function Header() {
                         }
                     `}
                 >
-                    {/* Logo Section */}
-                    <div className="flex items-center gap-2">
+                    {/* Logo Section - CHANGED TO LINK */}
+                    <Link href="/" className="flex items-center gap-2 group cursor-pointer">
                         <div className={`
                             w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-500
                             ${isScrolled 
@@ -80,7 +80,7 @@ export default function Header() {
                         `}>
                             Alumni<span className="text-brand-600">TPL</span>
                         </span>
-                    </div>
+                    </Link>
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex relative items-center justify-center">
@@ -121,7 +121,7 @@ export default function Header() {
                         {/* KONDISIONAL AUTH BUTTON (Desktop) */}
                         {auth?.user ? (
                             <Link
-                                href="/alumni" // FIX: Point to /alumni root
+                                href="/alumni" 
                                 className={`
                                     hidden md:flex items-center gap-3 px-2 py-1.5 pr-4 rounded-full transition-all duration-300 border group
                                     ${isScrolled
@@ -130,8 +130,17 @@ export default function Header() {
                                     }
                                 `}
                             >
-                                <div className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold shadow-md group-hover:scale-110 transition-transform">
-                                    {getInitials(auth.user.name)}
+                                {/* AVATAR LOGIC: Cek jika ada avatar di data alumni */}
+                                <div className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold shadow-md group-hover:scale-110 transition-transform overflow-hidden">
+                                    {auth.user.alumni && auth.user.alumni.avatar ? (
+                                        <img 
+                                            src={`/storage/${auth.user.alumni.avatar}`} 
+                                            alt={auth.user.name} 
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        getInitials(auth.user.name)
+                                    )}
                                 </div>
                                 <span className={`text-sm font-semibold max-w-[100px] truncate ${isScrolled ? 'text-slate-700 dark:text-slate-200' : 'text-slate-800 dark:text-white'}`}>
                                     {auth.user.name.split(' ')[0]}
@@ -161,7 +170,7 @@ export default function Header() {
                     {/* KONDISIONAL AUTH BUTTON (Mobile) */}
                     {auth?.user ? (
                         <MobileLink 
-                            href="/alumni" // FIX: Point to /alumni root
+                            href="/alumni" 
                             active={url.startsWith('/alumni')} 
                             icon="fa-user-circle"
                             isProfile={true}

@@ -33,7 +33,8 @@ class HandleInertiaRequests extends Middleware
 
             // 1. Share Auth Data
             'auth' => [
-                'user' => $request->user(),
+                // MODIFIED: Load relasi 'alumni' agar data avatar tersedia di frontend
+                'user' => $request->user() ? $request->user()->load('alumni') : null,
             ],
 
             // 2. Share Ziggy Routes
