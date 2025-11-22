@@ -129,10 +129,8 @@ export default function AlumniIndex({ alumni = { data: [], links: [] }, filters 
                         </div>
                     </div>
 
-                    <Link 
-                        href={route('admin.alumni.create')} 
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
-                    >
+                    {/* Tombol Tambah Alumni (Rounded Pink Glow Style) */}
+                    <Link href={route('admin.alumni.create')} className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2.5 rounded-full font-medium shadow-lg shadow-pink-500/30 transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 text-sm md:text-base w-full md:w-auto">
                         <i className="fa-solid fa-plus"></i> Tambah Alumni
                     </Link>
                 </div>

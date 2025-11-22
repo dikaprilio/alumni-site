@@ -112,10 +112,16 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // 4. ADMIN ROUTES
-Route::middleware(['auth', 'admin', 'verified'])->group(function () {
+    Route::middleware(['auth', 'admin', 'verified'])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-    Route::resource('/admin/alumni', AdminAlumniController::class)->names('admin.alumni');
+    
+    // --- PINDAHKAN INI KE ATAS ---
+    // Route spesifik harus didefinisikan SEBELUM Route::resource agar tidak tertimpa
     Route::get('/admin/alumni/export', [AdminAlumniController::class, 'export'])->name('admin.alumni.export');
+    
+    // Baru kemudian Resource Route
+    Route::resource('/admin/alumni', AdminAlumniController::class)->names('admin.alumni');
+    
     Route::resource('/admin/news', AdminNewsController::class)->names('admin.news');
     Route::resource('/admin/events', AdminEventController::class)->names('admin.events');
     Route::resource('/admin/jobs', AdminJobController::class)->names('admin.jobs');

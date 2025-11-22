@@ -340,7 +340,7 @@ export default function Dashboard({ stats, chartData, careerStats, topPositions,
             <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                        Dashboard <span className="text-blue-600">.</span>
+                        Dashboard <span className="text-pink-600">.</span>
                     </h1>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         Pantau performa & statistik alumni secara real-time.
@@ -348,16 +348,16 @@ export default function Dashboard({ stats, chartData, careerStats, topPositions,
                 </div>
                 
                 {/* HEADER ACTIONS */}
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <NotificationDropdown notifications={notifications} />
 
                     <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden md:block"></div>
 
-                    {/* TOMBOL "TULIS BERITA" DIHAPUS DARI SINI SESUAI REQUEST */}
-
-                    <Link href="/" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2">
+                    {/* Tombol Website (Pink Style) */}
+                    <Link href="/" className="bg-white hover:bg-pink-50 text-pink-600 hover:text-pink-700 border border-pink-100 hover:border-pink-200 px-5 py-2.5 rounded-full font-bold shadow-sm transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 text-xs">
                         Website <i className="fa-solid fa-arrow-up-right-from-square"></i>
                     </Link>
+
                 </div>
             </div>
 
