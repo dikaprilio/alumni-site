@@ -6,6 +6,7 @@ use App\Models\Alumni;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage; // Added for file storage
 use Illuminate\Support\Str;
 
 /**
@@ -53,14 +54,34 @@ class AlumniFactory extends Factory
         
         // Tanggal pendaftaran (created_at) diatur secara acak dalam 2 tahun terakhir
         $createdAt = $this->faker->dateTimeBetween('-2 years', 'now');
-        $name = $this->faker->name($this->faker->randomElement(['male', 'female'])); // Define name here
+        $name = $this->faker->name($this->faker->randomElement(['male', 'female'])); 
 
-        // Buat User dummy jika diperlukan (di-handle di afterCreating)
-        
+        // --- START: LIGHTWEIGHT AVATAR GENERATION ---
+        $filename = 'avatar_' . Str::slug($name) . '_' . uniqid() . '.png';
+        $avatarPath = null;
+
+        try {
+            // Generate URL from UI Avatars (128x128 px, ~2KB size)
+            $imageUrl = "https://ui-avatars.com/api/?name=" . urlencode($name) . "&background=random&color=fff&size=128&format=png";
+            
+            // Download the image content
+            $imageContent = @file_get_contents($imageUrl);
+
+            if ($imageContent) {
+                // Save to storage/app/public/avatars so it works with your frontend
+                Storage::disk('public')->put('avatars/' . $filename, $imageContent);
+                $avatarPath = 'avatars/' . $filename;
+            }
+        } catch (\Exception $e) {
+            // Fallback if internet is down
+            $avatarPath = null;
+        }
+        // --- END: LIGHTWEIGHT AVATAR GENERATION ---
+
         return [
             // Field Data Alumni
             'user_id' => null, // Akan diisi di afterCreating jika tidak di-set null
-            'name' => $name, // Now correctly defined
+            'name' => $name,
             'nim' => $nim,
             'graduation_year' => $year,
             'major' => $this->faker->randomElement(['Teknologi Rekayasa Perangkat Lunak', 'Manajemen Informatika']),
@@ -75,6 +96,10 @@ class AlumniFactory extends Factory
                 'Singapore', 
                 'Tokyo'
             ]),
+            'bio' => $this->faker->paragraph(), // Added Bio
+            'avatar' => $avatarPath, // Added Avatar path
+            'private_email' => false,
+            'private_phone' => false,
             
             // Field Karir
             'current_position' => $jobTitle,
@@ -96,12 +121,11 @@ class AlumniFactory extends Factory
     {
         // Pastikan User dibuat dan ditautkan ke Alumni, kecuali jika ditandai 'unlinked'
         return $this->afterCreating(function (Alumni $alumni) {
-            // FIX: Hanya buat user jika user_id masih null. Jika alumni dibuat 
-            // tanpa state khusus, user_id-nya null dan blok ini dieksekusi.
+            // FIX: Hanya buat user jika user_id masih null.
             if ($alumni->user_id === null) {
                 
                 // Ambil data penting dari alumni yang baru dibuat
-                $alumniData = $alumni->only(['name']); // Tambahkan kolom yang dibutuhkan
+                $alumniData = $alumni->only(['name']); 
 
                 $user = User::create([
                     'name' => $alumniData['name'],
@@ -126,10 +150,10 @@ class AlumniFactory extends Factory
             'current_position' => null,
             'company_name' => null,
             'graduation_year' => $this->faker->numberBetween(date('Y') - 1, date('Y')), 
-            'name' => $attributes['name'] ?? $this->faker->name(), // Ensure name exists
-            'nim' => $attributes['nim'] ?? 'J0403' . $this->faker->unique()->numberBetween(10000, 99999), // Ensure nim exists
-            'major' => $attributes['major'] ?? 'Teknologi Rekayasa Perangkat Lunak', // Ensure major exists
-            'gender' => $attributes['gender'] ?? $this->faker->randomElement(['L', 'P']), // Ensure gender exists
+            'name' => $attributes['name'] ?? $this->faker->name(), 
+            'nim' => $attributes['nim'] ?? 'J0403' . $this->faker->unique()->numberBetween(10000, 99999), 
+            'major' => $attributes['major'] ?? 'Teknologi Rekayasa Perangkat Lunak',
+            'gender' => $attributes['gender'] ?? $this->faker->randomElement(['L', 'P']),
         ])->afterCreating(function (Alumni $alumni) {
             // Karena ini unlinked, kita tidak melakukan apa-apa di afterCreating
         });
@@ -143,10 +167,10 @@ class AlumniFactory extends Factory
         return $this->state(fn (array $attributes) => [
             // Pastikan user_id null agar afterCreating terpicu
             'user_id' => null, 
-            'name' => $attributes['name'] ?? $this->faker->name(), // Ensure name exists
-            'nim' => $attributes['nim'] ?? 'J0403' . $this->faker->unique()->numberBetween(10000, 99999), // Ensure nim exists
-            'major' => $attributes['major'] ?? 'Manajemen Informatika', // Ensure major exists
-            'gender' => $attributes['gender'] ?? $this->faker->randomElement(['L', 'P']), // Ensure gender exists
+            'name' => $attributes['name'] ?? $this->faker->name(), 
+            'nim' => $attributes['nim'] ?? 'J0403' . $this->faker->unique()->numberBetween(10000, 99999),
+            'major' => $attributes['major'] ?? 'Manajemen Informatika',
+            'gender' => $attributes['gender'] ?? $this->faker->randomElement(['L', 'P']),
         ])->afterCreating(function (Alumni $alumni) {
             // Buat User, tapi set email_verified_at = null
             $alumniData = $alumni->only(['name']);

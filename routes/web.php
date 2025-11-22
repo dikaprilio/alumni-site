@@ -26,10 +26,9 @@ Route::get('/directory', [PublicAlumniController::class, 'index'])->name('public
 Route::get('/directory/{id}', [PublicAlumniController::class, 'show'])->name('public.alumni.show');
 Route::get('/', function () {
 
-    // Jika login sebagai admin → redirect ke dashboard admin
-    if (Auth::check() && Auth::user()->role === 'admin') {
-        return redirect()->route('admin.dashboard');
-    }
+    // REVISI: Admin tidak lagi dipaksa redirect ke dashboard jika mengunjungi landing page.
+    // Mereka bisa melihat halaman depan seperti user biasa.
+    // Login redirect logic ditangani di AuthController@adminLogin.
 
     // 1. Fetch Alumni Acak untuk Card
     $alumniList = Alumni::with('skills')
@@ -49,7 +48,8 @@ Route::get('/', function () {
 
     // 3. Total Alumni
     $totalAlumni = Alumni::count();
-    // 1. Fetch News (Ambil 4 terbaru)
+    
+    // 4. Fetch News (Ambil 4 terbaru)
     $news = News::latest()
         ->limit(4)
         ->get(['id', 'title', 'image', 'created_at', 'category'])
@@ -59,27 +59,25 @@ Route::get('/', function () {
             return $item;
         });
 
-    // 2. Fetch Events (Ambil 3 terbaru)
-    // Asumsi tabel events punya kolom 'event_date'
+    // 5. Fetch Events (Ambil 3 terbaru)
     $events = Event::latest()
         ->limit(3)
-        ->get(['id', 'title', 'image', 'event_date', 'category']) // Sesuaikan nama kolom tanggal event
+        ->get(['id', 'title', 'image', 'event_date', 'category'])
         ->map(function ($item) {
             $item->type = 'EVENT'; // Label tipe
-            $item->date = $item->event_date; // Standardisasi kolom tanggal
+            $item->date = $item->event_date; 
             return $item;
         });
 
-    // 3. Merge & Sort
-    // Gabung jadi satu koleksi, urutkan dari yang paling baru
+    // 6. Merge & Sort
     $latestUpdates = $news->concat($events)->sortByDesc('date')->take(6)->values();
+    
     return Inertia::render('Welcome', [
         'canLogin'     => Route::has('login'),
         'canRegister'  => Route::has('register'),
         'alumniList'   => $alumniList,
         'jobStats'     => $jobStats,
         'totalAlumni'  => $totalAlumni,
-        'alumniList' => $alumniList,
         'latestUpdates' => $latestUpdates,
     ]);
 
@@ -147,6 +145,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/alumni/jobs', [App\Http\Controllers\AlumniProfileController::class, 'addJobHistory'])->name('alumni.jobs.add');
     Route::delete('/alumni/jobs/{id}', [App\Http\Controllers\AlumniProfileController::class, 'deleteJobHistory'])->name('alumni.jobs.delete');
 });
+
 // 6. Logout
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

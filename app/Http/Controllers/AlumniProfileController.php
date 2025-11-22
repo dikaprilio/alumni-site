@@ -139,6 +139,8 @@ class AlumniProfileController extends Controller
         ]);
     }
 
+// FILE: app/Http/Controllers/AlumniProfileController.php
+
     public function update(Request $request)
     {
         $user = $request->user();
@@ -155,21 +157,36 @@ class AlumniProfileController extends Controller
             'major'             => 'nullable|string|max:100',
             'skills'            => 'array',
             'skills.*'          => 'exists:skills,id',
+            // Add validation for avatar
+            'avatar'            => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
         ]);
 
-        // Remove skills from validated array before updating alumni model directly
-        $alumniData = collect($validated)->except('skills')->toArray();
+        // Remove skills and avatar from the direct update array initially
+        $alumniData = collect($validated)->except(['skills', 'avatar'])->toArray();
+
+        // --- ADD THIS BLOCK TO HANDLE AVATAR UPLOAD ---
+        if ($request->hasFile('avatar')) {
+            // Delete old avatar if exists
+            if ($alumni->avatar) {
+                Storage::disk('public')->delete($alumni->avatar);
+            }
+            // Store new avatar
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $alumniData['avatar'] = $path;
+        }
+        // ----------------------------------------------
+
         $alumni->update($alumniData);
 
-        // Sync skills
-        if ($request->has('skills')) {
-            $alumni->skills()->sync($request->skills);
-        } else {
-            $alumni->skills()->detach();
-        }
-
-        return back()->with('message', 'Profil berhasil diperbarui!');
+    // Sync skills
+    if ($request->has('skills')) {
+        $alumni->skills()->sync($request->skills);
+    } else {
+        $alumni->skills()->detach();
     }
+
+    return back()->with('message', 'Profil berhasil diperbarui!');
+}
 
     public function settings(Request $request)
     {

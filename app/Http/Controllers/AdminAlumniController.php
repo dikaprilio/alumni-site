@@ -5,254 +5,202 @@ namespace App\Http\Controllers;
 use App\Models\Alumni;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Hash; // Import Hash
-use Illuminate\Validation\Rule; // Import Rule
+use Illuminate\Support\Facades\Hash;
+use Inertia\Inertia;
+use Illuminate\Support\Str;
 
 class AdminAlumniController extends Controller
 {
-    // Define the career field mapping and keywords for filtering
-    private array $careerMapping = [
-        'Web Development' => ['frontend', 'backend', 'fullstack', 'php', 'react', 'laravel', 'vue'],
-        'Mobile Development' => ['android', 'ios', 'flutter', 'react native', 'kotlin', 'swift'],
-        'Data & AI' => ['data analyst', 'data scientist', 'machine learning', 'big data', 'python'],
-        'Infrastructure' => ['devops', 'cloud', 'sysadmin', 'docker'],
-        'Quality & Testing' => ['qa', 'tester', 'sdet'],
-        'Design & Creative' => ['ui/ux', 'product design', 'graphic design', 'multimedia'],
-        'Management' => ['product manager', 'scrum master', 'project manager', 'tech lead'],
-    ];
-
-    /**
-     * Display a listing of the resource with filters.
-     */
     public function index(Request $request)
     {
-        // Start Query with User relationship
         $query = Alumni::with('user');
 
-        // 1. Search Filter (Enhanced & Case-Insensitive)
+        // 1. SMART SEARCH (Global Search)
+        // Mencari satu keyword di berbagai kolom relevan
         if ($request->filled('search')) {
-            $search = strtolower($request->search); 
-            
+            $search = $request->input('search');
             $query->where(function($q) use ($search) {
-                // Search Alumni fields (Name, NIM, Job, Company)
-                $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                  ->orWhereRaw('LOWER(nim) LIKE ?', ["%{$search}%"])
-                  ->orWhereRaw('LOWER(current_position) LIKE ?', ["%{$search}%"])
-                  ->orWhereRaw('LOWER(company_name) LIKE ?', ["%{$search}%"]);
-
-                // Search User email
-                $q->orWhereHas('user', function($subQ) use ($search) {
-                    $subQ->whereRaw('LOWER(email) LIKE ?', ["%{$search}%"]);
-                });
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('nim', 'like', "%{$search}%")
+                  ->orWhere('major', 'like', "%{$search}%")
+                  ->orWhere('current_position', 'like', "%{$search}%")
+                  ->orWhere('company_name', 'like', "%{$search}%")
+                  ->orWhere('address', 'like', "%{$search}%") // Termasuk lokasi
+                  ->orWhereHas('user', function($u) use ($search) {
+                      $u->where('email', 'like', "%{$search}%");
+                  });
             });
         }
-        
-        // 2. Filter by Graduation Year (Angkatan)
-        if ($request->filled('year') && $request->year != 'Semua') {
-            $query->where('graduation_year', $request->year);
+
+        // 2. FILTER: ANGKATAN (Graduation Year)
+        if ($request->filled('graduation_year')) {
+            $query->where('graduation_year', $request->input('graduation_year'));
         }
 
-        // 3. Filter by Status (Verified/Unverified)
-        if ($request->filled('status') && $request->status != 'Semua') {
-            if ($request->status == 'Terverifikasi') {
-                $query->whereHas('user', function($q) {
-                    $q->whereNotNull('email_verified_at');
-                });
-            } elseif ($request->status == 'Menunggu Verifikasi') {
-                $query->whereHas('user', function($q) {
-                    $q->whereNull('email_verified_at');
+        // 3. FILTER: STATUS KERJA (Employment Status)
+        // Asumsi: Jika 'current_position' diisi, berarti sedang bekerja
+        if ($request->filled('employment_status')) {
+            $status = $request->input('employment_status');
+            if ($status === 'employed') {
+                $query->whereNotNull('current_position')->where('current_position', '!=', '');
+            } elseif ($status === 'unemployed') {
+                $query->where(function($q) {
+                    $q->whereNull('current_position')->orWhere('current_position', '=', '');
                 });
             }
         }
 
-        // 4. Filter by Location (Lokasi) - Searching in the 'address' column
-        if ($request->filled('location') && $request->location != 'Semua') {
-            $location = strtolower($request->location);
-            $query->whereRaw('LOWER(address) LIKE ?', ["%{$location}%"]);
+        // 4. FILTER: STATUS AKUN (Has Account)
+        if ($request->filled('has_account')) {
+            $status = $request->input('has_account');
+            if ($status === 'yes') {
+                $query->whereNotNull('user_id');
+            } elseif ($status === 'no') {
+                $query->whereNull('user_id');
+            }
         }
 
-        // 5. Filter by Career Field (Bidang Karir)
-        if ($request->filled('career_field') && $request->career_field != 'Semua') {
-            $careerField = $request->career_field;
-            $keywords = $this->careerMapping[$careerField] ?? [];
+        // 5. FILTER: LOKASI (Specific Location Filter)
+        if ($request->filled('location')) {
+            $query->where('address', 'like', '%' . $request->input('location') . '%');
+        }
 
-            $query->where(function($q) use ($keywords) {
-                foreach ($keywords as $keyword) {
-                    // Use OR to match any keyword in current_position
-                    $q->orWhereRaw('LOWER(current_position) LIKE ?', ["%{$keyword}%"]);
-                }
+        // 6. FILTER: KARIR (Specific Career/Company Filter)
+        if ($request->filled('career')) {
+            $term = $request->input('career');
+            $query->where(function($q) use ($term) {
+                $q->where('current_position', 'like', "%{$term}%")
+                  ->orWhere('company_name', 'like', "%{$term}%");
             });
         }
-        
-        // Get results with pagination (10 per page)
-        $alumnis = $query->latest()->paginate(10)->withQueryString();
 
-        // Get distinct years for filter dropdown
-        $years = Alumni::select('graduation_year')->distinct()->orderBy('graduation_year', 'desc')->pluck('graduation_year');
+        // SORTING
+        $sortField = $request->input('sort_field', 'created_at');
+        $sortDirection = $request->input('sort_direction', 'desc');
         
-        // Cities for Location Filter (Common Indonesian cities based on assumptions)
-        $commonLocations = ['Jakarta', 'Bandung', 'Surabaya', 'Yogyakarta', 'Luar Negeri'];
+        $allowedSorts = ['name', 'nim', 'graduation_year', 'created_at', 'major'];
+        if (in_array($sortField, $allowedSorts)) {
+            $query->orderBy($sortField, $sortDirection);
+        }
 
-        return view('admin.alumni.index', compact('alumnis', 'years', 'commonLocations'))
-                ->with('careerFields', array_keys($this->careerMapping));
+        $alumni = $query->paginate(10)->withQueryString();
+
+        // Ambil daftar tahun kelulusan unik untuk opsi filter dropdown
+        $graduationYears = Alumni::select('graduation_year')
+            ->whereNotNull('graduation_year')
+            ->distinct()
+            ->orderBy('graduation_year', 'desc')
+            ->pluck('graduation_year');
+
+        return Inertia::render('Admin/Alumni/Index', [
+            'alumni' => $alumni,
+            'filters' => $request->all(), // Mengirim semua input filter kembali ke frontend
+            'graduationYears' => $graduationYears, // List tahun untuk dropdown
+        ]);
     }
 
-    /**
-     * Store a newly created alumni in storage (Create).
-     */
+    public function create()
+    {
+        return Inertia::render('Admin/Alumni/Create');
+    }
+
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'nim' => 'required|string|max:20|unique:alumnis,nim',
+            'nim' => 'required|string|unique:alumnis,nim|max:20',
+            'graduation_year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
+            'major' => 'required|string',
             'email' => 'nullable|email|unique:users,email',
-            'password' => 'nullable|string|min:8', // Enforce min length
-            'graduation_year' => 'required|integer|digits:4|max:' . date('Y'),
-            'major' => 'required|string|max:100', 
-            'phone_number' => 'nullable|string|max:15',
-            'gender' => 'required|in:L,P',
-            'address' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|string|max:20',
         ]);
 
-        $user = null;
+        $alumni = Alumni::create($request->except('email'));
 
-        // 1. Create User account if email/password is provided
-        if ($request->filled('email') && $request->filled('password')) {
+        if ($request->filled('email')) {
             $user = User::create([
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => Hash::make($data['password']),
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make('password'),
                 'role' => 'alumni',
-                'email_verified_at' => now(), // Assume manually added user is verified
             ]);
+            
+            $alumni->user_id = $user->id;
+            $alumni->save();
         }
-        // 2. Create Alumni record
-        Alumni::create([
-            'user_id' => $user->id ?? null,
-            'name' => $data['name'], 
-            'nim' => $data['nim'],
-            'graduation_year' => $data['graduation_year'],
-            'major' => $data['major'],
-            'phone_number' => $data['phone_number'],
-            'gender' => $data['gender'],
-            'address' => $data['address'],
-        ]);
 
-        return redirect()->route('admin.alumni.index')->with('success', 'Data alumni baru berhasil ditambahkan.');
+        return redirect()->route('admin.alumni.index')->with('message', 'Alumni berhasil ditambahkan.');
     }
 
-    /**
-     * Update the specified alumni in storage (Update).
-     */
-    public function update(Request $request, $id)
+    public function edit(Alumni $alumni)
     {
-        $alumni = Alumni::findOrFail($id);
+        $alumni->load('user'); 
+        
+        return Inertia::render('Admin/Alumni/Edit', [
+            'alumni' => $alumni
+        ]);
+    }
 
-        // Removed 'email' validation from here as admins shouldn't update it directly
-        $data = $request->validate([
+    public function update(Request $request, Alumni $alumni)
+    {
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'status' => 'required|in:Terverifikasi,Menunggu Verifikasi', 
-            'graduation_year' => 'required|integer|digits:4',
-            'current_position' => 'nullable|string|max:255',
-            'company_name' => 'nullable|string|max:255',
-        ]);
-        
-        // 1. Update Alumni details
-        $alumni->update([
-            'name' => $data['name'],
-            'graduation_year' => $data['graduation_year'],
-            'current_position' => $data['current_position'],
-            'company_name' => $data['company_name'],
+            'nim' => 'required|string|max:20|unique:alumnis,nim,' . $alumni->id,
+            'graduation_year' => 'required|integer',
+            'major' => 'required|string',
+            'current_position' => 'nullable|string',
+            'company_name' => 'nullable|string',
+            'email' => 'nullable|email|unique:users,email,' . ($alumni->user_id ?? 'NULL'),
         ]);
 
-        // 2. Update User/Verification Status Only
-        if ($alumni->user) {
-             // Update User's name if they have an account
-            $alumni->user->update(['name' => $data['name']]); 
+        $alumni->update($request->except('email'));
 
-            // Update Email Verification Status
-            if ($data['status'] === 'Terverifikasi') {
-                if (!$alumni->user->email_verified_at) {
-                    $alumni->user->email_verified_at = now();
-                }
+        if ($request->filled('email')) {
+            if ($alumni->user) {
+                $alumni->user->update(['email' => $validated['email'], 'name' => $validated['name']]);
             } else {
-                $alumni->user->email_verified_at = null;
-            }
-            
-            // NOTE: Email update removed for security. 
-            // If user needs to change email, they should do it from their profile
-            // or request a specific admin intervention (not bulk/quick edit).
-
-            $alumni->user->save();
-
-        } 
-        // Removed the "create new user if verified" logic in update to prevent accidental account creation with potentially wrong emails.
-        // Users should register themselves or be created explicitly via "Add Alumni".
-
-        return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil diperbarui.');
-    }
-
-    /**
-     * Export data to CSV.
-     */
-    public function export()
-    {
-        $filename = "alumni-data-" . date('Y-m-d') . ".csv";
-        $alumnis = Alumni::with('user')->get();
-
-        $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=$filename",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
-
-        $callback = function() use ($alumnis) {
-            $file = fopen('php://output', 'w');
-            
-            // Header Row
-            fputcsv($file, ['Nama', 'NIM', 'Angkatan', 'Email', 'No HP', 'Pekerjaan', 'Perusahaan', 'Status Verifikasi']);
-
-            // Data Rows
-            foreach ($alumnis as $alumni) {
-                fputcsv($file, [
-                    $alumni->name,
-                    $alumni->nim,
-                    $alumni->graduation_year,
-                    $alumni->user->email ?? '-',
-                    $alumni->phone_number,
-                    $alumni->current_position ?? 'Belum bekerja',
-                    $alumni->company_name ?? '-',
-                    $alumni->user && $alumni->user->hasVerifiedEmail() ? 'Terverifikasi' : 'Pending'
+                $user = User::create([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'password' => Hash::make('password'),
+                    'role' => 'alumni',
                 ]);
+                $alumni->user_id = $user->id;
+                $alumni->save();
             }
+        }
 
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return redirect()->route('admin.alumni.index')->with('message', 'Data alumni diperbarui.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(Alumni $alumni)
     {
-        $alumni = Alumni::findOrFail($id);
-        
-        // Security check: Prevent deleting self or other admins if they happen to be in alumni list (rare but safe)
-        if ($alumni->user && $alumni->user->role === 'admin') {
-             return redirect()->back()->with('error', 'Tidak dapat menghapus data administrator.');
-        }
-        
         if ($alumni->user) {
             $alumni->user->delete();
         }
-        
         $alumni->delete();
 
-        return redirect()->back()->with('success', 'Data alumni berhasil dihapus.');
+        return redirect()->route('admin.alumni.index')->with('message', 'Alumni dihapus.');
+    }
+    
+    public function generateAccount(Alumni $alumni)
+    {
+        if ($alumni->user_id) {
+            return back()->with('error', 'Alumni ini sudah memiliki akun.');
+        }
+
+        $email = $alumni->email ?? strtolower($alumni->nim) . '@alumni.com';
+        
+        $user = User::create([
+            'name' => $alumni->name,
+            'email' => $email,
+            'password' => Hash::make('password'),
+            'role' => 'alumni',
+        ]);
+
+        $alumni->user_id = $user->id;
+        $alumni->save();
+
+        return back()->with('message', 'Akun berhasil dibuatkan. Password default: password');
     }
 }

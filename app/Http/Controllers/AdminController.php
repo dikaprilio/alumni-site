@@ -2,138 +2,164 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Alumni;
-use App\Models\Event;
+use App\Models\JobPosting;
 use App\Models\News;
-use App\Models\JobHistory;
-use Carbon\Carbon;
-use Illuminate\Support\Str;
+use App\Models\Event;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
     public function dashboard()
     {
-        // --- 1. KARTU STATISTIK UTAMA ---
-        
+        // --- 1. STATISTIK UTAMA ---
         $totalAlumni = Alumni::count();
-
-        $alreadyWorking = Alumni::whereNotNull('current_position')
-                                ->where('current_position', '!=', '')
-                                ->count();
-        $workingPercentage = $totalAlumni > 0 ? round(($alreadyWorking / $totalAlumni) * 100, 1) : 0;
-
-        $activeEvents = Event::where('status', 'upcoming')->count();
+        $totalJobs = JobPosting::count();
         $totalNews = News::count();
+        $totalEvents = Event::count();
+        $totalPending = User::whereNull('email_verified_at')->count(); 
 
-        // --- STATISTIK BARU ---
+        // Pertumbuhan (New this month)
+        $newAlumniMonth = Alumni::where('created_at', '>=', Carbon::now()->startOfMonth())->count();
+        $newJobsMonth = JobPosting::where('created_at', '>=', Carbon::now()->startOfMonth())->count();
+
+        // --- 2. CHART 1: ALUMNI PER TAHUN LULUS (Bar Chart) ---
+        $chartData = Alumni::select('graduation_year', DB::raw('count(*) as total'))
+            ->whereNotNull('graduation_year')
+            ->groupBy('graduation_year')
+            ->orderBy('graduation_year', 'desc')
+            ->limit(5)
+            ->get()
+            ->sortBy('graduation_year')
+            ->values();
+
+        // --- 3. DATA BARU: CAREER STATS (Employment Rate) ---
+        // Hitung yang sudah bekerja vs belum (berdasarkan current_position)
+        $employedCount = Alumni::whereNotNull('current_position')
+            ->where('current_position', '!=', '')
+            ->count();
         
-        $newAlumniThisMonth = Alumni::whereYear('created_at', Carbon::now()->year)
-                                    ->whereMonth('created_at', Carbon::now()->month)
-                                    ->count();
+        $unemployedCount = $totalAlumni - $employedCount;
 
-        $companyPartners = Alumni::whereNotNull('company_name')
-                                 ->where('company_name', '!=', '')
-                                 ->distinct('company_name')
-                                 ->count('company_name');
+        $careerStats = [
+            'employed' => $employedCount,
+            'unemployed' => $unemployedCount,
+            'rate' => $totalAlumni > 0 ? round(($employedCount / $totalAlumni) * 100) : 0
+        ];
 
-
-        // --- 2. DATA CHART 1 (Line Chart: Statistik Bulanan) ---
-        
-        $currentYear = date('Y');
-        $monthlyAlumni = Alumni::select('created_at')
-                            ->whereYear('created_at', $currentYear)
-                            ->get()
-                            ->groupBy(function($date) {
-                                return Carbon::parse($date->created_at)->format('n');
-                            });
-
-        $chartData = [];
-        $chartLabels = [];
-        
-        for ($i = 1; $i <= 12; $i++) {
-            $chartLabels[] = date('M', mktime(0, 0, 0, $i, 1));
-            $chartData[] = isset($monthlyAlumni[$i]) ? $monthlyAlumni[$i]->count() : 0;
-        }
-
-        // --- 3. DATA CHART 2 (Pie Chart: Status Pekerjaan) ---
-        
-        $notWorking = $totalAlumni - $alreadyWorking;
-        $statusLabels = ['Sudah Bekerja', 'Belum Bekerja / Tidak Ada Data'];
-        $statusData = [$alreadyWorking, $notWorking];
-
-        // --- 4. DATA CHART 3 (Pie Chart: Distribusi Bidang Kerja) ---
-        // Mengambil top 5 pekerjaan terbanyak
-        $topJobs = Alumni::select('current_position', DB::raw('count(*) as total'))
+        // --- 4. DATA BARU: TOP 5 POSISI PEKERJAAN ---
+        $topPositions = Alumni::select('current_position', DB::raw('count(*) as total'))
             ->whereNotNull('current_position')
             ->where('current_position', '!=', '')
             ->groupBy('current_position')
-            ->orderByDesc('total')
-            ->take(5)
+            ->orderBy('total', 'desc')
+            ->limit(5)
             ->get();
 
-        $jobDistributionLabels = $topJobs->pluck('current_position');
-        $jobDistributionData = $topJobs->pluck('total');
+        // --- 5. CHART 3: TREN PENDAFTARAN (Line Chart) - FIXED LOGIC ---
+        // Gunakan PHP untuk generate range 6 bulan terakhir agar data selalu lengkap (tidak hanya bulan yg ada datanya)
+        // Ini juga mengatasi masalah kompatibilitas SQL (DATE_FORMAT vs strftime vs TO_CHAR)
+        
+        $months = collect(range(5, 0))->map(function ($i) {
+            return Carbon::now()->subMonths($i);
+        });
 
+        // Ambil raw data user 6 bulan terakhir
+        $usersRecent = User::select('created_at')
+            ->where('created_at', '>=', Carbon::now()->subMonths(6)->startOfMonth())
+            ->get()
+            ->groupBy(function($date) {
+                return Carbon::parse($date->created_at)->format('Y-m');
+            });
 
-        // --- 5. AKTIVITAS TERBARU ---
-
-        $mapActivity = function($item, $type) {
-            $data = [
-                'type' => $type,
-                'time' => $item->created_at,
+        // Mapping data agar format konsisten [ {month_year, month_name, count} ]
+        $monthlyGrowth = $months->map(function ($date) use ($usersRecent) {
+            $key = $date->format('Y-m');
+            return [
+                'month_year' => $key,
+                'month_name' => $date->translatedFormat('F'), // Nama bulan (Januari, Februari...) otomatis sesuai locale app
+                'count' => isset($usersRecent[$key]) ? $usersRecent[$key]->count() : 0
             ];
+        })->values();
 
-            if ($type === 'join') {
-                $data['name'] = $item->name;
-                $data['description'] = 'Bergabung sebagai alumni baru';
-                $data['initial'] = substr($item->name, 0, 2);
-            } elseif ($type === 'job') {
-                $data['name'] = $item->alumni->name ?? 'Alumni';
-                $data['description'] = 'Update karir di <span class="font-medium text-brand-600">' . Str::limit($item->company_name, 20) . '</span>';
-                $data['initial'] = substr($item->alumni->name ?? 'Al', 0, 2);
-            } elseif ($type === 'news') {
-                $data['name'] = $item->author->name ?? 'Admin';
-                $data['description'] = 'Memposting berita: <span class="font-medium text-brand-600">' . Str::limit($item->title, 30) . '</span>';
-                $data['initial'] = substr($item->author->name ?? 'Ad', 0, 2);
-            }
+        // --- 6. ACTIVITY LOG ---
+        $logs = collect();
 
-            return $data;
-        };
+        $users = User::latest()->take(3)->get()->map(function ($item) {
+            return [
+                'id' => 'u-' . $item->id,
+                'type' => 'USER',
+                'message' => $item->name . ' registered.',
+                'time' => $item->created_at,
+                'icon' => 'fa-solid fa-user-plus', // Pastikan prefix fa-solid ada
+                'color' => 'blue' // Sesuaikan dengan CARD_THEMES di frontend
+            ];
+        });
 
-        $rawAlumni = Alumni::latest()->take(10)->get();
-        $rawJobs = JobHistory::with('alumni')->latest()->take(10)->get();
-        $rawNews = News::with('author')->latest()->take(10)->get();
+        $news = News::latest()->take(3)->get()->map(function ($item) {
+            return [
+                'id' => 'n-' . $item->id,
+                'type' => 'NEWS',
+                'message' => 'Published: "' . \Illuminate\Support\Str::limit($item->title, 15) . '"',
+                'time' => $item->created_at,
+                'icon' => 'fa-solid fa-newspaper',
+                'color' => 'amber'
+            ];
+        });
 
-        $activities = collect()
-            ->merge($rawAlumni->map(fn($i) => $mapActivity($i, 'join')))
-            ->merge($rawJobs->map(fn($i) => $mapActivity($i, 'job')))
-            ->merge($rawNews->map(fn($i) => $mapActivity($i, 'news')))
+        $jobs = JobPosting::latest()->take(3)->get()->map(function ($item) {
+            return [
+                'id' => 'j-' . $item->id,
+                'type' => 'JOB',
+                'message' => 'Job posted: ' . \Illuminate\Support\Str::limit($item->title, 15),
+                'time' => $item->created_at,
+                'icon' => 'fa-solid fa-briefcase',
+                'color' => 'purple'
+            ];
+        });
+
+        $activityLog = $logs->concat($users)->concat($news)->concat($jobs)
             ->sortByDesc('time')
+            ->take(6)
             ->values();
 
-        $recentActivities = $activities->take(8);
-        $allActivities = $activities->take(20);
+        // --- 7. NOTIFICATIONS ---
+        $notifications = [];
+        if ($totalPending > 0) {
+            $notifications[] = [
+                'id' => 1,
+                'title' => 'Verifikasi Diperlukan',
+                'desc' => "$totalPending pengguna menunggu verifikasi email.",
+                'priority' => 'high',
+                'time' => 'Sekarang'
+            ];
+        }
+        $notifications[] = [
+            'id' => 2,
+            'title' => 'System Update',
+            'desc' => 'Sinkronisasi data trace study selesai.',
+            'priority' => 'low',
+            'time' => '2j lalu'
+        ];
 
-
-        return view('admin.dashboard', compact(
-            'totalAlumni', 
-            'alreadyWorking', 
-            'workingPercentage', 
-            'activeEvents', 
-            'totalNews',
-            'newAlumniThisMonth',
-            'companyPartners',
-            'chartData',
-            'chartLabels',
-            'currentYear',
-            'statusLabels',
-            'statusData',
-            'jobDistributionLabels', // Baru
-            'jobDistributionData',   // Baru
-            'recentActivities',
-            'allActivities'
-        ));
+        return Inertia::render('Admin/Dashboard', [
+            'stats' => [
+                'alumni' => ['total' => $totalAlumni, 'new' => $newAlumniMonth],
+                'jobs' => ['total' => $totalJobs, 'new' => $newJobsMonth],
+                'news' => $totalNews,
+                'events' => $totalEvents,
+                'pending' => $totalPending
+            ],
+            'chartData' => $chartData,
+            'careerStats' => $careerStats, 
+            'topPositions' => $topPositions, 
+            'monthlyGrowth' => $monthlyGrowth, // Data chart yang sudah diperbaiki
+            'activityLog' => $activityLog,
+            'notifications' => $notifications,
+        ]);
     }
 }

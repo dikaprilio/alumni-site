@@ -71,7 +71,7 @@ class PublicAlumniController extends Controller
     {
         // Method show tetap sama seperti revisi terakhir (dengan logika privasi)
         $alumni = Alumni::with(['skills', 'jobHistories', 'user']) 
-            ->whereNotNull('avatar')
+            // ->whereNotNull('avatar')
             ->findOrFail($id);
 
         $contactEmail = $alumni->user ? $alumni->user->email : null;

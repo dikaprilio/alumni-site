@@ -6,6 +6,7 @@ export default function MainPageCurtain() {
     const { url, component } = usePage(); 
     const [trigger, setTrigger] = useState(0);
     const [isActive, setIsActive] = useState(false);
+    const [animClass, setAnimClass] = useState('animate-curtain-sequence'); // Default standard sequence
     
     const prevPath = useRef(null);
 
@@ -17,17 +18,23 @@ export default function MainPageCurtain() {
         // 1. Cek apakah ini Main Page ATAU Halaman Error
         const isCurrentMain = mainPages.includes(currentPath) || component === 'Error';
         
-        // Cek history sebelumnya (agar transisi berjalan mulus antar menu)
-        // Kita asumsikan null (first load) sebagai valid agar error page di awal tetap dapat curtain jika diinginkan
-        // atau bisa kita buat lebih strict.
-        const isPrevMain = prevPath.current ? (mainPages.includes(prevPath.current) || prevPath.current === currentPath) : true;
-
-        // 2. Trigger Curtain
+        // 2. Trigger Curtain Logic
+        // Kita trigger jika ini Main Page DAN path berubah
         if (isCurrentMain && prevPath.current !== currentPath) {
+            
+            // LOGIC BARU: Tentukan animasi berdasarkan apakah ini load pertama
+            if (prevPath.current === null) {
+                // First Load: Curtain sudah di bawah (covered), tinggal naik ke atas
+                setAnimClass('animate-curtain-up');
+            } else {
+                // Navigasi: Curtain turun dulu, baru naik (Sequence)
+                setAnimClass('animate-curtain-sequence');
+            }
+
             setIsActive(true);
             setTrigger(t => t + 1); 
 
-            const timer = setTimeout(() => setIsActive(false), 1200);
+            const timer = setTimeout(() => setIsActive(false), 1500); // Sesuaikan timing dengan animasi terpanjang
             
             prevPath.current = currentPath;
             return () => clearTimeout(timer);
@@ -36,16 +43,17 @@ export default function MainPageCurtain() {
         prevPath.current = currentPath;
         setIsActive(false);
         
-    }, [url, component]); // Tambahkan component ke dependency
+    }, [url, component]);
 
     if (!isActive) return null;
 
     return (
         <div 
             key={trigger} 
-            className="fixed inset-0 z-40 pointer-events-none flex flex-col"
+            className="fixed inset-0 z-50 pointer-events-none flex flex-col"
         >
-            <div className="absolute inset-0 bg-brand-600 dark:bg-brand-700 animate-curtain-sequence flex items-center justify-center">
+            {/* Gunakan state animClass secara dinamis */}
+            <div className={`absolute inset-0 bg-brand-600 dark:bg-brand-700 flex items-center justify-center ${animClass}`}>
                 <div className="text-white opacity-0 animate-pulse" style={{ animationDelay: '0.3s', animationDuration: '0.4s' }}>
                     {/* Ikon Warning untuk Error, Topi Wisuda untuk page lain */}
                     {component === 'Error' ? (

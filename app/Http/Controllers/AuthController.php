@@ -7,23 +7,21 @@ use App\Models\Alumni;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Str;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 
 class AuthController extends Controller
 {
-    // =========================================
-    // LOGIN ALUMNI
-    // =========================================
+    // --- USER/ALUMNI LOGIN ---
+
     public function showLogin()
     {
-        return Inertia::render('Auth/Login');
+        return Inertia::render('Auth/Login', [
+            'canResetPassword' => \Illuminate\Support\Facades\Route::has('password.request'),
+            'status' => session('status'),
+        ]);
     }
 
     public function login(Request $request)
@@ -33,57 +31,79 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password, 'role' => 'alumni'], $request->boolean('remember'))) {
+        if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
-            // Redirect to intended or the smart alumni root
+
+            // Cek Role
+            if (Auth::user()->role === 'admin') {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Akun ini adalah akun Admin. Silakan login di halaman Admin.',
+                ]);
+            }
+
             return redirect()->intended(route('alumni.root'));
         }
 
         return back()->withErrors([
-            'email' => 'Email/Password salah atau akun bukan Alumni.',
-        ]);
+            'email' => 'The provided credentials do not match our records.',
+        ])->onlyInput('email');
     }
 
-    // =========================================
-    // PROSES VERIFIKASI EMAIL
-    // =========================================
-    public function showVerifyNotice(Request $request)
-    {
-        if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('alumni.root');
-        }
+    // --- ADMIN LOGIN ---
 
-        return Inertia::render('Auth/VerifyEmail', [
+    public function showAdminLoginForm()
+    {
+        // Updated to use Inertia React Component
+        return Inertia::render('Auth/AdminLogin', [
             'status' => session('status'),
         ]);
     }
 
-    public function verifyEmail(EmailVerificationRequest $request)
+    public function adminLogin(Request $request)
     {
-        $request->fulfill();
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
 
-        if ($request->user()->role === 'admin') {
-            return redirect()->route('admin.dashboard')->with('verified', true);
+        if (Auth::attempt($credentials, $request->filled('remember'))) {
+            $request->session()->regenerate();
+
+            // Security Check: Ensure user is actually an admin
+            if (Auth::user()->role !== 'admin') {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Akses ditolak. Akun ini bukan akun Administrator.',
+                ]);
+            }
+
+            // LOGIC UPDATE:
+            // "intended" checks if the user was trying to access a specific page before being intercepted.
+            // If yes -> redirects there.
+            // If no (e.g. direct login) -> redirects to admin dashboard.
+            return redirect()->intended(route('admin.dashboard'));
         }
 
-        // CRITICAL FIX: Redirect to 'alumni.root' so the Setup Wizard logic runs
-        return redirect()->route('alumni.root')->with('verified', true);
+        return back()->withErrors([
+            'email' => 'Kredensial Admin tidak valid.',
+        ])->onlyInput('email');
     }
 
-    public function resendVerifyEmail(Request $request)
+    // --- LOGOUT ---
+
+    public function logout(Request $request)
     {
-        if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('alumni.root');
-        }
+        Auth::logout();
 
-        $request->user()->sendEmailVerificationNotification();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-        return back()->with('status', 'verification-link-sent');
+        return redirect('/');
     }
 
-    // =========================================
-    // REGISTRASI STEP 1: CEK NIM
-    // =========================================
+    // --- REGISTER & VERIFICATION METHODS (UNCHANGED) ---
+    
     public function showRegisterStep1()
     {
         return Inertia::render('Auth/RegisterStep1');
@@ -92,116 +112,133 @@ class AuthController extends Controller
     public function checkNim(Request $request)
     {
         $request->validate([
-            'nim' => 'required|string',
+            'nim' => 'required|string|exists:alumnis,nim',
         ]);
 
+        // Cek apakah NIM sudah punya User account
         $alumni = Alumni::where('nim', $request->nim)->first();
 
-        if (!$alumni) {
-            return back()->withErrors(['nim' => 'NIM tidak ditemukan dalam database alumni kami.']);
+        if ($alumni->user_id) {
+            return back()->withErrors(['nim' => 'NIM ini sudah terdaftar dan memiliki akun.']);
         }
 
-        if ($alumni->user_id !== null) {
-            return back()->withErrors(['nim' => 'Akun untuk NIM ini sudah terdaftar. Silakan login.']);
-        }
-
-        Session::put('nim_untuk_register', $alumni->nim);
-        Session::put('nama_untuk_register', $alumni->name);
+        // Simpan NIM di session sementara untuk step 2
+        session(['register_nim' => $alumni->nim]);
+        session(['register_name' => $alumni->name]); 
 
         return redirect()->route('register.step2');
     }
 
-    // =========================================
-    // REGISTRASI STEP 2: BUAT AKUN
-    // =========================================
     public function showRegisterStep2()
     {
-        if (!Session::has('nim_untuk_register')) {
+        if (!session('register_nim')) {
             return redirect()->route('register.step1');
         }
 
         return Inertia::render('Auth/RegisterStep2', [
-            'nim' => Session::get('nim_untuk_register'),
-            'nama' => Session::get('nama_untuk_register'),
+            'nim' => session('register_nim'),
+            'name' => session('register_name')
         ]);
     }
 
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
+            'nim' => 'required|exists:alumnis,nim', // Double check
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'nim' => 'required|exists:alumnis,nim' 
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        if ($validator->fails()) {
-            return back()->withErrors($validator);
+        // 1. Ambil Data Alumni
+        $alumni = Alumni::where('nim', $request->nim)->firstOrFail();
+
+        if ($alumni->user_id) {
+            return back()->withErrors(['nim' => 'Akun sudah aktif.']);
         }
 
-        $alumni = Alumni::where('nim', $request->nim)->first();
-        if (!$alumni || $alumni->user_id !== null) {
-            return redirect()->route('register.step1')
-                ->withErrors(['nim' => 'Terjadi kesalahan data atau akun sudah terdaftar.']);
-        }
-
+        // 2. Buat User
         $user = User::create([
-            'name' => $alumni->name,
+            'name' => $alumni->name, 
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'alumni',
+            'role' => 'alumni', // Default role
         ]);
 
-        $alumni->update(['user_id' => $user->id]);
+        // 3. Link User ke Alumni
+        $alumni->user_id = $user->id;
+        $alumni->save();
 
+        // 4. Trigger Event Registered (Kirim Email Verifikasi)
         event(new Registered($user));
+
+        // 5. Login User
         Auth::login($user);
 
-        Session::forget(['nim_untuk_register', 'nama_untuk_register']);
+        // 6. Bersihkan session
+        $request->session()->forget(['register_nim', 'register_name']);
 
-        // Redirect to verification notice
+        // 7. Redirect ke verification notice
         return redirect()->route('verification.notice');
     }
 
-    // =========================================
-    // LOGOUT
-    // =========================================
-    public function logout(Request $request)
+    public function showVerifyNotice()
     {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect('/');
+        return Inertia::render('Auth/VerifyEmail', [
+            'status' => session('status'),
+        ]);
     }
 
-    // =========================================
-    // PASSWORD RESET
-    // =========================================
+    public function verifyEmail(Request $request)
+    {
+        $user = User::find($request->route('id'));
+
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('alumni.root');
+        }
+
+        if ($user->markEmailAsVerified()) {
+            event(new \Illuminate\Auth\Events\Verified($user));
+        }
+
+        return redirect()->route('alumni.root')->with('verified', true);
+    }
+
+    public function resendVerifyEmail(Request $request)
+    {
+        $request->user()->sendEmailVerificationNotification();
+
+        return back()->with('message', 'Verification link sent!');
+    }
+
+    // --- PASSWORD RESET ---
+    
     public function showForgotPassword()
     {
-        return Inertia::render('Auth/ForgotPassword');
+        return Inertia::render('Auth/ForgotPassword', [
+            'status' => session('status'),
+        ]);
     }
 
     public function sendResetLink(Request $request)
     {
         $request->validate(['email' => 'required|email']);
+        
+        // Laravel built-in generic password broker
+        $status = \Illuminate\Support\Facades\Password::sendResetLink(
+            $request->only('email')
+        );
 
-        $user = User::where('email', $request->email)->where('role', 'alumni')->first();
-
-        if (!$user) {
-            return back()->withErrors(['email' => 'Email alumni tidak ditemukan.']);
+        if ($status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT) {
+            return back()->with('status', __($status));
         }
 
-        $status = Password::sendResetLink($request->only('email'));
-
-        return $status == Password::RESET_LINK_SENT
-                    ? back()->with('status', 'Link reset password telah dikirim!')
-                    : back()->withErrors(['email' => 'Gagal mengirim link.']);
+        return back()->withErrors(['email' => __($status)]);
     }
 
-    public function showResetPassword(Request $request, $token = null)
+    public function showResetPassword(Request $request)
     {
         return Inertia::render('Auth/ResetPassword', [
-            'token' => $token,
+            'token' => $request->route('token'),
             'email' => $request->email,
         ]);
     }
@@ -214,48 +251,23 @@ class AuthController extends Controller
             'password' => 'required|confirmed|min:8',
         ]);
 
-        $status = Password::broker()->reset(
+        $status = \Illuminate\Support\Facades\Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
-                $user->password = Hash::make($password);
-                $user->setRememberToken(Str::random(60));
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
+
                 $user->save();
-                event(new PasswordReset($user));
+
+                event(new \Illuminate\Auth\Events\PasswordReset($user));
             }
         );
 
-        return $status == Password::PASSWORD_RESET
-                    ? redirect()->route('login')->with('status', 'Password berhasil direset!')
-                    : back()->withErrors(['email' => 'Token invalid atau email salah.']);
-    }
-    
-    // =========================================
-    // ADMIN LOGIN
-    // =========================================
-    public function showAdminLoginForm()
-    {
-        return view('auth.admin-login');
-    }
-
-    public function adminLogin(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            $user = Auth::user();
-
-            if ($user->role === 'admin') {
-                return redirect()->intended(route('admin.dashboard'));
-            }
-
-            Auth::logout();
-            return back()->withErrors(['email' => 'Akun ini bukan akun admin.']);
+        if ($status === \Illuminate\Support\Facades\Password::PASSWORD_RESET) {
+            return redirect()->route('login')->with('status', __($status));
         }
 
-        return back()->withErrors(['email' => 'Email atau password salah.']);
+        return back()->withErrors(['email' => [__($status)]]);
     }
 }
