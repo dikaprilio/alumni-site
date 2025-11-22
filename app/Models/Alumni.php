@@ -18,7 +18,7 @@ class Alumni extends Model
         'phone_number',
         'gender',
         'address',
-        'current_job',
+        'current_position',
         'company_name',
         'linkedin_url',
         'avatar',
@@ -47,7 +47,7 @@ class Alumni extends Model
     // Alumni punya banyak Riwayat Kerja
     public function jobHistories()
     {
-        return $this->hasMany(JobHistory::class)->orderBy('start_year', 'desc');
+        return $this->hasMany(JobHistory::class)->orderBy('start_date', 'desc');
     }
 
     // Alumni punya banyak Skill
@@ -75,7 +75,7 @@ class Alumni extends Model
         }
 
         // 3. Job Status
-        if (!empty($this->current_job)) {
+        if (!empty($this->current_position)) {
             $points++;
         }
 

@@ -19,8 +19,8 @@ class AdminController extends Controller
         
         $totalAlumni = Alumni::count();
 
-        $alreadyWorking = Alumni::whereNotNull('current_job')
-                                ->where('current_job', '!=', '')
+        $alreadyWorking = Alumni::whereNotNull('current_position')
+                                ->where('current_position', '!=', '')
                                 ->count();
         $workingPercentage = $totalAlumni > 0 ? round(($alreadyWorking / $totalAlumni) * 100, 1) : 0;
 
@@ -65,15 +65,15 @@ class AdminController extends Controller
 
         // --- 4. DATA CHART 3 (Pie Chart: Distribusi Bidang Kerja) ---
         // Mengambil top 5 pekerjaan terbanyak
-        $topJobs = Alumni::select('current_job', DB::raw('count(*) as total'))
-            ->whereNotNull('current_job')
-            ->where('current_job', '!=', '')
-            ->groupBy('current_job')
+        $topJobs = Alumni::select('current_position', DB::raw('count(*) as total'))
+            ->whereNotNull('current_position')
+            ->where('current_position', '!=', '')
+            ->groupBy('current_position')
             ->orderByDesc('total')
             ->take(5)
             ->get();
 
-        $jobDistributionLabels = $topJobs->pluck('current_job');
+        $jobDistributionLabels = $topJobs->pluck('current_position');
         $jobDistributionData = $topJobs->pluck('total');
 
 

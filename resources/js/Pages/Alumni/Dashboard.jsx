@@ -76,7 +76,7 @@ export default function Dashboard({ completeness }) {
                                         {auth.user.name}
                                     </h2>
                                     <p className="text-brand-600 dark:text-brand-400 font-mono text-sm mb-1">
-                                        {alumni?.current_job || 'Job Title Not Set'}
+                                        {alumni?.current_position || 'Job Title Not Set'}
                                     </p>
                                     <p className="text-slate-500 text-xs uppercase tracking-wider">
                                         {auth.user.email}
@@ -85,7 +85,7 @@ export default function Dashboard({ completeness }) {
 
                                 {/* Action */}
                                 <Link 
-                                    href="/alumni/setup" 
+                                    href="/alumni/edit" 
                                     className="mt-4 sm:mt-0 px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold uppercase tracking-wider hover:bg-brand-600 dark:hover:bg-brand-400 hover:text-white transition-all shadow-lg"
                                 >
                                     Edit Data
@@ -167,7 +167,7 @@ export default function Dashboard({ completeness }) {
 
                             {/* Security Button */}
                             <Link 
-                                href="/profile" // Route bawaan Breeze/Jetstream utk edit password biasanya di /profile
+                                href="/alumni/settings" // Route bawaan Breeze/Jetstream utk edit password biasanya di /profile
                                 className="group flex flex-col justify-between p-6 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 transition-all"
                             >
                                 <i className="fa-solid fa-lock text-2xl text-slate-400 group-hover:text-brand-500 mb-4 transition-colors"></i>

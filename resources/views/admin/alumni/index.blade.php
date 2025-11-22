@@ -119,8 +119,8 @@
                             </span>
                         </td>
                         <td class="px-6 py-4">
-                            @if($alumni->current_job)
-                                <div class="font-medium text-slate-700">{{ Str::limit($alumni->current_job, 30) }}</div>
+                            @if($alumni->current_position)
+                                <div class="font-medium text-slate-700">{{ Str::limit($alumni->current_position, 30) }}</div>
                                 @if($alumni->company_name)
                                     <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
                                         <i class="fa-regular fa-building"></i> {{ $alumni->company_name }}
@@ -258,7 +258,7 @@
                             <div class="grid grid-cols-1 gap-3">
                                 <div>
                                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pekerjaan Saat Ini</label>
-                                    <input type="text" name="current_job" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                                    <input type="text" name="current_position" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
                                 </div>
                                  <div>
                                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nama Perusahaan</label>
@@ -330,7 +330,7 @@
                             
                             <div>
                                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pekerjaan Saat Ini</label>
-                                <input type="text" id="edit_current_job" name="current_job" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                                <input type="text" id="edit_current_position" name="current_position" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nama Perusahaan</label>
@@ -415,7 +415,7 @@
         document.getElementById('edit_name').value = alumni.name;
         document.getElementById('edit_nim').value = alumni.nim;
         document.getElementById('edit_graduation_year').value = alumni.graduation_year;
-        document.getElementById('edit_current_job').value = alumni.current_job || '';
+        document.getElementById('edit_current_position').value = alumni.current_position || '';
         document.getElementById('edit_company_name').value = alumni.company_name || '';
         
         const statusSelect = document.getElementById('edit_status');

@@ -8,44 +8,44 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class AlumniProfileController extends Controller
 {
-    public function root()
-    {
-        $user = Auth::user();
+    // --- ROOT & SETUP ---
 
-        // --- FIX 1: Redirect Admin to Admin Dashboard ---
+    /**
+     * Smart Redirect: Checks if user needs setup or goes to dashboard.
+     */
+    public function root(Request $request)
+    {
+        $user = $request->user();
+
         if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
         }
-        // ------------------------------------------------
 
         $alumni = $user->alumni;
 
-        // Check if crucial data is missing
-        if (!$alumni || empty($alumni->phone_number) || empty($alumni->current_job)) {
+        // If alumni record doesn't exist or critical info is missing, go to setup
+        if (!$alumni || empty($alumni->phone_number) || empty($alumni->current_position)) {
             return redirect()->route('alumni.setup');
         }
 
         return redirect()->route('alumni.dashboard');
     }
 
-    public function showSetup()
+    public function showSetup(Request $request)
     {
-        $user = Auth::user();
+        $user = $request->user();
 
-        // --- FIX 1: Redirect Admin to Admin Dashboard ---
         if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
         }
-        // ------------------------------------------------
 
         $alumni = $user->alumni;
 
-        // --- FIX 2: Prevent Error on Null Alumni ---
-        // Only load skills if alumni record exists
         if ($alumni) {
             $alumni->load(['skills']);
         }
@@ -55,18 +55,14 @@ class AlumniProfileController extends Controller
             'allSkills' => Skill::select('id', 'name', 'category')->orderBy('name')->get(),
         ]);
     }
-    /**
-     * Simpan Data Setup (LOGIKA DIPERBAIKI)
-     */
+
     public function storeSetup(Request $request)
     {
-        $alumni = Auth::user()->alumni;
-        
-        // PENTING: Cast ke integer agar switch case terbaca benar
+        $alumni = $request->user()->alumni;
         $step = (int) $request->input('step');
 
         switch ($step) {
-            case 1: // Step 1: Kontak & Privasi
+            case 1: // Contact & Privacy
                 $validated = $request->validate([
                     'phone_number' => 'required|string|max:20',
                     'address'      => 'required|string|max:500',
@@ -77,27 +73,24 @@ class AlumniProfileController extends Controller
                 $alumni->update($validated);
                 break;
 
-            case 2: // Step 2: Karir
+            case 2: // Career
                 $validated = $request->validate([
-                    'current_job'  => 'required|string|max:100',
-                    // company_name boleh null (opsional)
+                    'current_position'  => 'required|string|max:100',
                     'company_name' => 'nullable|string|max:100', 
                 ]);
                 $alumni->update($validated);
                 break;
 
-            case 3: // Step 3: Skills
+            case 3: // Skills
                 $request->validate([
                     'skills'   => 'array',
                     'skills.*' => 'exists:skills,id'
                 ]);
-                
-                // Update skills jika ada
                 if ($request->has('skills')) {
                     $alumni->skills()->sync($request->skills);
                 }
-                return redirect()->route('alumni.dashboard')
-                                ->with('message', 'Profil berhasil dilengkapi!');
+                return redirect()->route('alumni.dashboard')->with('message', 'Profil berhasil dilengkapi!');
+            
             default:
                 return back()->withErrors(['step' => 'Invalid step']);
         }
@@ -105,124 +98,86 @@ class AlumniProfileController extends Controller
         return back()->with('message', 'Data step ' . $step . ' berhasil disimpan.');
     }
 
-    /**
-     * Dashboard Alumni
-     */
-    public function dashboard()
+    // --- DASHBOARD (MY ACCOUNT) ---
+
+    public function dashboard(Request $request)
     {
-        $alumni = Auth::user()->alumni->load(['skills', 'jobHistories']);
-        $completeness = $alumni->profile_completeness;
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        
+        // Load relations for dashboard view
+        $user->load(['alumni.skills', 'alumni.jobHistories']);
+        $alumni = $user->alumni;
+
+        // Calculate completeness
+        $completeness = $alumni ? $alumni->profile_completeness : 0;
 
         return Inertia::render('Alumni/Dashboard', [
-            'alumni' => $alumni,
+            'auth' => [
+                'user' => $user
+            ],
             'completeness' => $completeness,
             'badges' => $this->getBadges($completeness),
-            
-            // --- TAMBAHKAN BARIS INI ---
-            // Kirim data skills ke Dashboard juga
-            'allSkills' => \App\Models\Skill::select('id', 'name')->orderBy('name')->get(),
         ]);
     }
 
-    /**
-     * Tambah Skill (dari Dashboard)
-     */
-    public function addSkill(Request $request)
+    // --- EDIT PROFILE ---
+
+    public function edit(Request $request)
     {
-        $request->validate(['skill_id' => 'required|exists:skills,id']);
-        Auth::user()->alumni->skills()->syncWithoutDetaching([$request->skill_id]);
-        return back()->with('message', 'Skill added!');
+        // UPDATE: Tambahkan 'jobHistories' dengan sorting terbaru
+        $alumni = $request->user()->alumni()->with(['skills', 'jobHistories' => function($q) {
+            $q->orderBy('start_date', 'desc');
+        }])->first();
+        
+        $allSkills = Skill::select('id', 'name')->orderBy('name')->get();
+
+        return Inertia::render('Alumni/Edit', [
+            'alumni' => $alumni,
+            'user_name' => $request->user()->name,
+            'allSkills' => $allSkills
+        ]);
     }
 
-    /**
-     * Hapus Skill
-     */
-    public function removeSkill($skill)
+    public function update(Request $request)
     {
-        Auth::user()->alumni->skills()->detach($skill);
-        return back()->with('message', 'Skill removed.');
-    }
+        $user = $request->user();
+        $alumni = $user->alumni;
 
-    /**
-     * Tambah Riwayat Kerja
-     */
-    public function addJobHistory(Request $request)
-    {
         $validated = $request->validate([
-            'company_name' => 'required|string|max:255',
-            'position' => 'required|string|max:255',
-            'start_year' => 'required|digits:4|integer|min:1900|max:'.(date('Y')),
-            'end_year' => 'nullable|digits:4|integer|min:1900|max:'.(date('Y') + 5).'|gte:start_year',
-            'description' => 'nullable|string|max:1000',
+            'phone_number'      => 'required|string|max:20',
+            'address'           => 'required|string|max:500',
+            'bio'               => 'nullable|string|max:1000',
+            'current_position'  => 'required|string|max:100',
+            'company_name'      => 'nullable|string|max:100',
+            'linkedin_url'      => 'nullable|url|max:255',
+            'graduation_year'   => 'required|integer|min:1900|max:' . (date('Y') + 1),
+            'major'             => 'nullable|string|max:100',
+            'skills'            => 'array',
+            'skills.*'          => 'exists:skills,id',
         ]);
 
-        Auth::user()->alumni->jobHistories()->create($validated);
-        return back()->with('message', 'Work experience added!');
-    }
+        // Remove skills from validated array before updating alumni model directly
+        $alumniData = collect($validated)->except('skills')->toArray();
+        $alumni->update($alumniData);
 
-    /**
-     * Hapus Riwayat Kerja
-     */
-    public function deleteJobHistory($id)
-    {
-        $job = Auth::user()->alumni->jobHistories()->findOrFail($id);
-        $job->delete();
-        return back()->with('message', 'Work experience deleted.');
-    }
-
-
-    /**
-     * Update Bio & General Info
-     */
-/**
-     * Update Full Profile (Bio, Contact, Job Status)
-     */
-    public function updateProfile(Request $request)
-    {
-        $validated = $request->validate([
-            // Bio & Social
-            'bio' => 'nullable|string|max:1000',
-            'linkedin_url' => 'nullable|url',
-            
-            // Contact
-            'phone_number' => 'required|string|max:20',
-            'address' => 'required|string|max:500',
-            'private_email' => 'boolean',
-            'private_phone' => 'boolean',
-
-            // Current Status
-            'current_job' => 'required|string|max:100',
-            'company_name' => 'nullable|string|max:100',
-        ]);
-
-        Auth::user()->alumni->update($validated);
+        // Sync skills
+        if ($request->has('skills')) {
+            $alumni->skills()->sync($request->skills);
+        } else {
+            $alumni->skills()->detach();
+        }
 
         return back()->with('message', 'Profil berhasil diperbarui!');
     }
 
-    /**
-     * Upload Avatar
-     */
-    public function updateAvatar(Request $request)
+    public function settings(Request $request)
     {
-        $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Max 2MB
+        return Inertia::render('Alumni/Settings', [
+            'user' => $request->user(),
         ]);
-
-        $alumni = Auth::user()->alumni;
-
-        if ($request->file('avatar')) {
-            // Hapus avatar lama jika ada (opsional, perlu logic tambahan hapus file)
-            
-            // Simpan avatar baru ke folder 'avatars' di disk public
-            $path = $request->file('avatar')->store('avatars', 'public');
-            
-            // Update database
-            $alumni->update(['avatar' => $path]);
-        }
-
-        return back()->with('message', 'Foto profil berhasil diubah!');
     }
+
     public function updatePassword(Request $request)
     {
         $validated = $request->validate([
@@ -234,30 +189,85 @@ class AlumniProfileController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return back()->with('message', 'Password berhasil diperbarui!');
+        return back()->with('message', 'Password berhasil diubah.');
     }
 
-    /**
-     * Ganti Email
-     */
     public function updateEmail(Request $request)
     {
         $validated = $request->validate([
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $request->user()->id],
-            'password_confirmation' => ['required', 'current_password'], // Konfirmasi password sebelum ganti email
         ]);
 
         $request->user()->update([
             'email' => $validated['email'],
-            'email_verified_at' => null, // Reset verifikasi karena email berubah
+            'email_verified_at' => null, // Reset verification
         ]);
-        
-        // Opsional: Kirim ulang verifikasi email
-        // $request->user()->sendEmailVerificationNotification();
 
-        return back()->with('message', 'Email berhasil diperbarui! Mohon verifikasi ulang jika diperlukan.');
+        return back()->with('message', 'Email berhasil diperbarui. Silakan verifikasi ulang.');
     }
-    // --- Helpers ---
+
+    // --- INDIVIDUAL ACTIONS (Legacy/Setup Support) ---
+
+    public function addSkill(Request $request)
+    {
+        $request->validate(['skill_id' => 'required|exists:skills,id']);
+        $request->user()->alumni->skills()->syncWithoutDetaching([$request->skill_id]);
+        return back()->with('message', 'Skill added!');
+    }
+
+    public function removeSkill(Request $request, $skill)
+    {
+        $request->user()->alumni->skills()->detach($skill);
+        return back()->with('message', 'Skill removed.');
+    }
+
+    // method addJobHistory()
+    public function addJobHistory(Request $request)
+    {
+        $validated = $request->validate([
+            'company_name' => 'required|string|max:255',
+            'position'     => 'required|string|max:255',
+            
+            // REVISI VALIDASI TANGGAL
+            'start_date'   => 'required|date',
+            'end_date'     => 'nullable|date|after_or_equal:start_date', // Validasi logic
+            
+            'description'  => 'nullable|string|max:1000',
+        ]);
+
+        // Event 'created' di Model akan otomatis meng-update Alumni
+        // jika end_date-nya kosong (masih bekerja)
+        $request->user()->alumni->jobHistories()->create($validated);
+
+        return back()->with('message', 'Work experience added!');
+    }
+    public function deleteJobHistory(Request $request, $id)
+    {
+        $job = $request->user()->alumni->jobHistories()->findOrFail($id);
+        $job->delete();
+        return back()->with('message', 'Work experience deleted.');
+    }
+
+    public function updateAvatar(Request $request)
+    {
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $alumni = $request->user()->alumni;
+
+        if ($request->file('avatar')) {
+            if ($alumni->avatar) {
+                Storage::disk('public')->delete($alumni->avatar);
+            }
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $alumni->update(['avatar' => $path]);
+        }
+
+        return back()->with('message', 'Foto profil berhasil diubah!');
+    }
+
+    // --- HELPERS ---
 
     private function getBadges($score)
     {

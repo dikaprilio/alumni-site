@@ -27,7 +27,7 @@ class AlumniDashboardController extends Controller
         if ($user && $user->alumni) {
             if ($user->alumni->avatar) $completeness += 20;
             if ($user->alumni->graduation_year) $completeness += 20;
-            if ($user->alumni->current_job) $completeness += 20;
+            if ($user->alumni->current_position) $completeness += 20;
             // Gunakan count() agar lebih efisien daripada load semua data
             if ($user->alumni->skills()->count() > 0) $completeness += 20;
             if ($user->alumni->jobHistories()->count() > 0) $completeness += 20;

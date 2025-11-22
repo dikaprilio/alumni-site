@@ -77,7 +77,7 @@ class AlumniFactory extends Factory
             ]),
             
             // Field Karir
-            'current_job' => $jobTitle,
+            'current_position' => $jobTitle,
             'company_name' => $company,
             'linkedin_url' => 'https://linkedin.com/in/' . $this->faker->userName(),
             
@@ -123,7 +123,7 @@ class AlumniFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'user_id' => null,
-            'current_job' => null,
+            'current_position' => null,
             'company_name' => null,
             'graduation_year' => $this->faker->numberBetween(date('Y') - 1, date('Y')), 
             'name' => $attributes['name'] ?? $this->faker->name(), // Ensure name exists

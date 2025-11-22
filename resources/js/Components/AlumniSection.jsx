@@ -17,7 +17,7 @@ export default function AlumniSection({ alumniList = [] }) {
         if (activeFilter === 'All') return alumniList;
 
         return alumniList.filter(alumni => {
-            const job = (alumni.current_job || '').toLowerCase();
+            const job = (alumni.current_position || '').toLowerCase();
             if (activeFilter === 'Engineering') return job.includes('developer') || job.includes('engineer') || job.includes('programmer') || job.includes('tech');
             if (activeFilter === 'Creative') return job.includes('design') || job.includes('ui') || job.includes('ux') || job.includes('art') || job.includes('writer');
             if (activeFilter === 'Data') return job.includes('data') || job.includes('analyst') || job.includes('scientist') || job.includes('ai');

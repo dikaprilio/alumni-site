@@ -44,7 +44,7 @@ export default function AlumniIDCard({ alumni, index = 0 }) {
                     {alumni.name}
                 </h3>
                 <p className="text-xs font-mono text-slate-500 uppercase mb-4">
-                    {alumni.current_job || 'Software Engineer'}
+                    {alumni.current_position || 'Software Engineer'}
                 </p>
 
                 {/* SKILLS: SYSTEM TAGS */}

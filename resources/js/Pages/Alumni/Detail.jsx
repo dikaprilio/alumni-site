@@ -6,10 +6,10 @@ function Detail({ alumni }) {
     return (
         <>
             <Head title={`${alumni.name} - Alumni Profile`} />
-            
+
             {/* CONTAINER UTAMA: Padding Top untuk kompensasi Fixed Navbar */}
             <div className="pt-32 pb-20">
-                
+
                 {/* --- BREADCRUMB & NAVIGATION --- */}
                 <div className="max-w-[1440px] mx-auto px-8 md:px-20 lg:px-32 mb-8">
                     <Link href="/directory" className="group inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-slate-500 hover:text-brand-600 transition-colors">
@@ -34,16 +34,16 @@ function Detail({ alumni }) {
                                 {alumni.name}
                             </h1>
                             <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 font-medium">
-                                {alumni.current_job} <span className="text-slate-300 dark:text-slate-700 mx-2">/</span> {alumni.company_name}
+                                {alumni.current_position} <span className="text-slate-300 dark:text-slate-700 mx-2">/</span> {alumni.company_name}
                             </p>
                         </div>
 
                         {/* Action Buttons */}
                         <div className="flex gap-3">
                             {alumni.linkedin_url && (
-                                <a 
-                                    href={alumni.linkedin_url} 
-                                    target="_blank" 
+                                <a
+                                    href={alumni.linkedin_url}
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                     className="h-12 px-6 flex items-center gap-2 bg-[#0077b5] hover:bg-[#006396] text-white text-sm font-bold uppercase tracking-wider transition-colors shadow-lg shadow-blue-900/20"
                                 >
@@ -51,10 +51,10 @@ function Detail({ alumni }) {
                                     Connect
                                 </a>
                             )}
-                            
+
                             {/* Email Button (Hanya muncul jika data ada/tidak diprivate) */}
                             {alumni.email && (
-                                <a 
+                                <a
                                     href={`mailto:${alumni.email}`}
                                     className="h-12 w-12 flex items-center justify-center border border-slate-300 dark:border-slate-700 hover:border-brand-600 hover:text-brand-600 text-slate-500 transition-colors"
                                     title="Send Email"
@@ -65,7 +65,7 @@ function Detail({ alumni }) {
 
                             {/* WhatsApp Button */}
                             {alumni.phone_number && (
-                                <a 
+                                <a
                                     href={`https://wa.me/${alumni.phone_number.replace(/[^0-9]/g, '')}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -82,10 +82,10 @@ function Detail({ alumni }) {
                 {/* --- GRID LAYOUT (2 COLUMNS) --- */}
                 <div className="max-w-[1440px] mx-auto px-8 md:px-20 lg:px-32">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 border-l border-slate-200 dark:border-slate-800 pl-0 lg:pl-12">
-                        
+
                         {/* LEFT SIDEBAR (Photo & Key Stats) - SPANS 4 */}
                         <div className="lg:col-span-4 space-y-8">
-                            
+
                             {/* Photo Frame */}
                             <div className="relative aspect-[4/5] w-full bg-slate-200 dark:bg-slate-800 grayscale group hover:grayscale-0 transition-all duration-500 overflow-hidden border border-slate-300 dark:border-slate-700 p-2">
                                 <div className="absolute inset-0 border-[0.5px] border-white/20 z-10 pointer-events-none m-4"></div>
@@ -142,7 +142,7 @@ function Detail({ alumni }) {
 
                         {/* RIGHT CONTENT (Experience & Bio) - SPANS 8 */}
                         <div className="lg:col-span-8 space-y-12">
-                            
+
                             {/* BIO SECTION */}
                             <section>
                                 <div className="flex items-center gap-2 mb-6">
@@ -170,20 +170,20 @@ function Detail({ alumni }) {
                                         alumni.job_histories.map((job) => (
                                             <div key={job.id} className="relative pl-8 group">
                                                 <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-white dark:bg-slate-950 border-4 border-slate-300 dark:border-slate-700 group-hover:border-brand-500 transition-colors"></div>
-                                                
+
                                                 <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-2">
                                                     <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">
-                                                        {job.job_title}
+                                                        {job.position}
                                                     </h3>
                                                     <span className="font-mono text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-900 px-2 py-1">
-                                                        {job.start_year} - {job.end_year ? job.end_year : 'PRESENT'}
+                                                        {new Date(job.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - {job.end_date ? new Date(job.end_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'PRESENT'}
                                                     </span>
                                                 </div>
-                                                
+
                                                 <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
                                                     @ {job.company_name}
                                                 </div>
-                                                
+
                                                 {job.description && (
                                                     <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm max-w-2xl">
                                                         {job.description}

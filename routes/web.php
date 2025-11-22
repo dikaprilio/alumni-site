@@ -36,13 +36,13 @@ Route::get('/', function () {
         ->whereNotNull('avatar')
         ->inRandomOrder()
         ->limit(8)
-        ->get(['id', 'name', 'current_job', 'company_name', 'avatar', 'graduation_year']);
+        ->get(['id', 'name', 'current_position', 'company_name', 'avatar', 'graduation_year']);
 
     // 2. Statistik Pekerjaan (Top 5)
-    $jobStats = Alumni::select('current_job', DB::raw('count(*) as total'))
-        ->whereNotNull('current_job')
-        ->where('current_job', '!=', '')
-        ->groupBy('current_job')
+    $jobStats = Alumni::select('current_position', DB::raw('count(*) as total'))
+        ->whereNotNull('current_position')
+        ->where('current_position', '!=', '')
+        ->groupBy('current_position')
         ->orderByDesc('total')
         ->limit(5)
         ->get();
@@ -136,16 +136,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Main Dashboard
     Route::get('/alumni/dashboard', [AlumniProfileController::class, 'dashboard'])->name('alumni.dashboard');
     
-    // Skills & Jobs Actions
-    Route::post('/alumni/skills', [AlumniProfileController::class, 'addSkill'])->name('alumni.skills.add');
-    Route::delete('/alumni/skills/{skill}', [AlumniProfileController::class, 'removeSkill'])->name('alumni.skills.remove');
+    // EDIT PROFIL
+    Route::get('/alumni/edit', [AlumniProfileController::class, 'edit'])->name('alumni.edit');
+    Route::post('/alumni/edit', [AlumniProfileController::class, 'update'])->name('alumni.update');
 
-    Route::post('/alumni/jobs', [AlumniProfileController::class, 'addJobHistory'])->name('alumni.jobs.add');
-    Route::delete('/alumni/jobs/{id}', [AlumniProfileController::class, 'deleteJobHistory'])->name('alumni.jobs.delete');
-    Route::post('/alumni/update-profile', [AlumniProfileController::class, 'updateProfile'])->name('alumni.update.profile');
-    Route::post('/alumni/update-avatar', [AlumniProfileController::class, 'updateAvatar'])->name('alumni.update.avatar');
-    Route::post('/alumni/settings/password', [AlumniProfileController::class, 'updatePassword'])->name('alumni.settings.password');
-    Route::post('/alumni/settings/email', [AlumniProfileController::class, 'updateEmail'])->name('alumni.settings.email');
+    // SECURITY SETTINGS
+    Route::get('/alumni/settings', [AlumniProfileController::class, 'settings'])->name('alumni.settings');
+    Route::post('/alumni/settings/password', [AlumniProfileController::class, 'updatePassword'])->name('alumni.update.password');
+    Route::post('/alumni/settings/email', [AlumniProfileController::class, 'updateEmail'])->name('alumni.update.email');
+    Route::post('/alumni/jobs', [App\Http\Controllers\AlumniProfileController::class, 'addJobHistory'])->name('alumni.jobs.add');
+    Route::delete('/alumni/jobs/{id}', [App\Http\Controllers\AlumniProfileController::class, 'deleteJobHistory'])->name('alumni.jobs.delete');
 });
 // 6. Logout
 Route::middleware(['auth'])->group(function () {

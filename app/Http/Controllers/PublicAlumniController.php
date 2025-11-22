@@ -23,7 +23,7 @@ class PublicAlumniController extends Controller
                 // Teknik 'whereRaw' dengan 'LOWER()' memastikan pencarian tidak peduli kapitalisasi
                 // Ini bekerja aman di MySQL, PostgreSQL, dan SQLite
                 $q->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
-                  ->orWhereRaw('LOWER(current_job) LIKE ?', ["%{$term}%"])
+                  ->orWhereRaw('LOWER(current_position) LIKE ?', ["%{$term}%"])
                   ->orWhereRaw('LOWER(company_name) LIKE ?', ["%{$term}%"])
                   // Cari juga di dalam relasi Skills
                   ->orWhereHas('skills', function($sq) use ($term) {
@@ -52,7 +52,7 @@ class PublicAlumniController extends Controller
                 $query->where(function($q) use ($keywords) {
                     foreach ($keywords as $word) {
                         // Kita juga pakai LOWER disini untuk konsistensi
-                        $q->orWhereRaw('LOWER(current_job) LIKE ?', ["%{$word}%"]);
+                        $q->orWhereRaw('LOWER(current_position) LIKE ?', ["%{$word}%"]);
                     }
                 });
             }

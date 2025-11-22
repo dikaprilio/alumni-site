@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 
-// PERBAIKAN 1: Default value allSkills=[]
 export default function SetupWizard({ alumni, allSkills = [] }) {
     const [step, setStep] = useState(1);
-    
-    // PERBAIKAN 2: Deklarasi state strength yang sebelumnya hilang
     const [strength, setStrength] = useState(20);
     
     const { data, setData, post, processing, errors, clearErrors } = useForm({
@@ -15,40 +12,38 @@ export default function SetupWizard({ alumni, allSkills = [] }) {
         linkedin_url: alumni?.linkedin_url || '',
         private_email: alumni?.private_email || false,
         private_phone: alumni?.private_phone || false,
-        current_job: alumni?.current_job || '',
+        current_position: alumni?.current_position || '', // Konsisten dengan DB baru
         company_name: alumni?.company_name || '',
-        // PERBAIKAN 3: Safety check optional chaining (?.)
-        skills: alumni?.skills?.map(s => s.id) || [],
+        skills: alumni?.skills?.map(s => s.id) || [], // Ambil ID saja
     });
 
-    // Hitung kekuatan profil (Gamifikasi)
+    // Hitung Profile Strength
     useEffect(() => {
         let score = 20;
         if (data.phone_number) score += 10;
         if (data.address) score += 10;
         if (data.linkedin_url) score += 10;
-        if (data.current_job) score += 20;
+        if (data.current_position) score += 20;
         if (data.company_name) score += 10;
         if (data.skills.length > 0) score += 20;
         setStrength(Math.min(score, 100));
     }, [data]);
 
-    // Update form data 'step' setiap kali state 'step' berubah
+    // Sync Step ke Form Data
     useEffect(() => {
         setData('step', step);
     }, [step]);
 
     const handleNext = (e) => {
         e.preventDefault();
-        clearErrors(); // Pastikan clearErrors ada di useForm destructur (opsional, jika error muncul hapus saja baris ini)
+        clearErrors(); 
 
-        // Logic untuk step terakhir (Finish)
+        // STEP 3: FINISH
         if (step === 3) {
             post(route('alumni.setup.store'), {
                 preserveScroll: true,
                 onSuccess: () => {
-                    // JANGAN setStep(step + 1) disini!
-                    // Paksa pindah halaman manual jika backend gagal redirect
+                    // Redirect paksa jika Inertia tidak otomatis
                     window.location.href = route('alumni.dashboard');
                 },
                 onError: (err) => {
@@ -59,17 +54,17 @@ export default function SetupWizard({ alumni, allSkills = [] }) {
             return;
         }
 
-        // Logic untuk step 1 & 2 (Next)
+        // STEP 1 & 2: NEXT
         post(route('alumni.setup.store'), {
             preserveScroll: true,
             onSuccess: () => {
-                const nextStep = step + 1;
-                setStep(nextStep);
+                setStep(step + 1);
             },
             onError: (errors) => {
                 console.log("Validation Errors:", errors);
+                // Alert simple untuk user
                 const errorMessages = Object.values(errors).join('\n');
-                alert(`Gagal melanjutkan. Mohon periksa inputan Anda:\n${errorMessages}`);
+                alert(`Mohon periksa inputan Anda:\n${errorMessages}`);
             }
         });
     };
@@ -93,7 +88,7 @@ export default function SetupWizard({ alumni, allSkills = [] }) {
         <div className="min-h-screen bg-[#F8F9FD] dark:bg-slate-900 flex flex-col md:flex-row transition-colors duration-500 font-sans">
             <Head title="Lengkapi Profil" />
 
-            {/* --- SIDEBAR --- */}
+            {/* --- SIDEBAR (Static Info) --- */}
             <div className="md:w-1/3 lg:w-1/4 bg-white dark:bg-slate-800 p-8 md:p-12 flex flex-col justify-between border-r border-slate-100 dark:border-slate-700 relative overflow-hidden">
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-8 text-brand-600 dark:text-brand-400">
@@ -155,6 +150,7 @@ export default function SetupWizard({ alumni, allSkills = [] }) {
             <div className="flex-1 flex items-center justify-center p-6 md:p-12 overflow-y-auto">
                 <form onSubmit={handleNext} className="w-full max-w-lg space-y-8 animate-fade-in-up">
                     
+                    {/* Error Alert */}
                     {Object.keys(errors).length > 0 && (
                         <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl text-sm mb-4">
                             <p className="font-bold flex items-center gap-2"><i className="fa-solid fa-triangle-exclamation"></i> Periksa kembali input Anda:</p>
@@ -220,10 +216,10 @@ export default function SetupWizard({ alumni, allSkills = [] }) {
                         <div className="space-y-6">
                              <InputGroup 
                                 label="Pekerjaan / Posisi Saat Ini" 
-                                name="current_job"
-                                value={data.current_job} 
-                                onChange={e => setData('current_job', e.target.value)}
-                                error={errors.current_job}
+                                name="current_position" // Changed from current_position to match DB
+                                value={data.current_position} 
+                                onChange={e => setData('current_position', e.target.value)}
+                                error={errors.current_position}
                                 icon="fa-briefcase"
                                 placeholder="Misal: Frontend Developer"
                                 required
@@ -236,7 +232,6 @@ export default function SetupWizard({ alumni, allSkills = [] }) {
                                 error={errors.company_name}
                                 icon="fa-building"
                                 placeholder="Misal: Tokopedia, Pertamina, atau Freelance"
-                                // required dihapus agar tidak memblokir jika kosong
                             />
                             
                             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-sm flex gap-3 items-start">
@@ -258,7 +253,6 @@ export default function SetupWizard({ alumni, allSkills = [] }) {
                             
                             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-1 max-h-80 overflow-y-auto custom-scrollbar">
                                 <div className="p-4 flex flex-wrap gap-2">
-                                    {/* PERBAIKAN 4: Safety check allSkills */}
                                     {allSkills && allSkills.length > 0 ? (
                                         allSkills.map((skill) => (
                                             <button
@@ -333,6 +327,8 @@ export default function SetupWizard({ alumni, allSkills = [] }) {
         </div>
     );
 }
+
+// --- SUB COMPONENTS ---
 
 function InputGroup({ label, name, value, onChange, error, icon, type = 'text', placeholder, required }) {
     return (

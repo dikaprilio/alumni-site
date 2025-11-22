@@ -47,7 +47,7 @@ class DatabaseSeeder extends Seeder
             'phone_number' => '081234567890',
             'gender' => 'L',
             'address' => 'Jl. Kumbang No. 1, Bogor',
-            'current_job' => 'Backend Developer (Laravel)',
+            'current_position' => 'Backend Developer (Laravel)',
             'company_name' => 'Tokopedia',
             'linkedin_url' => 'https://linkedin.com/in/budisantoso',
             'created_at' => now()->subMonths(6)
@@ -63,7 +63,7 @@ class DatabaseSeeder extends Seeder
             'phone_number' => '08987654321',
             'gender' => 'P',
             'address' => 'Jl. Pajajaran No. 10, Bogor',
-            'current_job' => null,
+            'current_position' => null,
             'company_name' => null,
             'linkedin_url' => null,
             'created_at' => now()->subMonths(1)
@@ -105,5 +105,11 @@ class DatabaseSeeder extends Seeder
             'content' => 'Detail acara reuni akbar...',
             'created_at' => now()->subDays(2)
         ]);
+
+        // Generate random News
+        News::factory()->count(20)->create();
+
+        // 7. DUMMY EVENTS
+        \App\Models\Event::factory()->count(10)->create();
     }
 }

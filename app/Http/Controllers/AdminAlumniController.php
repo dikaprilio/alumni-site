@@ -38,7 +38,7 @@ class AdminAlumniController extends Controller
                 // Search Alumni fields (Name, NIM, Job, Company)
                 $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
                   ->orWhereRaw('LOWER(nim) LIKE ?', ["%{$search}%"])
-                  ->orWhereRaw('LOWER(current_job) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(current_position) LIKE ?', ["%{$search}%"])
                   ->orWhereRaw('LOWER(company_name) LIKE ?', ["%{$search}%"]);
 
                 // Search User email
@@ -79,8 +79,8 @@ class AdminAlumniController extends Controller
 
             $query->where(function($q) use ($keywords) {
                 foreach ($keywords as $keyword) {
-                    // Use OR to match any keyword in current_job
-                    $q->orWhereRaw('LOWER(current_job) LIKE ?', ["%{$keyword}%"]);
+                    // Use OR to match any keyword in current_position
+                    $q->orWhereRaw('LOWER(current_position) LIKE ?', ["%{$keyword}%"]);
                 }
             });
         }
@@ -154,7 +154,7 @@ class AdminAlumniController extends Controller
             'name' => 'required|string|max:255',
             'status' => 'required|in:Terverifikasi,Menunggu Verifikasi', 
             'graduation_year' => 'required|integer|digits:4',
-            'current_job' => 'nullable|string|max:255',
+            'current_position' => 'nullable|string|max:255',
             'company_name' => 'nullable|string|max:255',
         ]);
         
@@ -162,7 +162,7 @@ class AdminAlumniController extends Controller
         $alumni->update([
             'name' => $data['name'],
             'graduation_year' => $data['graduation_year'],
-            'current_job' => $data['current_job'],
+            'current_position' => $data['current_position'],
             'company_name' => $data['company_name'],
         ]);
 
@@ -223,7 +223,7 @@ class AdminAlumniController extends Controller
                     $alumni->graduation_year,
                     $alumni->user->email ?? '-',
                     $alumni->phone_number,
-                    $alumni->current_job ?? 'Belum bekerja',
+                    $alumni->current_position ?? 'Belum bekerja',
                     $alumni->company_name ?? '-',
                     $alumni->user && $alumni->user->hasVerifiedEmail() ? 'Terverifikasi' : 'Pending'
                 ]);

@@ -18,8 +18,8 @@ return new class extends Migration
             
             $table->string('company_name');
             $table->string('position'); // Jabatan
-            $table->year('start_year');
-            $table->year('end_year')->nullable(); // Kosong = Masih bekerja di sana
+            $table->date('start_date');
+            $table->date('end_date')->nullable(); // Kosong = Masih bekerja di sana
             $table->text('description')->nullable(); // Deskripsi tugas/jobdesk
             
             $table->timestamps();

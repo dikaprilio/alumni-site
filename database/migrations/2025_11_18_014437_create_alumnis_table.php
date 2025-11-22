@@ -34,7 +34,7 @@ return new class extends Migration
             $table->text('address')->nullable();
             
             // Data Karir Singkat
-            $table->string('current_job')->nullable();
+            $table->string('current_position')->nullable();
             $table->string('company_name')->nullable(); 
             $table->string('linkedin_url')->nullable();
             
