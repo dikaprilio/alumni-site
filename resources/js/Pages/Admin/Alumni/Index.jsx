@@ -4,7 +4,7 @@ import AdminLayout from '../../../Layouts/AdminLayout';
 import Pagination from '../../../Components/Pagination';
 import { debounce } from 'lodash'; 
 
-// Komponen Status Badge (Updated)
+// Komponen Status Badge
 const StatusBadge = ({ hasAccount, completeness }) => {
     if (!hasAccount) {
         return (
@@ -35,17 +35,21 @@ const StatusBadge = ({ hasAccount, completeness }) => {
     );
 };
 
-export default function AlumniIndex({ alumni, filters, graduationYears }) {
+// FIX: Tambahkan default value kosong untuk 'alumni' agar tidak undefined
+export default function AlumniIndex({ alumni = { data: [], links: [] }, filters = {}, graduationYears = [] }) {
+    
+    // Debugging: Cek di Console browser (F12) apa yang dikirim backend
+    console.log('Alumni Data:', alumni);
+    
     // State untuk semua filter
     const [params, setParams] = useState({
-        search: filters.search || '',
-        graduation_year: filters.graduation_year || '',
-        employment_status: filters.employment_status || '',
-        has_account: filters.has_account || '',
-        location: filters.location || '',
+        search: filters?.search || '',
+        graduation_year: filters?.graduation_year || '',
+        employment_status: filters?.employment_status || '',
+        has_account: filters?.has_account || '',
+        location: filters?.location || '',
     });
 
-    // Debounce Function untuk mengirim request
     const debouncedFetch = useCallback(
         debounce((queryParams) => {
             router.get(route('admin.alumni.index'), queryParams, {
@@ -57,7 +61,6 @@ export default function AlumniIndex({ alumni, filters, graduationYears }) {
         []
     );
 
-    // Handle perubahan input apa saja
     const handleChange = (field, value) => {
         const newParams = { ...params, [field]: value };
         setParams(newParams);
@@ -68,6 +71,22 @@ export default function AlumniIndex({ alumni, filters, graduationYears }) {
         if (confirm('Apakah Anda yakin ingin menghapus data alumni ini? Akun user terkait juga akan dihapus.')) {
             router.delete(route('admin.alumni.destroy', id));
         }
+    };
+
+    // Safe Access untuk data alumni
+    const alumniList = alumni?.data || [];
+    const alumniLinks = alumni?.links || [];
+
+    // FUNCTION BARU: Handle Export Click
+    const handleExport = (type) => {
+        // Ambil query params saat ini (search, filter, dll) dari URL browser
+        const currentParams = new URLSearchParams(window.location.search);
+        
+        // Tambahkan tipe export (xlsx / pdf)
+        currentParams.append('type', type);
+        
+        // Redirect ke route export (ini akan trigger download file)
+        window.location.href = `${route('admin.alumni.export')}?${currentParams.toString()}`;
     };
 
     return (
@@ -85,12 +104,38 @@ export default function AlumniIndex({ alumni, filters, graduationYears }) {
                     </p>
                 </div>
                 
-                <Link 
-                    href={route('admin.alumni.create')} 
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
-                >
-                    <i className="fa-solid fa-plus"></i> Tambah Alumni
-                </Link>
+                <div className="flex items-center gap-3">
+                    {/* --- TOMBOL EXPORT BARU --- */}
+                    <div className="relative group">
+                        <button className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm transition-all flex items-center gap-2">
+                            <i className="fa-solid fa-file-export"></i> Export
+                            <i className="fa-solid fa-chevron-down text-[10px]"></i>
+                        </button>
+                        
+                        {/* Dropdown Menu */}
+                        <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform origin-top-right z-50 overflow-hidden">
+                            <button 
+                                onClick={() => handleExport('xlsx')}
+                                className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-3 border-b border-slate-50 dark:border-slate-700"
+                            >
+                                <i className="fa-solid fa-file-excel text-green-600 text-base"></i> Excel (.xlsx)
+                            </button>
+                            <button 
+                                onClick={() => handleExport('pdf')}
+                                className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-3"
+                            >
+                                <i className="fa-solid fa-file-pdf text-red-600 text-base"></i> PDF Document
+                            </button>
+                        </div>
+                    </div>
+
+                    <Link 
+                        href={route('admin.alumni.create')} 
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
+                    >
+                        <i className="fa-solid fa-plus"></i> Tambah Alumni
+                    </Link>
+                </div>
             </div>
 
             {/* --- SMART FILTER TOOLBAR --- */}
@@ -110,8 +155,6 @@ export default function AlumniIndex({ alumni, filters, graduationYears }) {
 
                 {/* 2. Specific Filters Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    
-                    {/* Filter Angkatan */}
                     <select 
                         value={params.graduation_year}
                         onChange={(e) => handleChange('graduation_year', e.target.value)}
@@ -123,7 +166,6 @@ export default function AlumniIndex({ alumni, filters, graduationYears }) {
                         ))}
                     </select>
 
-                    {/* Filter Status Kerja */}
                     <select 
                         value={params.employment_status}
                         onChange={(e) => handleChange('employment_status', e.target.value)}
@@ -134,7 +176,6 @@ export default function AlumniIndex({ alumni, filters, graduationYears }) {
                         <option value="unemployed">Belum Bekerja</option>
                     </select>
 
-                    {/* Filter Lokasi */}
                     <div className="relative">
                         <i className="fa-solid fa-location-dot absolute left-3 top-2.5 text-slate-400 text-xs"></i>
                         <input 
@@ -146,7 +187,6 @@ export default function AlumniIndex({ alumni, filters, graduationYears }) {
                         />
                     </div>
 
-                    {/* Filter Akun */}
                     <select 
                         value={params.has_account}
                         onChange={(e) => handleChange('has_account', e.target.value)}
@@ -173,8 +213,8 @@ export default function AlumniIndex({ alumni, filters, graduationYears }) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {alumni.data.length > 0 ? (
-                                alumni.data.map((alum) => (
+                            {alumniList.length > 0 ? (
+                                alumniList.map((alum) => (
                                     <tr key={alum.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                                         {/* 1. Alumni Info */}
                                         <td className="px-6 py-4">
@@ -184,7 +224,7 @@ export default function AlumniIndex({ alumni, filters, graduationYears }) {
                                                         <img src={`/storage/${alum.avatar}`} alt={alum.name} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400">
-                                                            {alum.name.charAt(0)}
+                                                            {alum.name ? alum.name.charAt(0) : '?'}
                                                         </div>
                                                     )}
                                                 </div>
@@ -224,7 +264,7 @@ export default function AlumniIndex({ alumni, filters, graduationYears }) {
                                         <td className="px-6 py-4">
                                             <StatusBadge 
                                                 hasAccount={!!alum.user_id} 
-                                                completeness={alum.profile_completeness} 
+                                                completeness={alum.profile_completeness || 0} 
                                             />
                                             {alum.user && (
                                                 <p className="text-[9px] text-slate-400 mt-1 truncate max-w-[120px]" title={alum.user.email}>
@@ -238,14 +278,14 @@ export default function AlumniIndex({ alumni, filters, graduationYears }) {
                                             <div className="w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto overflow-hidden">
                                                 <div 
                                                     className={`h-full rounded-full transition-all duration-500 ${
-                                                        alum.profile_completeness >= 80 ? 'bg-emerald-500' :
-                                                        alum.profile_completeness >= 40 ? 'bg-amber-500' : 'bg-rose-500'
+                                                        (alum.profile_completeness || 0) >= 80 ? 'bg-emerald-500' :
+                                                        (alum.profile_completeness || 0) >= 40 ? 'bg-amber-500' : 'bg-rose-500'
                                                     }`} 
-                                                    style={{ width: `${alum.profile_completeness}%` }}
+                                                    style={{ width: `${alum.profile_completeness || 0}%` }}
                                                 ></div>
                                             </div>
                                             <p className="text-[9px] text-center text-slate-400 mt-1 font-mono font-bold">
-                                                {alum.profile_completeness}%
+                                                {alum.profile_completeness || 0}%
                                             </p>
                                         </td>
 
@@ -287,10 +327,12 @@ export default function AlumniIndex({ alumni, filters, graduationYears }) {
                     </table>
                 </div>
                 
-                {/* Pagination */}
-                <div className="border-t border-slate-200 dark:border-slate-800 p-4">
-                    <Pagination links={alumni.links} />
-                </div>
+                {/* Pagination Safe Check */}
+                {alumniLinks.length > 0 && (
+                    <div className="border-t border-slate-200 dark:border-slate-800 p-4">
+                        <Pagination links={alumniLinks} />
+                    </div>
+                )}
             </div>
         </AdminLayout>
     );

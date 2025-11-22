@@ -25,10 +25,13 @@ export default function EditAlumni({ alumni }) {
         put(route('admin.alumni.update', alumni.id));
     };
 
-    // Helper: Cek status akun (True jika relasi user ada dan tidak null)
-    // Pastikan alumni.user benar-benar dicek keberadaannya
-    const hasAccount = alumni.user !== null && alumni.user !== undefined;
+    // --- LOGIC DETEKSI STATUS AKUN (FIXED) ---
+    // 1. Cek apakah alumni punya user di database (dari props)
+    const hasExistingAccount = alumni.user !== null && alumni.user !== undefined;
     
+    // 2. Cek apakah admin sedang menginput email baru untuk alumni yang belum punya akun
+    const isCreatingAccount = !hasExistingAccount && data.email && data.email.length > 0;
+
     // Helper: Inisial nama untuk avatar placeholder
     const avatarInitial = alumni.name ? alumni.name.charAt(0).toUpperCase() : '?';
 
@@ -56,20 +59,42 @@ export default function EditAlumni({ alumni }) {
                 {/* --- KOLOM KIRI: STATUS & FOTO --- */}
                 <div className="xl:col-span-1 space-y-6">
                     
-                    {/* KARTU STATUS AKUN (DETEKSI SISTEM) */}
-                    <div className={`border rounded-2xl p-6 shadow-sm relative overflow-hidden ${hasAccount ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800'}`}>
+                    {/* KARTU STATUS AKUN (IMPROVED UI LOGIC) */}
+                    <div className={`border rounded-2xl p-6 shadow-sm relative overflow-hidden transition-colors duration-300 
+                        ${hasExistingAccount 
+                            ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' 
+                            : (isCreatingAccount 
+                                ? 'bg-blue-50 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800' 
+                                : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800')
+                        }`}>
+                        
                         <div className="flex items-start gap-4 relative z-10">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0 ${hasAccount ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
-                                <i className={`fa-solid ${hasAccount ? 'fa-user-check' : 'fa-user-clock'}`}></i>
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0 
+                                ${hasExistingAccount 
+                                    ? 'bg-emerald-100 text-emerald-600' 
+                                    : (isCreatingAccount ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600')
+                                }`}>
+                                <i className={`fa-solid 
+                                    ${hasExistingAccount ? 'fa-user-check' 
+                                    : (isCreatingAccount ? 'fa-user-plus' : 'fa-user-clock')}
+                                `}></i>
                             </div>
                             <div>
-                                <h3 className={`font-bold text-lg ${hasAccount ? 'text-emerald-800 dark:text-emerald-300' : 'text-amber-800 dark:text-amber-300'}`}>
-                                    {hasAccount ? 'Akun Aktif' : 'Belum Punya Akun'}
+                                <h3 className={`font-bold text-lg 
+                                    ${hasExistingAccount ? 'text-emerald-800 dark:text-emerald-300' 
+                                    : (isCreatingAccount ? 'text-blue-800 dark:text-blue-300' : 'text-amber-800 dark:text-amber-300')}
+                                `}>
+                                    {hasExistingAccount ? 'Akun Aktif' : (isCreatingAccount ? 'Akan Dibuatkan Akun' : 'Belum Punya Akun')}
                                 </h3>
-                                <p className={`text-xs mt-1 leading-relaxed ${hasAccount ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
-                                    {hasAccount 
-                                        ? `Alumni ini sudah bisa login menggunakan email: ${alumni.user.email}` 
-                                        : 'Alumni ini hanya terdaftar sebagai data master dan belum bisa login ke sistem.'}
+                                <p className={`text-xs mt-1 leading-relaxed 
+                                    ${hasExistingAccount ? 'text-emerald-700 dark:text-emerald-400' 
+                                    : (isCreatingAccount ? 'text-blue-700 dark:text-blue-400' : 'text-amber-700 dark:text-amber-400')}
+                                `}>
+                                    {hasExistingAccount 
+                                        ? `Login aktif: ${alumni.user?.email}` 
+                                        : (isCreatingAccount 
+                                            ? `Akun login akan dibuatkan otomatis dengan email: ${data.email}`
+                                            : 'Alumni belum memiliki akses login aplikasi.')}
                                 </p>
                             </div>
                         </div>
@@ -122,21 +147,43 @@ export default function EditAlumni({ alumni }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
                                 <InputLabel htmlFor="name" value="Nama Lengkap *" />
-                                <InputText id="name" value={data.name} onChange={(e) => setData('name', e.target.value)} className="mt-1" required />
+                                <InputText 
+                                    id="name" 
+                                    value={data.name} 
+                                    onChange={(e) => setData('name', e.target.value)} 
+                                    className="mt-1" 
+                                    placeholder="Contoh: Budi Santoso"
+                                    required 
+                                />
                                 <p className="text-[10px] text-slate-400 mt-1">Nama lengkap sesuai ijazah tanpa gelar.</p>
                                 {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                             </div>
                             
                             <div>
                                 <InputLabel htmlFor="nim" value="NIM (Nomor Induk) *" />
-                                <InputText id="nim" value={data.nim} onChange={(e) => setData('nim', e.target.value)} className="mt-1 font-mono bg-slate-50" required />
+                                <InputText 
+                                    id="nim" 
+                                    value={data.nim} 
+                                    onChange={(e) => setData('nim', e.target.value)} 
+                                    className="mt-1 font-mono bg-slate-50" 
+                                    placeholder="Contoh: 2021001"
+                                    required 
+                                />
                                 <p className="text-[10px] text-slate-400 mt-1">NIM unik sebagai identitas utama.</p>
                                 {errors.nim && <p className="text-red-500 text-xs mt-1">{errors.nim}</p>}
                             </div>
 
                             <div>
                                 <InputLabel htmlFor="graduation_year" value="Tahun Lulus *" />
-                                <InputText id="graduation_year" type="number" value={data.graduation_year} onChange={(e) => setData('graduation_year', e.target.value)} className="mt-1" required />
+                                <InputText 
+                                    id="graduation_year" 
+                                    type="number" 
+                                    value={data.graduation_year} 
+                                    onChange={(e) => setData('graduation_year', e.target.value)} 
+                                    className="mt-1" 
+                                    placeholder="YYYY"
+                                    required 
+                                />
                             </div>
 
                             <div className="md:col-span-2">
@@ -158,7 +205,14 @@ export default function EditAlumni({ alumni }) {
                             
                             <div className="md:col-span-2">
                                 <InputLabel htmlFor="bio" value="Bio Singkat" />
-                                <TextArea id="bio" value={data.bio} onChange={(e) => setData('bio', e.target.value)} rows="3" className="mt-1" placeholder="Deskripsi singkat tentang alumni..." />
+                                <TextArea 
+                                    id="bio" 
+                                    value={data.bio} 
+                                    onChange={(e) => setData('bio', e.target.value)} 
+                                    rows="3" 
+                                    className="mt-1" 
+                                    placeholder="Contoh: Alumni angkatan 2021 yang sekarang bekerja sebagai Fullstack Developer..." 
+                                />
                                 <p className="text-[10px] text-slate-400 mt-1">Opsional. Akan tampil di halaman profil publik.</p>
                             </div>
                         </div>
@@ -179,11 +233,23 @@ export default function EditAlumni({ alumni }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <InputLabel htmlFor="current_position" value="Posisi / Jabatan" />
-                                <InputText id="current_position" value={data.current_position} onChange={(e) => setData('current_position', e.target.value)} className="mt-1" placeholder="Contoh: Frontend Dev" />
+                                <InputText 
+                                    id="current_position" 
+                                    value={data.current_position} 
+                                    onChange={(e) => setData('current_position', e.target.value)} 
+                                    className="mt-1" 
+                                    placeholder="Contoh: Frontend Developer" 
+                                />
                             </div>
                             <div>
                                 <InputLabel htmlFor="company_name" value="Nama Perusahaan" />
-                                <InputText id="company_name" value={data.company_name} onChange={(e) => setData('company_name', e.target.value)} className="mt-1" placeholder="Contoh: Gojek" />
+                                <InputText 
+                                    id="company_name" 
+                                    value={data.company_name} 
+                                    onChange={(e) => setData('company_name', e.target.value)} 
+                                    className="mt-1" 
+                                    placeholder="Contoh: PT GoTo Gojek Tokopedia" 
+                                />
                             </div>
                         </div>
                     </div>
@@ -209,18 +275,18 @@ export default function EditAlumni({ alumni }) {
                                     value={data.email} 
                                     onChange={(e) => setData('email', e.target.value)} 
                                     className="mt-1 bg-white" 
-                                    placeholder="alumni@email.com"
+                                    placeholder="masukkan_email@domain.com"
                                 />
                                 {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                                 
-                                {/* PANDUAN PENGISIAN */}
+                                {/* PANDUAN PENGISIAN DYNAMIC */}
                                 <div className="mt-3 flex gap-2 text-[11px] text-slate-500 bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
                                     <i className="fa-solid fa-circle-info text-blue-500 mt-0.5"></i>
                                     <div>
-                                        {hasAccount ? (
+                                        {hasExistingAccount ? (
                                             <span><strong>Perhatian:</strong> Mengubah email di sini akan mengganti kredensial login alumni ini. Pastikan email aktif.</span>
                                         ) : (
-                                            <span><strong>Buat Akun:</strong> Masukkan email untuk membuatkan akun login otomatis bagi alumni ini. Password default adalah <strong>'password'</strong>.</span>
+                                            <span><strong>Buat Akun:</strong> {data.email ? 'Sistem akan membuatkan akun login otomatis menggunakan email di atas.' : 'Masukkan email untuk membuatkan akun login otomatis bagi alumni ini. Password default adalah "password".'}</span>
                                         )}
                                     </div>
                                 </div>
