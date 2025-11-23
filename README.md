@@ -1,59 +1,186 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🎓 Alumni Site - Sistem Informasi & Jejaring Alumni
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Platform web modern berbasis **Monolithic Architecture** yang dirancang untuk mengelola database alumni secara terpusat, memfasilitasi jejaring karir profesional, dan menyebarkan informasi kegiatan kampus.
 
-## About Laravel
+Dibangun dengan teknologi terkini: **Laravel (Backend)** dan **React Inertia (Frontend)** menggunakan database **PostgreSQL**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🌟 Fitur Unggulan
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Berdasarkan analisis *source code*, aplikasi ini memiliki fitur mendalam sebagai berikut:
 
-## Learning Laravel
+### 🚀 Fitur Publik (Guest)
+* **Landing Page Interaktif:** Hero section dengan animasi partikel (*tsparticles*) dan statistik alumni real-time.
+* **Alumni Directory:** Pencarian alumni berdasarkan nama, angkatan, atau jurusan.
+* **Portal Berita & Event:** Informasi terkini kampus yang dapat diakses siapa saja.
+* **Alumni of The Month:** Fitur *highlight* alumni berprestasi di halaman depan (dikelola Admin).
+* **Job Board (Loker):** Informasi lowongan pekerjaan yang terbuka untuk umum.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### 🎓 Fitur Alumni (User Dashboard)
+* **Two-Step Registration:**
+  * **Step 1:** Verifikasi NIM/Data Akademik.
+  * **Step 2:** Pembuatan akun pengguna.
+* **Onboarding Wizard:** Panduan langkah demi langkah bagi pengguna baru untuk melengkapi profil.
+* **Digital Alumni ID Card:** Generate otomatis kartu tanda alumni yang siap cetak/unduh.
+* **Manajemen Karir & Profil:**
+  * Riwayat Pekerjaan (*Job History*) & Pengalaman.
+  * Keahlian (*Skills*) - Hard Skill & Soft Skill.
+  * Tautan Sosial Media (LinkedIn, GitHub, dll).
+* **Privasi Profil:** Opsi untuk menyembunyikan profil dari publik (*Private/Public Mode*).
+* **Keamanan Akun:** Update password, ganti email, dan verifikasi email wajib.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🛠 Panel Administrator (Admin)
+* **Dashboard Analitik:** Visualisasi total alumni, sebaran pekerjaan, dan metrik aktivitas.
+* **Manajemen Master Data:**
+  * **Verifikasi Alumni:** Validasi pendaftar baru (*Pending/Verified*).
+  * **CRUD Data:** Kelola penuh data alumni, user, dan master skills.
+* **Content Management System (CMS):**
+  * Posting Berita/Artikel dengan kategori.
+  * Manajemen Agenda/Event Reuni.
+  * Manajemen Lowongan Kerja (*Jobs*).
+* **Laporan & Ekspor Data:**
+  * **Export PDF:** Unduh laporan data alumni format cetak (dompdf).
+  * **Export Excel:** Unduh rekap data mentah (maatwebsite/excel).
+* **Pengaturan Sistem:** Manajemen admin tambahan dan konfigurasi situs.
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 💻 Tech Stack
 
-### Premium Partners
+* **Backend:** Laravel 11/12 (PHP 8.2+)
+* **Frontend:** React 19 + Inertia.js 2.0
+* **Styling:** Tailwind CSS v4.0
+* **Database:** PostgreSQL
+* **Routing:** Ziggy (Use Laravel routes in React)
+* **Build Tool:** Vite 7
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+## ⚙️ Panduan Instalasi Lengkap
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Ikuti langkah-langkah ini dari awal hingga akhir untuk menjalankan proyek di Localhost.
 
-## Code of Conduct
+### 1. Prasyarat Sistem
+Pastikan software berikut sudah terinstall:
+* **PHP >= 8.2** (Pastikan ekstensi `pdo_pgsql`, `pgsql`, dan `fileinfo` aktif di `php.ini`).
+* **Composer** (Dependency Manager PHP).
+* **Node.js & NPM** (Minimal v18+).
+* **PostgreSQL** (Database Server).
+* **Git**.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 2. Clone Repository
+```bash
+git clone [https://github.com/username/alumni-site.git](https://github.com/username/alumni-site.git)
+cd alumni-site
+```
 
-## Security Vulnerabilities
+### 3. Install Dependensi
+Install paket Backend (PHP) dan Frontend (JS):
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+composer install
+npm install
+```
 
-## License
+### 4. Konfigurasi Environment (PostgreSQL)
+Salin file konfigurasi contoh:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+cp .env.example .env
+```
+
+Buka file `.env` dan sesuaikan konfigurasi database PostgreSQL kamu:
+
+```dotenv
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=alumni_site_db
+DB_USERNAME=postgres
+DB_PASSWORD=password_postgres_kamu
+```
+
+### 5. 📧 Konfigurasi Email (Sangat Disarankan: Mailtrap)
+Aplikasi ini memiliki fitur **Verifikasi Email** dan **Lupa Password**. Untuk testing di localhost tanpa ribet setting SMTP Google, gunakan [**Mailtrap**](https://mailtrap.io/home).
+
+1. Daftar akun gratis di [Mailtrap.io](https://mailtrap.io/home).
+2. Buat "Inbox" baru.
+3. Pilih integrasi "Laravel 9+" (atau salin kredensial SMTP-nya).
+4. Update file `.env` kamu:
+
+```dotenv
+MAIL_MAILER=smtp
+MAIL_HOST=sandbox.smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=username_mailtrap_kamu
+MAIL_PASSWORD=password_mailtrap_kamu
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS="hello@alumni-site.test"
+MAIL_FROM_NAME="${APP_NAME}"
+```
+*Dengan ini, semua email dari aplikasi akan masuk ke inbox Mailtrap, aman dan tidak nyasar ke user asli.*
+
+### 6. Setup Database
+Buat database kosong di PostgreSQL. Bisa lewat pgAdmin atau terminal:
+
+```bash
+# Contoh via terminal (masukkan password postgres saat diminta)
+psql -U postgres -c "CREATE DATABASE alumni_site_db;"
+```
+
+### 7. Generate Key & Migrasi
+Isi app key dan jalankan migrasi tabel beserta data dummy (seeder):
+
+```bash
+php artisan key:generate
+php artisan migrate --seed
+```
+
+### 8. Link Storage (Wajib)
+Agar fitur upload foto profil dan gambar berita berfungsi:
+
+```bash
+php artisan storage:link
+```
+
+### 9. Jalankan Aplikasi
+Buka **dua terminal** terpisah agar backend dan frontend berjalan bersamaan:
+
+**Terminal 1 (Laravel Server):**
+```bash
+php artisan serve
+```
+
+**Terminal 2 (Vite Build Process):**
+```bash
+npm run dev
+```
+
+Buka browser dan akses: `http://localhost:8000`
+
+---
+
+## 🔑 Akun Default (Seeder)
+
+Gunakan akun berikut untuk login pertama kali:
+
+| Role | Email | Password | Akses |
+| :--- | :--- | :--- | :--- |
+| **Super Admin** | `admin@alumni.com` | `password` | Dashboard Admin, CMS, User Management |
+| **Alumni (User)** | `alumni@alumni.com` | `password` | Dashboard Alumni, Edit Profil, ID Card |
+
+---
+
+## 🐛 Troubleshooting
+
+* **Error `could not find driver`:**
+  Pastikan ekstensi `extension=pdo_pgsql` dan `extension=pgsql` di file `php.ini` sudah di-uncomment (hapus tanda `;` di depannya).
+* **Tampilan Berantakan / CSS Hilang:**
+  Pastikan `npm run dev` sedang berjalan di terminal.
+* **Gambar Tidak Muncul:**
+  Coba hapus folder `public/storage` lalu jalankan ulang `php artisan storage:link`.
+
+## 📝 Lisensi
+
+[MIT License](https://opensource.org/licenses/MIT)
