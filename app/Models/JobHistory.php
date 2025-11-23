@@ -13,8 +13,8 @@ class JobHistory extends Model
         'alumni_id',
         'company_name',
         'position',
-        'start_date', // Ganti start_year
-        'end_date',   // Ganti end_year
+        'start_date',
+        'end_date',
         'description',
     ];
 
@@ -23,35 +23,8 @@ class JobHistory extends Model
         'end_date' => 'date',
     ];
 
-    // --- OTOMATISASI SINKRONISASI ---
-    protected static function booted()
-    {
-        // Saat riwayat kerja baru DIBUAT
-        static::created(function ($job) {
-            $job->syncToAlumni();
-        });
-
-        // Saat riwayat kerja DIUPDATE
-        static::updated(function ($job) {
-            $job->syncToAlumni();
-        });
-        
-        // Saat riwayat kerja DIHAPUS (Opsional: Reset jika yang dihapus adalah job aktif)
-        static::deleted(function ($job) {
-             // Logic tambahan jika diperlukan
-        });
-    }
-
-    public function syncToAlumni()
-    {
-        // Logika: Jika pekerjaan ini AKTIF (end_date kosong), maka jadikan Current Position
-        if (is_null($this->end_date)) {
-            $this->alumni()->update([
-                'current_position' => $this->position, // Kolom baru
-                'company_name'     => $this->company_name,
-            ]);
-        }
-    }
+    // LOGIKA 'booted' DIHAPUS KARENA SUDAH DINORMALISASI.
+    // Tidak perlu lagi sync ke tabel alumni karena tabel alumni tidak menyimpan data pekerjaan lagi.
 
     public function alumni()
     {

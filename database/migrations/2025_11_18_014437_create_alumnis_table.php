@@ -14,18 +14,13 @@ return new class extends Migration
         Schema::create('alumnis', function (Blueprint $table) {
             $table->id();
             
-            // --- PERUBAHAN PENTING ---
-            // user_id harus bisa NULL, karena data alumni dibuat dulu
-            // baru user mendaftar belakangan.
-            // onDelete('set null') berarti jika User dihapus, data Alumni tetap ada
-            // tapi user_id-nya jadi NULL.
+            // Relasi ke User (bisa null jika user dihapus)
             $table->foreignId('user_id')
-                  ->nullable() // <--- TAMBAHKAN INI
+                  ->nullable()
                   ->constrained('users')
-                  ->onDelete('set null'); // <--- GANTI DARI cascade
+                  ->onDelete('set null');
 
-            // Kolom ini untuk nama alumni, terpisah dari nama user
-            $table->string('name'); // <-- TAMBAHKAN KOLOM NAMA ALUMNI
+            $table->string('name'); 
             $table->string('nim')->unique();
             $table->year('graduation_year');
             $table->string('major');
@@ -33,9 +28,9 @@ return new class extends Migration
             $table->enum('gender', ['L', 'P'])->nullable();
             $table->text('address')->nullable();
             
-            // Data Karir Singkat
-            $table->string('current_position')->nullable();
-            $table->string('company_name')->nullable(); 
+            // NORMALISASI: Kolom 'current_position' dan 'company_name' DIHAPUS.
+            // Data ini sekarang diambil langsung dari relasi tabel job_histories.
+            
             $table->string('linkedin_url')->nullable();
             
             $table->timestamps();

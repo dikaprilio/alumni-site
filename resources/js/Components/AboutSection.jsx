@@ -6,25 +6,25 @@ export default function AboutSection() {
     const cards = [
         {
             id: 0,
-            title: "THE BRAIN",
-            subtitle: "Teknis & Logika",
-            desc: "Bukan sekadar mengetik kode. Kami melatih logika pemecahan masalah yang kompleks, algoritma efisien, dan arsitektur sistem yang skalabel.",
+            title: "TRANSFORMASI",
+            subtitle: "D3 MI ke D4 TRPL",
+            desc: "Berevolusi dari Manajemen Informatika (D3) menjadi Teknologi Rekayasa Perangkat Lunak (D4). Masa studi 4 tahun untuk memperdalam rekayasa software end-to-end, web, mobile, dan multimedia.",
             img: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop",
             color: "from-blue-600 to-cyan-500"
         },
         {
             id: 1,
-            title: "THE HEART",
-            subtitle: "Sosial & Empati",
-            desc: "Teknologi tanpa hati adalah robot. Mahasiswa TPL diajarkan peka terhadap isu sosial, menciptakan solusi digital yang benar-benar dibutuhkan masyarakat.",
+            title: "KURIKULUM",
+            subtitle: "Techno-Socio & Data",
+            desc: "Menempatkan proyek nyata sebagai pusat pendidikan. Kami memperkuat aspek analisis data, kewirausahaan sosial (techno-socio), dan kolaborasi lintas disiplin agar mahasiswa siap kerja.",
             img: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop",
             color: "from-purple-600 to-pink-500"
         },
         {
             id: 2,
-            title: "THE VISION",
-            subtitle: "Inovasi & Dampak",
-            desc: "Melihat masa depan. Dari analisis kebutuhan hingga pengelolaan produk, kami mencetak visioner yang siap memimpin transformasi digital.",
+            title: "IDENTITAS",
+            subtitle: "Agro-Maritim & Biosains",
+            desc: "Mencetak 'Sarjana Terapan' yang tidak hanya ahli koding, tapi mampu membangun sistem kompleks untuk sektor pertanian, kelautan, dan biosains tropika yang menjadi fokus IPB.",
             img: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2070&auto=format&fit=crop",
             color: "from-emerald-600 to-teal-500"
         }
@@ -53,10 +53,10 @@ export default function AboutSection() {
                             
                             <h2 className="text-6xl sm:text-7xl md:text-8xl font-black tracking-tighter leading-[0.9] relative z-10">
                                 <span className="block text-slate-500 dark:text-slate-500 transform -translate-x-1 lg:-translate-x-2">
-                                    BEYOND
+                                    SARJANA
                                 </span>
                                 <span className="block text-slate-900 dark:text-white">
-                                    CODING<span className="text-brand-600">.</span>
+                                    TERAPAN<span className="text-brand-600">.</span>
                                 </span>
                             </h2>
                         </div>
@@ -65,10 +65,10 @@ export default function AboutSection() {
                         <div className="lg:col-span-5 flex flex-col justify-center">
                             <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border-l-4 border-brand-600 shadow-sm dark:shadow-none">
                                 <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                                    Program Studi <strong className="text-brand-600 dark:text-brand-400">Teknologi Rekayasa Perangkat Lunak (TPL)</strong> mencetak arsitek digital yang tidak hanya jago teknis, tapi punya <span className="italic font-serif">soul</span>.
+                                    Program Studi <strong className="text-brand-600 dark:text-brand-400">Teknologi Rekayasa Perangkat Lunak (TPL)</strong> Sekolah Vokasi IPB.
                                 </p>
                                 <p className="mt-4 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Kami menggabungkan ketajaman logika algoritma dengan kepekaan empati manusia untuk menciptakan solusi yang berdampak.
+                                    Mengadaptasi pondasi Manajemen Informatika, kami bertransformasi untuk menjawab strategi vokasi nasional. Memperluas jenjang pendidikan menjadi 8 semester untuk mencetak lulusan yang siap menghadapi kompleksitas industri 4.0.
                                 </p>
                             </div>
                         </div>
@@ -142,7 +142,7 @@ export default function AboutSection() {
                     </div>
                     <div className="text-right">
                          <p className="text-[10px] font-bold tracking-widest text-slate-400 dark:text-slate-600 uppercase mb-1">Sekolah Vokasi IPB</p>
-                         <p className="text-xs font-mono text-slate-500 dark:text-slate-500">Shaping Future Professionals</p>
+                         <p className="text-xs font-mono text-slate-500 dark:text-slate-500">Vocational School of IPB University</p>
                     </div>
                 </div>
 

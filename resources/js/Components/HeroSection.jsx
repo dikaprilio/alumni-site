@@ -77,7 +77,7 @@ export default function HeroSection() {
                     </Link>
                     
                     <Link
-                        href="/about"
+                        href="/directory"
                         className="hover-lift min-w-[180px] px-8 py-3.5 bg-white dark:bg-white/5 text-slate-700 dark:text-white border-2 border-slate-200 dark:border-white/10 rounded-full font-bold text-sm md:text-base hover:border-brand-300 hover:text-brand-600 dark:hover:border-brand-500 dark:hover:text-brand-400 transition-all"
                     >
                         Intip Alumni

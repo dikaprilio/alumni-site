@@ -4,7 +4,7 @@ import { Link, usePage } from '@inertiajs/react';
 export default function Header() {
     // 1. Ambil props 'auth' dari Inertia untuk cek status login
     const { url, props } = usePage();
-    const { auth } = props; 
+    const { auth } = props;
 
     const [isScrolled, setIsScrolled] = useState(false);
     const [isDark, setIsDark] = useState(false);
@@ -12,7 +12,7 @@ export default function Header() {
     useEffect(() => {
         const storedTheme = localStorage.getItem('theme');
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        
+
         if (storedTheme === 'dark' || (!storedTheme && systemDark)) {
             setIsDark(true);
             document.documentElement.classList.add('dark');
@@ -54,9 +54,9 @@ export default function Header() {
                     className={`
                         pointer-events-auto flex items-center justify-between
                         transition-all duration-500 ease-in-out border
-                        ${isScrolled 
-                            ? 'w-[95%] md:w-[85%] max-w-6xl py-3 px-6 rounded-full shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-slate-700' 
-                            : 'w-full max-w-[1920px] py-5 px-6 md:px-12 bg-white/0 dark:bg-slate-900/0 border-white/0 dark:border-slate-700/0 shadow-none' 
+                        ${isScrolled
+                            ? 'w-[95%] md:w-[85%] max-w-6xl py-3 px-6 rounded-full shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-slate-700'
+                            : 'w-full max-w-[1920px] py-5 px-6 md:px-12 bg-white/0 dark:bg-slate-900/0 border-white/0 dark:border-slate-700/0 shadow-none'
                         }
                     `}
                 >
@@ -64,8 +64,8 @@ export default function Header() {
                     <Link href="/" className="flex items-center gap-2 group cursor-pointer">
                         <div className={`
                             w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-500
-                            ${isScrolled 
-                                ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30' 
+                            ${isScrolled
+                                ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
                                 : 'bg-brand-600 text-white dark:bg-white/10 dark:text-white backdrop-blur-md'
                             }
                         `}>
@@ -73,8 +73,8 @@ export default function Header() {
                         </div>
                         <span className={`
                             text-xl font-bold tracking-tight transition-colors duration-500
-                            ${isScrolled 
-                                ? 'text-slate-800 dark:text-white' 
+                            ${isScrolled
+                                ? 'text-slate-800 dark:text-white'
                                 : 'text-slate-800 dark:text-white'
                             }
                         `}>
@@ -92,8 +92,8 @@ export default function Header() {
 
                         <div className="relative z-10 flex items-center gap-1 px-2 py-1.5">
                             <NavLink href="/" active={url === '/'} isScrolled={isScrolled} isDark={isDark}>Home</NavLink>
-                            <NavLink href="/study" active={url.startsWith('/study')} isScrolled={isScrolled} isDark={isDark}>Program Studi</NavLink>
                             <NavLink href="/directory" active={url.startsWith('/directory')} isScrolled={isScrolled} isDark={isDark}>Alumni</NavLink>
+                            <NavLink href="/opportunities" active={url.startsWith('/opportunities')} isScrolled={isScrolled} isDark={isDark}>Karir</NavLink>
                             <NavLink href="/news" active={url.startsWith('/news')} isScrolled={isScrolled} isDark={isDark}>Berita</NavLink>
                         </div>
                     </div>
@@ -121,7 +121,7 @@ export default function Header() {
                         {/* KONDISIONAL AUTH BUTTON (Desktop) */}
                         {auth?.user ? (
                             <Link
-                                href="/alumni" 
+                                href="/alumni"
                                 className={`
                                     hidden md:flex items-center gap-3 px-2 py-1.5 pr-4 rounded-full transition-all duration-300 border group
                                     ${isScrolled
@@ -133,9 +133,9 @@ export default function Header() {
                                 {/* AVATAR LOGIC: Cek jika ada avatar di data alumni */}
                                 <div className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold shadow-md group-hover:scale-110 transition-transform overflow-hidden">
                                     {auth.user.alumni && auth.user.alumni.avatar ? (
-                                        <img 
-                                            src={`/storage/${auth.user.alumni.avatar}`} 
-                                            alt={auth.user.name} 
+                                        <img
+                                            src={`/storage/${auth.user.alumni.avatar}`}
+                                            alt={auth.user.name}
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
@@ -161,17 +161,17 @@ export default function Header() {
             {/* --- 2. MOBILE BOTTOM NAVBAR --- */}
             <div className="md:hidden fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
                 <nav className="pointer-events-auto bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-700 rounded-2xl shadow-2xl shadow-black/10 flex items-center gap-1 p-2 w-full max-w-sm justify-between">
-                    
+
                     <MobileLink href="/" active={url === '/'} icon="fa-house">Home</MobileLink>
-                    <MobileLink href="/study" active={url.startsWith('/study')} icon="fa-laptop-code">Studi</MobileLink>
                     <MobileLink href="/directory" active={url.startsWith('/directory')} icon="fa-user-graduate">Alumni</MobileLink>
+                    <MobileLink href="/opportunities" active={url.startsWith('/opportunities')} icon="fa-briefcase">Karir</MobileLink>
                     <MobileLink href="/news" active={url.startsWith('/news')} icon="fa-newspaper">Berita</MobileLink>
 
                     {/* KONDISIONAL AUTH BUTTON (Mobile) */}
                     {auth?.user ? (
-                        <MobileLink 
-                            href="/alumni" 
-                            active={url.startsWith('/alumni')} 
+                        <MobileLink
+                            href="/alumni"
+                            active={url.startsWith('/alumni')}
                             icon="fa-user-circle"
                             isProfile={true}
                             customClass="text-brand-600 dark:text-brand-400"
@@ -179,9 +179,9 @@ export default function Header() {
                             Akun
                         </MobileLink>
                     ) : (
-                        <MobileLink 
-                            href="/login" 
-                            active={url.startsWith('/login')} 
+                        <MobileLink
+                            href="/login"
+                            active={url.startsWith('/login')}
                             icon="fa-right-to-bracket"
                             isProfile={true}
                         >
@@ -211,12 +211,12 @@ function NavLink({ href, children, active, isScrolled, isDark }) {
 
 function MobileLink({ href, icon, children, active, isProfile, customClass }) {
     return (
-        <Link 
+        <Link
             href={href}
             className={`
                 flex flex-col items-center justify-center w-full py-2 rounded-xl transition-all duration-300
-                ${active 
-                    ? 'text-brand-600 bg-brand-50 dark:bg-brand-900/20 dark:text-brand-400' 
+                ${active
+                    ? 'text-brand-600 bg-brand-50 dark:bg-brand-900/20 dark:text-brand-400'
                     : 'text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-300'
                 }
                 ${isProfile ? 'bg-slate-100 dark:bg-slate-800 ml-1' : ''}

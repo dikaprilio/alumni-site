@@ -29,17 +29,26 @@ Route::get('/directory/{id}', [PublicAlumniController::class, 'show'])->name('pu
 Route::get('/', function () {
 
     // 1. Fetch Alumni Acak untuk Card
-    $alumniList = Alumni::with('skills')
+    // 1. Fetch Alumni Acak untuk Card
+    $alumniList = Alumni::with(['skills', 'jobHistories' => function ($query) {
+            $query->whereNull('end_date'); // Ambil pekerjaan aktif
+        }])
         ->whereNotNull('avatar')
         ->inRandomOrder()
         ->limit(8)
-        ->get(['id', 'name', 'current_position', 'company_name', 'avatar', 'graduation_year']);
+        ->get()
+        ->map(function ($alumni) {
+            // Map legacy attributes to relationship data for frontend compatibility
+            $alumni->current_position = $alumni->jobHistories->first()?->position;
+            $alumni->company_name = $alumni->jobHistories->first()?->company_name;
+            return $alumni;
+        });
 
     // 2. Statistik Pekerjaan (Top 5)
-    $jobStats = Alumni::select('current_position', DB::raw('count(*) as total'))
-        ->whereNotNull('current_position')
-        ->where('current_position', '!=', '')
-        ->groupBy('current_position')
+    // Query langsung ke tabel job_histories untuk performa dan akurasi
+    $jobStats = \App\Models\JobHistory::select('position as current_position', DB::raw('count(*) as total'))
+        ->whereNull('end_date') // Hanya pekerjaan aktif
+        ->groupBy('position')
         ->orderByDesc('total')
         ->limit(5)
         ->get();
@@ -138,7 +147,9 @@ Route::middleware(['auth', 'admin', 'verified'])->group(function () {
     Route::post('/admin/settings/admin', [AdminSettingsController::class, 'storeAdmin'])->name('admin.settings.store_admin');
     Route::delete('/admin/settings/admin/{id}', [AdminSettingsController::class, 'destroyAdmin'])->name('admin.settings.delete_admin');
 });
-
+Route::get('/program', function () {
+    return Inertia::render('Program/Index');
+})->name('public.program');
 // 5. ALUMNI ROUTES (PROFILE & DASHBOARD)
 Route::middleware(['auth', 'verified'])->group(function () {
     
@@ -162,9 +173,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/alumni/settings/email', [AlumniProfileController::class, 'updateEmail'])->name('alumni.update.email');
     Route::post('/alumni/jobs', [App\Http\Controllers\AlumniProfileController::class, 'addJobHistory'])->name('alumni.jobs.add');
     Route::delete('/alumni/jobs/{id}', [App\Http\Controllers\AlumniProfileController::class, 'deleteJobHistory'])->name('alumni.jobs.delete');
+
+    // OPPORTUNITIES (JOBS & MENTORING)
+    Route::get('/opportunities', [App\Http\Controllers\OpportunityController::class, 'index'])->name('opportunities.index');
+    Route::post('/opportunities', [App\Http\Controllers\OpportunityController::class, 'store'])->name('opportunities.store');
+    Route::delete('/opportunities/{id}', [App\Http\Controllers\OpportunityController::class, 'destroy'])->name('opportunities.destroy');
 });
 
 // 6. Logout
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+});
+
+// 7. Fallback Route (Handle 404 with Session/Auth)
+Route::fallback(function () {
+    return Inertia::render('Error', ['status' => 404])
+        ->toResponse(request())
+        ->setStatusCode(404);
 });

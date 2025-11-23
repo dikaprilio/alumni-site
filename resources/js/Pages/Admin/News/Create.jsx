@@ -4,6 +4,7 @@ import AdminLayout from '../../../Layouts/AdminLayout';
 import InputLabel from '../../../Components/InputLabel';
 import InputText from '../../../Components/InputText';
 import TextArea from '../../../Components/TextArea';
+import ImageCropperModal from '../../../Components/ImageCropperModal'; // Import Modal Cropper
 
 export default function CreateNews() {
     const { data, setData, post, processing, errors } = useForm({
@@ -14,13 +15,32 @@ export default function CreateNews() {
     });
 
     const [imagePreview, setImagePreview] = useState(null);
+    const [showCropper, setShowCropper] = useState(false);
+    const [cropperImageSrc, setCropperImageSrc] = useState(null);
 
+    // 1. Handle File Selection -> Open Cropper
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setData('image', file);
-            setImagePreview(URL.createObjectURL(file));
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                setCropperImageSrc(reader.result); // Set source for cropper
+                setShowCropper(true); // Show modal
+            };
         }
+        // Reset input value so same file can be selected again if needed
+        e.target.value = null;
+    };
+
+    // 2. Handle Crop Complete -> Set Data & Preview
+    const handleCropComplete = async (croppedBlob) => {
+        // Convert Blob to File
+        const file = new File([croppedBlob], "news_cover.jpg", { type: "image/jpeg" });
+        
+        setData('image', file);
+        setImagePreview(URL.createObjectURL(croppedBlob));
+        setShowCropper(false);
     };
 
     const submit = (e) => {
@@ -32,6 +52,15 @@ export default function CreateNews() {
         <AdminLayout>
             <Head title="Buat Berita Baru" />
             
+            {/* --- CROPPER MODAL --- */}
+            <ImageCropperModal 
+                show={showCropper}
+                onClose={() => setShowCropper(false)}
+                imageSrc={cropperImageSrc}
+                onCropComplete={handleCropComplete}
+                aspectRatio={16/9} // NEWS PAKE 16:9
+            />
+
             <div className="max-w-5xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
@@ -141,6 +170,7 @@ export default function CreateNews() {
                                 </div>
                             </div>
                             {errors.image && <p className="text-red-500 text-xs mt-1">{errors.image}</p>}
+                            <p className="text-[10px] text-slate-400 mt-2 text-center">Format: 16:9 (Landscape)</p>
                         </div>
                     </div>
                 </form>

@@ -3,7 +3,7 @@ import Cropper from 'react-easy-crop';
 import Modal from './Modal'; 
 import getCroppedImg from '../Utils/cropUtils';
 
-export default function ImageCropperModal({ show, onClose, imageSrc, onCropComplete }) {
+export default function ImageCropperModal({ show, onClose, imageSrc, onCropComplete, aspectRatio = 1 }) {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
@@ -38,7 +38,7 @@ export default function ImageCropperModal({ show, onClose, imageSrc, onCropCompl
     if (!show) return null;
 
     return (
-        <Modal title="Sesuaikan Foto Profil" onClose={onClose} maxWidth="2xl">
+        <Modal title="Sesuaikan Gambar" onClose={onClose} maxWidth="2xl">
             <div className="p-6">
                 {/* Cropper Container */}
                 <div className="relative w-full h-80 bg-slate-900 rounded-2xl overflow-hidden mb-6 shadow-inner border border-slate-700">
@@ -46,12 +46,11 @@ export default function ImageCropperModal({ show, onClose, imageSrc, onCropCompl
                         image={imageSrc}
                         crop={crop}
                         zoom={zoom}
-                        aspect={1} // 1:1 for profile pictures
+                        aspect={aspectRatio} // Dynamic Aspect Ratio
                         onCropChange={onCropChange}
                         onCropComplete={onCropCompleteHandler}
                         onZoomChange={onZoomChange}
-                        cropShape="round" 
-                        showGrid={false}
+                        showGrid={true} // Show grid for better precision
                     />
                 </div>
 
@@ -78,7 +77,7 @@ export default function ImageCropperModal({ show, onClose, imageSrc, onCropCompl
                         onClick={onClose}
                         className="px-6 py-3 text-slate-500 font-bold text-xs uppercase tracking-wider hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
                     >
-                        Cancel
+                        Batal
                     </button>
                     <button
                         type="button"
@@ -87,7 +86,7 @@ export default function ImageCropperModal({ show, onClose, imageSrc, onCropCompl
                         className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-brand-600 dark:hover:bg-brand-400 dark:hover:text-white transition-all shadow-lg hover:shadow-brand-600/20 disabled:opacity-50 flex items-center gap-2"
                     >
                         {loading && <i className="fa-solid fa-circle-notch fa-spin"></i>}
-                        {loading ? 'Processing...' : 'Apply Crop'}
+                        {loading ? 'Memproses...' : 'Potong & Simpan'}
                     </button>
                 </div>
             </div>
