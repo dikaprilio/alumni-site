@@ -4,23 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Alumni;
 use App\Models\User;
-use App\Exports\AlumniExport; // Nanti kita buat
+use App\Exports\AlumniExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
-use Maatwebsite\Excel\Facades\Excel; // Untuk Excel
-use Barryvdh\DomPDF\Facade\Pdf; // Untuk PDF
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminAlumniController extends Controller
 {
     /**
-     * PRIVATE HELPER: Pusat logic filter (Smart Search)
-     * Digunakan oleh Index (View) dan Export (Download)
+     * PRIVATE HELPER: Pusat logic filter & Sorting
      */
     private function getFilteredQuery(Request $request)
     {
-        $query = Alumni::with('user')->latest();
+        $query = Alumni::with('user');
 
         // 1. SMART SEARCH
         if ($request->filled('search')) {
@@ -71,12 +70,41 @@ class AdminAlumniController extends Controller
              $query->where('address', 'like', '%' . $request->input('location') . '%');
         }
 
+        // 3. SORTING LOGIC (FIXED)
+        if ($request->filled('sort_by') && $request->filled('sort_dir')) {
+            $sortBy = $request->input('sort_by');
+            $sortDir = $request->input('sort_dir') === 'desc' ? 'desc' : 'asc';
+
+            // Mapping kolom yang valid untuk di-sort
+            $validColumns = ['name', 'graduation_year', 'nim', 'created_at'];
+
+            if (in_array($sortBy, $validColumns)) {
+                $query->orderBy($sortBy, $sortDir);
+            } 
+            // Logic khusus untuk sort "Kelengkapan Profil" (profile_completeness)
+            // Kita hitung skor manual via SQL agar bisa di-sort
+            elseif ($sortBy === 'profile_completeness') {
+                $query->orderByRaw("
+                    (CASE WHEN phone_number IS NOT NULL AND phone_number != '' THEN 1 ELSE 0 END +
+                     CASE WHEN address IS NOT NULL AND address != '' THEN 1 ELSE 0 END +
+                     CASE WHEN linkedin_url IS NOT NULL AND linkedin_url != '' THEN 1 ELSE 0 END +
+                     CASE WHEN current_position IS NOT NULL AND current_position != '' THEN 1 ELSE 0 END +
+                     (SELECT COUNT(*) FROM alumni_skill WHERE alumni_skill.alumni_id = alumnis.id LIMIT 1) +
+                     (SELECT COUNT(*) FROM job_histories WHERE job_histories.alumni_id = alumnis.id LIMIT 1)
+                    ) $sortDir
+                ");
+            } else {
+                $query->latest(); // Default fallback
+            }
+        } else {
+            $query->latest(); // Default jika tidak ada sorting
+        }
+
         return $query;
     }
 
     public function index(Request $request)
     {
-        // Panggil helper query di atas
         $query = $this->getFilteredQuery($request);
 
         $alumni = $query->paginate(10)->withQueryString();
@@ -94,31 +122,24 @@ class AdminAlumniController extends Controller
         ]);
     }
 
-    // --- NEW: EXPORT FUNCTION ---
     public function export(Request $request)
     {
-        // 1. Ambil Query yang SAMA PERSIS dengan hasil search user
         $query = $this->getFilteredQuery($request);
         
-        $type = $request->input('type', 'xlsx'); // Default xlsx
+        $type = $request->input('type', 'xlsx');
         $timestamp = date('Y-m-d_H-i');
         $filename = "data_alumni_{$timestamp}.{$type}";
 
-        // 2. Export sesuai tipe
         if ($type === 'pdf') {
-            // Ambil semua data (tanpa pagination)
             $data = $query->get();
-            
-            // Load View PDF
             $pdf = Pdf::loadView('exports.alumni_pdf', ['alumni' => $data])
-                      ->setPaper('a4', 'landscape'); // Landscape agar muat banyak kolom
-            
+                      ->setPaper('a4', 'landscape');
             return $pdf->download($filename);
         } else {
-            // Export Excel menggunakan Class Export
             return Excel::download(new AlumniExport($query), $filename);
         }
     }
+
     public function create()
     {
         return Inertia::render('Admin/Alumni/Create');
@@ -131,24 +152,22 @@ class AdminAlumniController extends Controller
             'nim' => 'required|string|unique:alumnis,nim',
             'graduation_year' => 'required|integer|min:2000|max:' . (date('Y') + 1),
             'major' => 'required|string',
-            'email' => 'nullable|email|unique:users,email', // Cek unik di tabel users
+            'email' => 'nullable|email|unique:users,email',
         ]);
 
         DB::beginTransaction();
         try {
-            // 1. Buat User baru jika email diisi
             $userId = null;
             if ($request->filled('email')) {
                 $user = User::create([
                     'name' => $request->name,
                     'email' => $request->email,
-                    'password' => Hash::make('password'), // Password default
+                    'password' => Hash::make('password'),
                     'role' => 'alumni',
                 ]);
                 $userId = $user->id;
             }
 
-            // 2. Buat Data Alumni
             Alumni::create([
                 'user_id' => $userId,
                 'name' => $request->name,
@@ -173,7 +192,6 @@ class AdminAlumniController extends Controller
 
     public function edit($id)
     {
-        // FIX UTAMA: Tambahkan ->with('user') agar data user (email) terbaca di Edit.jsx
         $alumni = Alumni::with('user')->findOrFail($id);
 
         return Inertia::render('Admin/Alumni/Edit', [
@@ -190,15 +208,13 @@ class AdminAlumniController extends Controller
             'nim' => 'required|string|unique:alumnis,nim,' . $id,
             'graduation_year' => 'required|integer',
             'major' => 'required|string',
-            // Validasi email unik, kecualikan user milik alumni ini
             'email' => 'nullable|email|unique:users,email,' . ($alumni->user_id ?? 'NULL'),
         ]);
 
         DB::beginTransaction();
         try {
-            // 1. Update Data Alumni
             $alumni->update([
-                'name' => $request->name, // Update nama di alumni juga
+                'name' => $request->name,
                 'nim' => $request->nim,
                 'graduation_year' => $request->graduation_year,
                 'major' => $request->major,
@@ -209,24 +225,20 @@ class AdminAlumniController extends Controller
                 'bio' => $request->bio,
             ]);
 
-            // 2. Handle Logic Email / User Account
             if ($request->filled('email')) {
                 if ($alumni->user) {
-                    // KASUS A: Alumni sudah punya akun -> Update email & namanya
                     $alumni->user->update([
                         'email' => $request->email,
-                        'name' => $request->name, // Sinkronkan nama user dengan nama alumni
+                        'name' => $request->name,
                     ]);
                 } else {
-                    // KASUS B: Alumni belum punya akun -> Buatkan akun baru
                     $newUser = User::create([
                         'name' => $request->name,
                         'email' => $request->email,
-                        'password' => Hash::make('password'), // Default password
+                        'password' => Hash::make('password'),
                         'role' => 'alumni',
                     ]);
                     
-                    // Sambungkan user baru ke alumni ini
                     $alumni->update(['user_id' => $newUser->id]);
                 }
             }
@@ -244,7 +256,6 @@ class AdminAlumniController extends Controller
     {
         $alumni = Alumni::findOrFail($id);
         
-        // Opsional: Hapus user terkait jika alumni dihapus
         if ($alumni->user_id) {
             User::destroy($alumni->user_id);
         }
@@ -253,12 +264,11 @@ class AdminAlumniController extends Controller
 
         return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil dihapus.');
     }
-        // --- NEW: TOGGLE FEATURED ---
+
     public function toggleFeatured(Request $request, $id)
     {
         $alumni = Alumni::findOrFail($id);
         
-        // Jika sudah featured, un-feature (hapus timestamp)
         if ($alumni->featured_at) {
             $alumni->update([
                 'featured_at' => null,
@@ -267,13 +277,8 @@ class AdminAlumniController extends Controller
             return back()->with('success', 'Status Alumni of the Month dicabut.');
         } 
         
-        // Jika belum featured, set timestamp & reason
-        // Kita bisa ambil 'reason' dari request jika admin mengisi modal
         $reason = $request->input('featured_reason', 'Kontribusi luar biasa di bidang profesional.');
         
-        // Optional: Reset featured alumni lain jika ingin hanya ada 1 "of the month"
-        // Alumni::whereNotNull('featured_at')->update(['featured_at' => null]); 
-
         $alumni->update([
             'featured_at' => now(),
             'featured_reason' => $reason

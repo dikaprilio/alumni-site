@@ -3,6 +3,7 @@ import { Head, useForm, Link, router, usePage } from '@inertiajs/react';
 import PublicLayout from '../../Layouts/PublicLayout';
 import Modal from '../../Components/Modal';
 import MonthYearPicker from '../../Components/MonthYearPicker';
+import ImageCropperModal from '../../Components/ImageCropperModal'; // Import Cropper
 
 // --- HELPER: DATE FORMATTER ---
 const formatDate = (dateString) => {
@@ -106,6 +107,10 @@ export default function Edit({ alumni, user_name, allSkills = [] }) {
     const [selectedSkillId, setSelectedSkillId] = useState('');
     const [isJobModalOpen, setIsJobModalOpen] = useState(false);
 
+    // --- CROPPER STATE ---
+    const [imageSrc, setImageSrc] = useState(null);
+    const [isCropperOpen, setIsCropperOpen] = useState(false);
+
     // Real-time Completeness State
     const [completeness, setCompleteness] = useState(0);
     const [missingFields, setMissingFields] = useState([]);
@@ -169,12 +174,30 @@ export default function Edit({ alumni, user_name, allSkills = [] }) {
 
     // --- HANDLERS ---
 
+    // 1. Triggered when user selects a file
     const handleAvatarChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setData('avatar', file);
-            setAvatarPreview(URL.createObjectURL(file));
+            const reader = new FileReader();
+            reader.onload = () => {
+                setImageSrc(reader.result); // Set source for cropper
+                setIsCropperOpen(true);     // Open Modal
+            };
+            reader.readAsDataURL(file);
         }
+        // Reset input so same file can be selected again if needed
+        e.target.value = '';
+    };
+
+    // 2. Triggered when user clicks "Apply" in Cropper Modal
+    const handleCropComplete = (croppedBlob) => {
+        // Create a preview URL for UI
+        const newPreviewUrl = URL.createObjectURL(croppedBlob);
+        setAvatarPreview(newPreviewUrl);
+        
+        // Set the cropped blob to form data
+        setData('avatar', croppedBlob);
+        setIsCropperOpen(false);
     };
 
     const submitMain = (e) => {
@@ -276,6 +299,7 @@ export default function Edit({ alumni, user_name, allSkills = [] }) {
                                     </div>
                                 )}
                             </div>
+                            {/* Changed label to trigger new handleAvatarChange */}
                             <label htmlFor="avatar" className="absolute bottom-0 right-0 w-8 h-8 bg-brand-600 text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-brand-500 transition-colors shadow-lg transform group-hover:scale-110">
                                 <i className="fa-solid fa-camera text-xs"></i>
                                 <input type="file" id="avatar" onChange={handleAvatarChange} className="hidden" accept="image/*" />
@@ -562,6 +586,15 @@ export default function Edit({ alumni, user_name, allSkills = [] }) {
                     </form>
                 </Modal>
             )}
+
+            {/* --- MODAL: CROPPER --- */}
+            <ImageCropperModal
+                show={isCropperOpen}
+                onClose={() => setIsCropperOpen(false)}
+                imageSrc={imageSrc}
+                onCropComplete={handleCropComplete}
+            />
+
         </div>
     );
 }
