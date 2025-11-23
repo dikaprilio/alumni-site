@@ -1,16 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
+import { useToast } from '../Components/ToastContext'; // Import useToast
 
 export default function AdminLayout({ children }) {
     const { url, props } = usePage();
-    const { auth } = props;
+    const { auth, flash } = props; // Destructure flash messages
+    const { addToast } = useToast(); // Hook toast
+
+    // --- FLASH MESSAGE LISTENER ---
+    // Automatically triggers a toast whenever "flash" props change (from Laravel)
+    useEffect(() => {
+        if (flash?.success) {
+            addToast(flash.success, 'success');
+        }
+        if (flash?.error) {
+            addToast(flash.error, 'error');
+        }
+        if (flash?.message) {
+            addToast(flash.message, 'info');
+        }
+    }, [flash, addToast]);
+
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     
-    // Ref untuk dropdown profil
     const profileRef = useRef(null);
 
-    // Close dropdown profile if clicked outside
+    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (profileRef.current && !profileRef.current.contains(event.target)) {
@@ -21,7 +37,6 @@ export default function AdminLayout({ children }) {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
     
-    // State untuk Dark Mode
     const [isDarkMode, setIsDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark';
@@ -47,10 +62,9 @@ export default function AdminLayout({ children }) {
         router.post(route('logout'));
     };
 
-    // Helper untuk cek aktif
     const isActive = (path) => url.startsWith(path);
 
-    // --- COMPONENT: NAV ITEM (Desktop Sidebar) ---
+    // --- SUBCOMPONENTS ---
     const SidebarItem = ({ href, icon, label }) => {
         const active = isActive(href);
         return (
@@ -70,7 +84,6 @@ export default function AdminLayout({ children }) {
         );
     };
 
-    // --- COMPONENT: MOBILE NAV ITEM (Bottom Bar) ---
     const MobileNavItem = ({ href, icon, label }) => {
         const active = isActive(href);
         return (
@@ -93,9 +106,9 @@ export default function AdminLayout({ children }) {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans flex flex-col lg:flex-row transition-colors duration-300 pb-24 lg:pb-0">
             
-            {/* --- SIDEBAR (DESKTOP ONLY) --- */}
+            {/* --- DESKTOP SIDEBAR --- */}
             <aside className="w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col fixed inset-y-0 z-50 transition-colors duration-300">
-                {/* Logo Area */}
+                {/* Logo */}
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-brand-600 to-brand-700 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/30">
                         <i className="fa-solid fa-shield-cat text-white"></i>
@@ -106,7 +119,7 @@ export default function AdminLayout({ children }) {
                     </div>
                 </div>
 
-                {/* Desktop Navigation */}
+                {/* Navigation Links */}
                 <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
                     <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 mt-2">Overview</p>
                     <SidebarItem href="/admin/dashboard" icon="fa-gauge-high" label="Dashboard" />
@@ -120,18 +133,29 @@ export default function AdminLayout({ children }) {
                     <SidebarItem href="/admin/events" icon="fa-calendar-day" label="Events Agenda" />
                 </nav>
 
-                {/* Footer Sidebar */}
+                {/* Sidebar Footer (User Profile & Actions) */}
                 <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
-                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-500/20 border border-brand-200 dark:border-brand-500/30 flex items-center justify-center text-brand-600 dark:text-brand-400">
+                    
+                    {/* Clickable Profile Area - Links to Settings */}
+                    <Link 
+                        href={route('admin.settings')}
+                        className="bg-slate-50 dark:bg-slate-800/50 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-xl p-3 flex items-center gap-3 transition-colors cursor-pointer group border border-transparent hover:border-brand-200 dark:hover:border-slate-700"
+                    >
+                        <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-500/20 border border-brand-200 dark:border-brand-500/30 flex items-center justify-center text-brand-600 dark:text-brand-400 group-hover:scale-105 transition-transform">
                             <i className="fa-solid fa-user-astronaut"></i>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{auth.user.name}</p>
-                            <p className="text-xs text-slate-500 truncate">Administrator</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-brand-700 dark:group-hover:text-brand-400 transition-colors">
+                                {auth.user.name}
+                            </p>
+                            <p className="text-xs text-slate-500 truncate flex items-center gap-1">
+                                <i className="fa-solid fa-gear text-[10px]"></i> Settings
+                            </p>
                         </div>
-                    </div>
+                        <i className="fa-solid fa-chevron-right text-xs text-slate-300 group-hover:text-brand-400"></i>
+                    </Link>
 
+                    {/* Action Buttons */}
                     <div className="grid grid-cols-2 gap-2">
                         <button 
                             onClick={toggleTheme}
@@ -149,13 +173,12 @@ export default function AdminLayout({ children }) {
                 </div>
             </aside>
 
-            {/* --- MAIN CONTENT WRAPPER --- */}
+            {/* --- CONTENT AREA --- */}
             <div className="flex-1 lg:ml-72 flex flex-col min-h-screen relative bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
                 
-                {/* HEADER MOBILE (Top Bar) */}
+                {/* MOBILE HEADER */}
                 <header className="lg:hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 h-16 flex items-center justify-between px-4 sticky top-0 z-40 shadow-sm">
                     
-                    {/* Left: Logo & Theme Toggle */}
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shadow-brand-500/20 shadow-lg">
                             <i className="fa-solid fa-shield-cat text-white text-xs"></i>
@@ -163,13 +186,12 @@ export default function AdminLayout({ children }) {
                         <span className="font-bold text-slate-900 dark:text-white text-lg">ADMIN</span>
                     </div>
 
-                    {/* Right: Theme Toggle & Profile Dropdown */}
                     <div className="flex items-center gap-3">
                         <button onClick={toggleTheme} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                             {isDarkMode ? <i className="fa-solid fa-sun text-amber-400 text-lg"></i> : <i className="fa-solid fa-moon text-lg"></i>}
                         </button>
 
-                        {/* PROFILE DROPDOWN (MOBILE) */}
+                        {/* Mobile Profile Dropdown */}
                         <div className="relative" ref={profileRef}>
                             <button 
                                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
@@ -178,7 +200,6 @@ export default function AdminLayout({ children }) {
                                 <i className="fa-solid fa-user text-sm"></i>
                             </button>
 
-                            {/* Dropdown Menu */}
                             {isProfileDropdownOpen && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden animation-fade-in-up origin-top-right">
                                     <div className="p-3 border-b border-slate-100 dark:border-slate-800">
@@ -186,8 +207,8 @@ export default function AdminLayout({ children }) {
                                         <p className="text-[10px] text-slate-500 truncate">{auth.user.email}</p>
                                     </div>
                                     <div className="p-1">
-                                        <Link href={route('alumni.settings')} className="flex items-center gap-2 w-full text-left px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                            <i className="fa-solid fa-cog text-slate-400"></i> Edit Profil
+                                        <Link href={route('admin.settings')} className="flex items-center gap-2 w-full text-left px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                            <i className="fa-solid fa-gear text-slate-400"></i> Settings
                                         </Link>
                                         <button 
                                             onClick={handleLogout}
@@ -202,19 +223,19 @@ export default function AdminLayout({ children }) {
                     </div>
                 </header>
 
-                {/* PAGE CONTENT */}
+                {/* MAIN CONTENT */}
                 <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
                     {children}
                 </main>
 
-                {/* --- BOTTOM NAVIGATION BAR (MOBILE ONLY) --- */}
+                {/* MOBILE BOTTOM NAV */}
                 <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 lg:hidden z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] dark:shadow-none pb-[env(safe-area-inset-bottom)]">
                     <nav className="flex items-center justify-between h-[72px] px-4 w-full max-w-md mx-auto relative">
                         
                         <MobileNavItem href="/admin/dashboard" icon="fa-gauge-high" label="Home" />
                         <MobileNavItem href="/admin/alumni" icon="fa-users" label="Alumni" />
                         
-                        {/* Center Action Button (Add Only) */}
+                        {/* Center Action Button */}
                         <div className="relative -top-6 pointer-events-auto px-2">
                             <button 
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -233,37 +254,24 @@ export default function AdminLayout({ children }) {
                     </nav>
                 </div>
 
-                {/* --- MOBILE EXPANDED MENU (Just Quick Actions) --- */}
+                {/* MOBILE EXPANDED MENU (Quick Create) */}
                 {isMobileMenuOpen && (
                     <div className="fixed inset-0 z-40 bg-slate-900/20 dark:bg-slate-900/90 backdrop-blur-sm lg:hidden flex flex-col justify-end pb-32 animate-fade-in">
                         <div className="mx-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 space-y-3 shadow-2xl transform transition-all">
-                            
                             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 px-2">Create New</p>
-                            
                             <Link href={route('admin.news.create')} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-white transition-colors bg-slate-50 dark:bg-slate-700/50">
-                                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-500 rounded-lg flex items-center justify-center shadow-sm">
-                                    <i className="fa-solid fa-pen-nib text-lg"></i>
-                                </div>
+                                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-500 rounded-lg flex items-center justify-center shadow-sm"><i className="fa-solid fa-pen-nib text-lg"></i></div>
                                 <span className="font-bold text-base">Post News</span>
                             </Link>
-                            
                             <Link href={route('admin.jobs.create')} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-white transition-colors bg-slate-50 dark:bg-slate-700/50">
-                                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-500 rounded-lg flex items-center justify-center shadow-sm">
-                                    <i className="fa-solid fa-briefcase text-lg"></i>
-                                </div>
+                                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-500 rounded-lg flex items-center justify-center shadow-sm"><i className="fa-solid fa-briefcase text-lg"></i></div>
                                 <span className="font-bold text-base">Add Job</span>
                             </Link>
-                            
                             <Link href={route('admin.alumni.create')} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-white transition-colors bg-slate-50 dark:bg-slate-700/50">
-                                <div className="w-10 h-10 bg-brand-100 dark:bg-brand-500/20 text-brand-600 dark:text-brand-500 rounded-lg flex items-center justify-center shadow-sm">
-                                    <i className="fa-solid fa-user-plus text-lg"></i>
-                                </div>
+                                <div className="w-10 h-10 bg-brand-100 dark:bg-brand-500/20 text-brand-600 dark:text-brand-500 rounded-lg flex items-center justify-center shadow-sm"><i className="fa-solid fa-user-plus text-lg"></i></div>
                                 <span className="font-bold text-base">Add User</span>
                             </Link>
-                            
-                            {/* Removed Logout from here since it's now in the top profile menu */}
                         </div>
-                        
                         <button onClick={() => setIsMobileMenuOpen(false)} className="absolute inset-0 -z-10"></button>
                     </div>
                 )}

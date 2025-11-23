@@ -12,6 +12,7 @@ use App\Http\Controllers\AdminNewsController;
 use App\Http\Controllers\AdminEventController;
 use App\Http\Controllers\AdminJobController;
 use App\Http\Controllers\AlumniProfileController;
+use App\Http\Controllers\AdminSettingsController;
 use App\Models\Alumni;
 use App\Models\News;
 use App\Models\Event;
@@ -24,11 +25,8 @@ Route::get('/news/{id}', [PublicNewsController::class, 'showNews'])->name('publi
 Route::get('/events/{id}', [PublicNewsController::class, 'showEvent'])->name('public.events.show');
 Route::get('/directory', [PublicAlumniController::class, 'index'])->name('public.alumni');
 Route::get('/directory/{id}', [PublicAlumniController::class, 'show'])->name('public.alumni.show');
-Route::get('/', function () {
 
-    // REVISI: Admin tidak lagi dipaksa redirect ke dashboard jika mengunjungi landing page.
-    // Mereka bisa melihat halaman depan seperti user biasa.
-    // Login redirect logic ditangani di AuthController@adminLogin.
+Route::get('/', function () {
 
     // 1. Fetch Alumni Acak untuk Card
     $alumniList = Alumni::with('skills')
@@ -69,8 +67,14 @@ Route::get('/', function () {
             return $item;
         });
 
-    // 6. Merge & Sort
+    // 6. Merge & Sort News + Events
     $latestUpdates = $news->concat($events)->sortByDesc('date')->take(6)->values();
+
+    // 7. (BARU) Fetch Alumni of the Month
+    // Ambil satu alumni yang punya timestamp 'featured_at' paling baru
+    $alumniOfTheMonth = Alumni::whereNotNull('featured_at')
+        ->orderByDesc('featured_at')
+        ->first();
     
     return Inertia::render('Welcome', [
         'canLogin'     => Route::has('login'),
@@ -79,6 +83,7 @@ Route::get('/', function () {
         'jobStats'     => $jobStats,
         'totalAlumni'  => $totalAlumni,
         'latestUpdates' => $latestUpdates,
+        'alumniOfTheMonth' => $alumniOfTheMonth, // <-- Kirim data ini ke frontend
     ]);
 
 })->name('home');
@@ -112,19 +117,26 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // 4. ADMIN ROUTES
-    Route::middleware(['auth', 'admin', 'verified'])->group(function () {
+Route::middleware(['auth', 'admin', 'verified'])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     
-    // --- PINDAHKAN INI KE ATAS ---
-    // Route spesifik harus didefinisikan SEBELUM Route::resource agar tidak tertimpa
     Route::get('/admin/alumni/export', [AdminAlumniController::class, 'export'])->name('admin.alumni.export');
     
-    // Baru kemudian Resource Route
+    // Route untuk toggle featured alumni (Alumni of the Month)
+    Route::post('/admin/alumni/{id}/toggle-featured', [AdminAlumniController::class, 'toggleFeatured'])->name('admin.alumni.toggle_featured');
+
+    // Resource routes
     Route::resource('/admin/alumni', AdminAlumniController::class)->names('admin.alumni');
-    
     Route::resource('/admin/news', AdminNewsController::class)->names('admin.news');
     Route::resource('/admin/events', AdminEventController::class)->names('admin.events');
     Route::resource('/admin/jobs', AdminJobController::class)->names('admin.jobs');
+
+    // Settings Routes
+    Route::get('/admin/settings', [AdminSettingsController::class, 'index'])->name('admin.settings');
+    Route::post('/admin/settings/profile', [AdminSettingsController::class, 'updateProfile'])->name('admin.settings.profile');
+    Route::post('/admin/settings/password', [AdminSettingsController::class, 'updatePassword'])->name('admin.settings.password');
+    Route::post('/admin/settings/admin', [AdminSettingsController::class, 'storeAdmin'])->name('admin.settings.store_admin');
+    Route::delete('/admin/settings/admin/{id}', [AdminSettingsController::class, 'destroyAdmin'])->name('admin.settings.delete_admin');
 });
 
 // 5. ALUMNI ROUTES (PROFILE & DASHBOARD)

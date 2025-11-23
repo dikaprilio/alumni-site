@@ -25,11 +25,14 @@ class Alumni extends Model
         'bio',
         'private_email', // Added
         'private_phone', // Added
+        'featured_at',  // Added
+        'featured_reason', // Added
     ];
 
     protected $casts = [
         'private_email' => 'boolean',
         'private_phone' => 'boolean',
+        'featured_at' => 'datetime',
     ];
 
     // Automatically verify user relationship

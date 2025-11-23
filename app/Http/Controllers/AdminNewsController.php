@@ -7,21 +7,49 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class AdminNewsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $news = News::with('author')->latest()->paginate(10);
-        return view('admin.news.index', compact('news'));
+        $query = News::with('author')->latest();
+
+        // 1. Search Logic
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+
+        // 2. Category Filter
+        if ($request->has('category') && $request->category !== '') {
+            $query->where('category', $request->category);
+        }
+
+        // 3. Pagination
+        $news = $query->paginate(10)->withQueryString();
+
+        return Inertia::render('Admin/News/Index', [
+            'news' => $news,
+            'filters' => $request->only(['search', 'category']),
+        ]);
+    }
+
+    public function create()
+    {
+        return Inertia::render('Admin/News/Create');
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
+            'category' => 'required|string',
             'content' => 'required',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Max 2MB
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         $imagePath = null;
@@ -32,12 +60,21 @@ class AdminNewsController extends Controller
         News::create([
             'user_id' => Auth::id(),
             'title' => $request->title,
-            'slug' => Str::slug($request->title) . '-' . time(), 
-            'content' => $request->input('content'), // Menggunakan input() sesuai perbaikan
+            'category' => $request->category,
+            'slug' => Str::slug($request->title) . '-' . time(),
+            'content' => $request->content,
             'image' => $imagePath,
         ]);
 
-        return redirect()->back()->with('success', 'Berita berhasil diterbitkan.');
+        return redirect()->route('admin.news.index')->with('success', 'Berita berhasil diterbitkan.');
+    }
+
+    public function edit($id)
+    {
+        $news = News::findOrFail($id);
+        return Inertia::render('Admin/News/Edit', [
+            'news' => $news
+        ]);
     }
 
     public function update(Request $request, $id)
@@ -46,6 +83,7 @@ class AdminNewsController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
+            'category' => 'required|string',
             'content' => 'required',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
@@ -64,10 +102,11 @@ class AdminNewsController extends Controller
 
         $news->update([
             'title' => $request->title,
-            'content' => $request->input('content'),
+            'category' => $request->category,
+            'content' => $request->content,
         ]);
 
-        return redirect()->back()->with('success', 'Berita berhasil diperbarui.');
+        return redirect()->route('admin.news.index')->with('success', 'Berita berhasil diperbarui.');
     }
 
     public function destroy($id)

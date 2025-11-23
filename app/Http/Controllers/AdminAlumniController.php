@@ -253,4 +253,32 @@ class AdminAlumniController extends Controller
 
         return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil dihapus.');
     }
+        // --- NEW: TOGGLE FEATURED ---
+    public function toggleFeatured(Request $request, $id)
+    {
+        $alumni = Alumni::findOrFail($id);
+        
+        // Jika sudah featured, un-feature (hapus timestamp)
+        if ($alumni->featured_at) {
+            $alumni->update([
+                'featured_at' => null,
+                'featured_reason' => null
+            ]);
+            return back()->with('success', 'Status Alumni of the Month dicabut.');
+        } 
+        
+        // Jika belum featured, set timestamp & reason
+        // Kita bisa ambil 'reason' dari request jika admin mengisi modal
+        $reason = $request->input('featured_reason', 'Kontribusi luar biasa di bidang profesional.');
+        
+        // Optional: Reset featured alumni lain jika ingin hanya ada 1 "of the month"
+        // Alumni::whereNotNull('featured_at')->update(['featured_at' => null]); 
+
+        $alumni->update([
+            'featured_at' => now(),
+            'featured_reason' => $reason
+        ]);
+
+        return back()->with('success', 'Alumni berhasil dijadikan Alumni of the Month!');
+    }
 }
