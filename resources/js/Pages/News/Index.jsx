@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'; // <--- Tambah useRef
+import React, { useState, useEffect, useRef } from 'react'; 
 import { Head, router } from '@inertiajs/react';
 import PublicLayout from '../../Layouts/PublicLayout';
 import Pagination from '../../Components/Pagination';
@@ -43,19 +43,21 @@ function NewsIndex({ items, filters }) {
                 
                 {/* --- HEADER SECTION --- */}
                 <div className="max-w-[1440px] mx-auto px-8 md:px-20 lg:px-32 mb-12">
-                    <div className="border-b border-slate-300 dark:border-slate-700 pb-8 flex flex-col md:flex-row justify-between items-end gap-6">
+                    {/* MODIFICATION: Mengubah justify-between dan items-end menjadi items-start untuk rata kiri penuh */}
+                    <div className="border-b border-slate-300 dark:border-slate-700 pb-8 flex flex-col md:flex-row justify-between items-start gap-6">
                         <div>
                             <span className="font-mono text-xs tracking-[0.3em] uppercase text-brand-600 dark:text-brand-400 block mb-4">
                                 /// INFORMATION FEED
                             </span>
-                            <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-[0.9]">
+                            <h1 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-[0.9]">
                                 WARTA <span className="text-slate-400 dark:text-slate-600">&</span> <br/>
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-purple-600">AGENDA.</span>
+                                <span className="text-brand-600 dark:text-brand-400">AGENDA.</span>
                             </h1>
                         </div>
                         
-                        {/* Ticker */}
-                        <div className="hidden lg:flex items-center gap-4 font-mono text-xs text-slate-400 uppercase tracking-widest border border-slate-300 dark:border-slate-700 px-4 py-2 rounded-none bg-white dark:bg-slate-900">
+                        {/* Ticker (Dipertahankan di kanan, tapi dalam align items-start container) */}
+                        {/* Tambahkan ml-auto untuk dorong ke kanan */}
+                        <div className="hidden lg:flex items-center gap-4 font-mono text-xs text-slate-400 uppercase tracking-widest border border-slate-300 dark:border-slate-700 px-4 py-2 rounded-none bg-white dark:bg-slate-900 ml-auto">
                             <span className="w-2 h-2 bg-green-500 animate-pulse rounded-full"></span>
                             System Online
                             <span className="mx-2">|</span>
@@ -71,7 +73,7 @@ function NewsIndex({ items, filters }) {
                             <button
                                 onClick={() => setType('news')}
                                 className={`
-                                    h-12 px-8 text-xs font-bold uppercase tracking-widest transition-all border border-r-0 border-slate-300 dark:border-slate-700
+                                    h-12 px-6 sm:px-8 text-xs font-bold uppercase tracking-widest transition-all border border-r-0 border-slate-300 dark:border-slate-700
                                     ${type === 'news' 
                                         ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' 
                                         : 'bg-transparent text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800'
@@ -83,7 +85,7 @@ function NewsIndex({ items, filters }) {
                             <button
                                 onClick={() => setType('event')}
                                 className={`
-                                    h-12 px-8 text-xs font-bold uppercase tracking-widest transition-all border border-slate-300 dark:border-slate-700
+                                    h-12 px-6 sm:px-8 text-xs font-bold uppercase tracking-widest transition-all border border-slate-300 dark:border-slate-700
                                     ${type === 'event' 
                                         ? 'bg-purple-600 text-white border-purple-600' 
                                         : 'bg-transparent text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800'

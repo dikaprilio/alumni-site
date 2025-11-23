@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Link } from '@inertiajs/react'; // Jangan lupa import Link
-import AlumniIDCard from './AlumniIDCard'; // Import komponen kartu baru
+import { Link } from '@inertiajs/react'; 
+import AlumniIDCard from './AlumniIDCard'; 
 
 export default function AlumniSection({ alumniList = [] }) {
     const [activeFilter, setActiveFilter] = useState('All');
@@ -41,16 +41,18 @@ export default function AlumniSection({ alumniList = [] }) {
                             <span className="w-2 h-2 bg-brand-600"></span>
                             <span className="font-mono text-xs tracking-[0.3em] uppercase text-slate-500">Directory</span>
                         </div>
-                        <h2 className="text-5xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-[0.85]">
-                            Jejak<br/>
+                        {/* MODIFICATION: Judul kini menggunakan text-4xl di mobile */}
+                        <h2 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-[0.85]">
+                            Alumni<br/>
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-400 dark:from-white dark:to-slate-500">
-                                Perintis.
+                                Global Impact.
                             </span>
                         </h2>
                     </div>
                     
+                    {/* MODIFICATION: Copywriting diubah agar lebih profesional */}
                     <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-md text-right leading-relaxed font-medium">
-                        Database terverifikasi lulusan kami yang kini memimpin inovasi di berbagai sektor industri global.
+                        Temukan para lulusan terverifikasi yang kini aktif memimpin inovasi dan memberikan kontribusi nyata di berbagai sektor industri.
                     </p>
                 </div>
 

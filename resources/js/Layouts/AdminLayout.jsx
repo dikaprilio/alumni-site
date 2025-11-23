@@ -131,6 +131,9 @@ export default function AdminLayout({ children }) {
                     <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 mt-6">Content & Events</p>
                     <SidebarItem href="/admin/news" icon="fa-newspaper" label="News & Updates" />
                     <SidebarItem href="/admin/events" icon="fa-calendar-day" label="Events Agenda" />
+
+                    <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 mt-6">System</p>
+                    <SidebarItem href="/admin/logs" icon="fa-list-check" label="Activity Logs" />
                 </nav>
 
                 {/* Sidebar Footer (User Profile & Actions) */}

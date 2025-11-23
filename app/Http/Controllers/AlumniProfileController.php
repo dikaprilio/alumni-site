@@ -10,6 +10,7 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use App\Services\ActivityLogger; // Import Logger
 
 class AlumniProfileController extends Controller
 {
@@ -168,6 +169,8 @@ class AlumniProfileController extends Controller
             $alumni->skills()->detach();
         }
 
+        ActivityLogger::log('UPDATE_PROFILE', 'User updated their profile.');
+
         return back()->with('message', 'Profil berhasil diperbarui!');
     }
 
@@ -200,12 +203,17 @@ class AlumniProfileController extends Controller
 
         $request->user()->alumni->jobHistories()->create($validated);
 
+        ActivityLogger::log('ADD_JOB', 'User added a job history.', ['company' => $validated['company_name']]);
+
         return back()->with('message', 'Work experience added!');
     }
 
     public function deleteJobHistory(Request $request, $id)
     {
         $request->user()->alumni->jobHistories()->findOrFail($id)->delete();
+        
+        ActivityLogger::log('DELETE_JOB', 'User deleted a job history.', ['job_id' => $id]);
+
         return back()->with('message', 'Work experience deleted.');
     }
 
@@ -244,6 +252,9 @@ class AlumniProfileController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
         $request->user()->update(['password' => Hash::make($validated['password'])]);
+
+        ActivityLogger::log('UPDATE_PASSWORD', 'User changed their password.');
+
         return back()->with('message', 'Password berhasil diubah.');
     }
 
@@ -253,6 +264,9 @@ class AlumniProfileController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $request->user()->id],
         ]);
         $request->user()->update(['email' => $validated['email'], 'email_verified_at' => null]);
+
+        ActivityLogger::log('UPDATE_EMAIL', 'User changed their email address.');
+
         return back()->with('message', 'Email berhasil diperbarui. Silakan verifikasi ulang.');
     }
     

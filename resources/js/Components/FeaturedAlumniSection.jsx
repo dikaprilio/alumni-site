@@ -8,7 +8,6 @@ export default function FeaturedAlumniSection({ alumni }) {
         <section className="relative py-24 overflow-hidden bg-slate-50 dark:bg-slate-950 font-sans">
             
             {/* --- 1. BACKGROUND PATTERN (Tech/Modern Feel) --- */}
-            {/* Menggunakan pola dot grid halus sebagai ganti blur blob yang umum */}
             <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none" 
                  style={{ 
                      backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', 
@@ -16,10 +15,9 @@ export default function FeaturedAlumniSection({ alumni }) {
                  }}>
             </div>
             
-            {/* Dekorasi Garis Geometris di pojok */}
             <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-brand-500/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="max-w-[1440px] mx-auto px-8 md:px-20 lg:px-32 relative z-10">
                 <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-center">
                     
                     {/* --- 2. LEFT CONTENT (Typography Focus) --- */}
@@ -68,19 +66,21 @@ export default function FeaturedAlumniSection({ alumni }) {
                         </div>
 
                         {/* Action Buttons (High Contrast) */}
-                        <div className="flex flex-wrap gap-4 pt-2">
+                        <div className="flex gap-4 pt-2">
                             <Link 
                                 href={route('public.alumni.show', alumni.id)} 
-                                className="px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold hover:-translate-y-1 transition-all shadow-xl shadow-slate-900/10 flex items-center gap-3"
+                                // MODIFICATION: Changed py-4 to py-3 and text-xs to text-sm
+                                className="flex-1 px-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-sm uppercase tracking-widest hover:-translate-y-1 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3"
                             >
-                                Lihat Profil Lengkap <i className="fa-solid fa-arrow-right"></i>
+                                Profil <i className="fa-solid fa-arrow-right"></i>
                             </Link>
                             {alumni.linkedin_url && (
                                 <a 
                                     href={alumni.linkedin_url} 
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
+                                    // MODIFICATION: Changed py-4 to py-3 and added text-sm
+                                    className="flex-1 px-4 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
                                 >
                                     <i className="fa-brands fa-linkedin text-blue-600 text-xl"></i> LinkedIn
                                 </a>
