@@ -33,9 +33,10 @@ function OpportunitiesIndex({ opportunities }) {
                             <span className="font-mono text-xs tracking-[0.3em] uppercase text-brand-600 dark:text-brand-400 block mb-4">
                                 /// CAREER & GROWTH
                             </span>
-                            <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-[0.9]">
+                            {/* MODIFICATION: Judul kini menggunakan text-4xl di mobile, dan menghilangkan gradien */}
+                            <h1 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-[0.9]">
                                 OPPORTUNITIES <span className="text-slate-400 dark:text-slate-600">&</span> <br/>
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-purple-600">NETWORK.</span>
+                                <span className="text-brand-600 dark:text-brand-400">NETWORK.</span>
                             </h1>
                         </div>
 
@@ -58,7 +59,7 @@ function OpportunitiesIndex({ opportunities }) {
                             <button
                                 onClick={() => setActiveTab('JOB')}
                                 className={`
-                                    h-12 px-8 text-xs font-bold uppercase tracking-widest transition-all border border-r-0 border-slate-300 dark:border-slate-700
+                                    h-12 px-6 sm:px-8 text-xs font-bold uppercase tracking-widest transition-all border border-r-0 border-slate-300 dark:border-slate-700
                                     ${activeTab === 'JOB' 
                                         ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' 
                                         : 'bg-transparent text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800'
@@ -71,7 +72,7 @@ function OpportunitiesIndex({ opportunities }) {
                             <button
                                 onClick={() => setActiveTab('MENTORING')}
                                 className={`
-                                    h-12 px-8 text-xs font-bold uppercase tracking-widest transition-all border border-slate-300 dark:border-slate-700
+                                    h-12 px-6 sm:px-8 text-xs font-bold uppercase tracking-widest transition-all border border-slate-300 dark:border-slate-700
                                     ${activeTab === 'MENTORING' 
                                         ? 'bg-purple-600 text-white border-purple-600' 
                                         : 'bg-transparent text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800'
@@ -124,7 +125,6 @@ function OpportunitiesIndex({ opportunities }) {
         </>
     );
 }
-
 
 
 // Layout

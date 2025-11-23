@@ -93,7 +93,7 @@ export default function Header() {
                         <div className="relative z-10 flex items-center gap-1 px-2 py-1.5">
                             <NavLink href="/" active={url === '/'} isScrolled={isScrolled} isDark={isDark}>Home</NavLink>
                             <NavLink href="/directory" active={url.startsWith('/directory')} isScrolled={isScrolled} isDark={isDark}>Alumni</NavLink>
-                            <NavLink href="/opportunities" active={url.startsWith('/opportunities')} isScrolled={isScrolled} isDark={isDark}>Karir</NavLink>
+                            <NavLink href="/opportunities" active={url.startsWith('/opportunities')} isScrolled={isScrolled} isDark={isDark} id="nav-opportunities">Karir</NavLink>
                             <NavLink href="/news" active={url.startsWith('/news')} isScrolled={isScrolled} isDark={isDark}>Berita</NavLink>
                         </div>
                     </div>
@@ -164,7 +164,7 @@ export default function Header() {
 
                     <MobileLink href="/" active={url === '/'} icon="fa-house">Home</MobileLink>
                     <MobileLink href="/directory" active={url.startsWith('/directory')} icon="fa-user-graduate">Alumni</MobileLink>
-                    <MobileLink href="/opportunities" active={url.startsWith('/opportunities')} icon="fa-briefcase">Karir</MobileLink>
+                    <MobileLink href="/opportunities" active={url.startsWith('/opportunities')} icon="fa-briefcase" id="mobile-nav-opportunities">Karir</MobileLink>
                     <MobileLink href="/news" active={url.startsWith('/news')} icon="fa-newspaper">Berita</MobileLink>
 
                     {/* KONDISIONAL AUTH BUTTON (Mobile) */}
@@ -195,7 +195,7 @@ export default function Header() {
     );
 }
 
-function NavLink({ href, children, active, isScrolled, isDark }) {
+function NavLink({ href, children, active, isScrolled, isDark, ...props }) {
     let classes = "px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ";
     if (active) {
         classes += "bg-brand-600 text-white shadow-md shadow-brand-500/20";
@@ -206,10 +206,10 @@ function NavLink({ href, children, active, isScrolled, isDark }) {
             classes += "text-slate-700 hover:bg-white/50 hover:text-brand-700 dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white";
         }
     }
-    return <Link href={href} className={classes}>{children}</Link>;
+    return <Link href={href} className={classes} {...props}>{children}</Link>;
 }
 
-function MobileLink({ href, icon, children, active, isProfile, customClass }) {
+function MobileLink({ href, icon, children, active, isProfile, customClass, ...props }) {
     return (
         <Link
             href={href}
@@ -222,6 +222,7 @@ function MobileLink({ href, icon, children, active, isProfile, customClass }) {
                 ${isProfile ? 'bg-slate-100 dark:bg-slate-800 ml-1' : ''}
                 ${customClass || ''}
             `}
+            {...props}
         >
             <i className={`fa-solid ${icon} text-xl mb-0.5 ${isProfile && !active ? 'text-slate-700 dark:text-slate-300' : ''}`}></i>
             <span className="text-[10px] font-medium">{children}</span>

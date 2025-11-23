@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
+use App\Services\ActivityLogger; // Import Logger
 
 class AuthController extends Controller
 {
@@ -41,6 +42,8 @@ class AuthController extends Controller
                     'email' => 'Akun ini adalah akun Admin. Silakan login di halaman Admin.',
                 ]);
             }
+
+            ActivityLogger::log('LOGIN', 'User logged in via standard login.');
 
             return redirect()->intended(route('alumni.root'));
         }
@@ -78,6 +81,8 @@ class AuthController extends Controller
                 ]);
             }
 
+            ActivityLogger::log('ADMIN_LOGIN', 'Admin logged in.');
+
             // LOGIC UPDATE:
             // "intended" checks if the user was trying to access a specific page before being intercepted.
             // If yes -> redirects there.
@@ -94,6 +99,10 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        if (Auth::check()) {
+            ActivityLogger::log('LOGOUT', 'User logged out.');
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();
@@ -173,6 +182,8 @@ class AuthController extends Controller
 
         // 5. Login User
         Auth::login($user);
+
+        ActivityLogger::log('REGISTER', 'User registered account.', ['nim' => $alumni->nim]);
 
         // 6. Bersihkan session
         $request->session()->forget(['register_nim', 'register_name']);

@@ -38,7 +38,7 @@ class Alumni extends Model
     protected $with = ['user'];
 
     // Tambahkan 'current_job' ke output JSON
-    protected $appends = ['profile_completeness', 'current_job'];
+    protected $appends = ['profile_completeness', 'current_job', 'missing_fields'];
 
     public function user()
     {
@@ -99,9 +99,9 @@ class Alumni extends Model
     public function getProfileCompletenessAttribute()
     {
         $points = 0;
-        $total_criteria = 5; 
+        $total_criteria = 6; // HARUS 6 KRITERIA
 
-        // 1. Contact Info
+        // 1. Contact Info (Phone & Address)
         if (!empty($this->phone_number) && !empty($this->address)) {
             $points++;
         }
@@ -111,8 +111,9 @@ class Alumni extends Model
             $points++;
         }
 
-        // 3. Job Status (Cek dari relasi, bukan kolom tabel lagi)
-        if ($this->jobHistories()->exists()) {
+        // 3. Job Status (Current Position) - Cek apakah ada pekerjaan aktif (end_date NULL)
+        // Logika di Edit.jsx: alumni.job_histories.some(job => !job.end_date)
+        if ($this->jobHistories()->whereNull('end_date')->exists()) {
             $points++;
         }
 
@@ -121,12 +122,51 @@ class Alumni extends Model
             $points++;
         }
 
-        // 5. Experience (Sama dengan poin 3, bisa disesuaikan logikanya)
-        // Misalnya: Poin 3 untuk "Punya Pekerjaan Saat Ini", Poin 5 untuk "Punya Riwayat Apapun"
-        if ($this->jobHistories()->whereNotNull('end_date')->exists() || $this->jobHistories()->exists()) {
+        // 5. Bio (Harus ada dan > 20 karakter)
+        // Logika di Edit.jsx: data.bio && data.bio.length > 20
+        if (!empty($this->bio) && strlen($this->bio) > 20) {
+            $points++;
+        }
+        
+        // 6. Experience (Work History) - Cek apakah ada riwayat pekerjaan sama sekali
+        // Logika di Edit.jsx: alumni.job_histories.length > 0
+        if ($this->jobHistories()->exists()) {
             $points++;
         }
 
         return round(($points / $total_criteria) * 100);
+    }
+    public function getMissingFieldsAttribute()
+    {
+        $missing = [];
+
+        // 1. Contact Info
+        if (empty($this->phone_number)) $missing[] = 'Phone';
+        if (empty($this->address)) $missing[] = 'Address';
+
+        // 2. LinkedIn
+        if (empty($this->linkedin_url)) $missing[] = 'LinkedIn';
+
+        // 3. Job Status (Current Position)
+        if (!$this->jobHistories()->whereNull('end_date')->exists()) {
+            $missing[] = 'Current Position';
+        }
+
+        // 4. Skills
+        if (!$this->skills()->exists()) {
+            $missing[] = 'Skills';
+        }
+
+        // 5. Bio
+        if (empty($this->bio) || strlen($this->bio) <= 20) {
+            $missing[] = 'Bio';
+        }
+        
+        // 6. Experience (Work History)
+        if (!$this->jobHistories()->exists()) {
+            $missing[] = 'Work History';
+        }
+
+        return $missing;
     }
 }

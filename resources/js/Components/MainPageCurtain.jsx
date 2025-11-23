@@ -13,7 +13,7 @@ export default function MainPageCurtain() {
     useEffect(() => {
         const currentPath = url.split('?')[0];
         
-        const mainPages = ['/', '/directory', '/news', '/login', '/register', '/about', '/admin/login', '/error'];
+        const mainPages = ['/', '/directory', '/opportunities', '/news', '/login', '/register', '/about', '/admin/login', '/error'];
         
         // 1. Cek apakah ini Main Page ATAU Halaman Error
         const isCurrentMain = mainPages.includes(currentPath) || component === 'Error';

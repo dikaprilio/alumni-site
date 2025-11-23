@@ -18,8 +18,8 @@ export default function NewsSection({ latestUpdates = [] }) {
     return (
         <section className="relative py-16 md:py-24 bg-white dark:bg-slate-950 text-slate-900 dark:text-white font-sans border-y border-slate-200 dark:border-slate-800">
             
-            {/* CONTAINER RESPONSIVE: px-4 (HP) -> px-6 -> px-20 -> px-32 (Desktop) */}
-            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-20 lg:px-32 relative z-10">
+            {/* MODIFICATION: Mengubah padding agar konsisten dengan layout lain */}
+            <div className="max-w-[1440px] mx-auto px-8 md:px-20 lg:px-32 relative z-10">
                 
                 {/* --- HEADER --- */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12 border-b-4 border-slate-900 dark:border-white pb-4 md:pb-6">
@@ -78,10 +78,6 @@ function NewsCard({ item, size }) {
     const month = dateObj.toLocaleString('default', { month: 'short' }).toUpperCase();
 
     // --- LOGIC IMAGE FIX ---
-    // Jika item.image ada:
-    // 1. Cek apakah diawali 'http' (untuk dummy data / external link) -> Pakai langsung
-    // 2. Jika tidak (berarti dari DB / storage local) -> Tambahkan '/storage/'
-    // 3. Jika null -> Pakai default unsplash
     const imageUrl = item.image 
         ? (item.image.startsWith('http') ? item.image : `/storage/${item.image}`)
         : "https://images.unsplash.com/photo-1504384308090-c54be3852f33?q=80&w=800";

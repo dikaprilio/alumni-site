@@ -110,69 +110,12 @@ export default function Edit({ alumni, user_name, allSkills = [] }) {
     const [imageSrc, setImageSrc] = useState(null);
     const [isCropperOpen, setIsCropperOpen] = useState(false);
 
-    // Real-time Completeness State
-    const [completeness, setCompleteness] = useState(0);
-    const [missingFields, setMissingFields] = useState([]);
 
     // Flash Message
     const { flash } = usePage().props;
 
-    // --- EFFECT: CALCULATE COMPLETENESS ---
-    useEffect(() => {
-        let score = 0;
-        let missing = [];
-        const totalCriteria = 6;
-
-        // 1. Contact (Phone & Address)
-        if (data.phone_number && data.address) {
-            score++;
-        } else {
-            if (!data.phone_number) missing.push('Phone');
-            if (!data.address) missing.push('Address');
-        }
-
-        // 2. LinkedIn (NEW)
-        if (data.linkedin_url) {
-            score++;
-        } else {
-            missing.push('LinkedIn');
-        }
-
-        // 3. Job Status
-        // Check dynamically from alumni.job_histories
-        const hasCurrentJob = alumni.job_histories && alumni.job_histories.some(job => !job.end_date);
-        if (hasCurrentJob) {
-            score++;
-        } else {
-            missing.push('Current Position');
-        }
-
-        // 4. Skills
-        if (data.skills.length > 0) {
-            score++;
-        } else {
-            missing.push('Skills');
-        }
-
-        // 5. Bio
-        if (data.bio && data.bio.length > 20) {
-            score++;
-        } else {
-            missing.push('Bio');
-        }
-
-        // 6. Experience
-        if (alumni.job_histories && alumni.job_histories.length > 0) {
-            score++;
-        } else {
-            missing.push('Work History');
-        }
-
-        setCompleteness(Math.round((score / totalCriteria) * 100));
-        setMissingFields(missing);
-
-    }, [data, alumni.job_histories]);
-
+    const completeness = alumni.profile_completeness; // AMBIL DARI PROP
+    const missingFields = alumni.missing_fields;      // AMBIL DARI PROP
     // --- HANDLERS ---
 
     // 1. Triggered when user selects a file
@@ -491,19 +434,39 @@ export default function Edit({ alumni, user_name, allSkills = [] }) {
                         </div>
                     </div>
 
-                    {/* SUBMIT BUTTON */}
-                    <div className="flex justify-end pt-4 pb-10">
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="px-8 py-4 bg-brand-600 text-white font-black uppercase tracking-widest hover:bg-brand-700 transition-all shadow-lg hover:shadow-brand-600/30 disabled:opacity-70 rounded-xl flex items-center gap-3"
-                        >
-                            {processing && <i className="fa-solid fa-circle-notch fa-spin"></i>}
-                            {processing ? 'Saving...' : 'Save All Changes'}
-                        </button>
+                    {/* SUBMIT BUTTON - RESPONSIVE POSITIONING (Floating on Mobile, Docked on Desktop) */}
+                    <div className="
+                        fixed z-40 transition-all duration-300
+                        bottom-24 left-4 right-4 md:bottom-0 md:left-0 md:right-0
+                        md:p-4 md:px-12 
+                        md:bg-white/90 md:dark:bg-slate-950/90 md:backdrop-blur-lg md:border-t md:border-slate-200 md:dark:border-slate-800 md:shadow-[0_-4px_20px_rgba(0,0,0,0.05)]
+                        flex justify-end items-center
+                        pointer-events-none md:pointer-events-auto
+                    ">
+                        <div className="max-w-[800px] w-full mx-auto flex justify-between md:justify-end items-center gap-4 pointer-events-auto">
+                            <span className="text-xs text-slate-500 dark:text-slate-400 hidden md:block italic">
+                                Don't forget to save your changes &rarr;
+                            </span>
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className="
+                                    w-full md:w-auto px-6 py-3 bg-brand-600 text-white font-black uppercase tracking-widest 
+                                    hover:bg-brand-700 transition-all 
+                                    shadow-xl shadow-brand-600/20 md:shadow-lg md:hover:shadow-brand-600/30 
+                                    disabled:opacity-70 rounded-xl flex items-center justify-center gap-3 transform hover:-translate-y-1
+                                "
+                            >
+                                {processing && <i className="fa-solid fa-circle-notch fa-spin"></i>}
+                                {processing ? 'Saving...' : 'Save Changes'}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
+            
+            {/* SPACER FOR FIXED BOTTOM BAR (Increased for mobile safety) */}
+            <div className="h-40 md:h-24"></div>
 
             {/* --- MODAL: ADD JOB --- */}
             {isJobModalOpen && (

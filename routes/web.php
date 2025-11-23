@@ -131,6 +131,10 @@ Route::middleware(['auth', 'admin', 'verified'])->group(function () {
     
     Route::get('/admin/alumni/export', [AdminAlumniController::class, 'export'])->name('admin.alumni.export');
     
+    // Activity Logs
+    Route::get('/admin/logs', [App\Http\Controllers\AdminLogController::class, 'index'])->name('admin.logs.index');
+    Route::get('/admin/logs/export', [App\Http\Controllers\AdminLogController::class, 'export'])->name('admin.logs.export');
+
     // Route untuk toggle featured alumni (Alumni of the Month)
     Route::post('/admin/alumni/{id}/toggle-featured', [AdminAlumniController::class, 'toggleFeatured'])->name('admin.alumni.toggle_featured');
 
@@ -153,6 +157,15 @@ Route::get('/program', function () {
 // 5. ALUMNI ROUTES (PROFILE & DASHBOARD)
 Route::middleware(['auth', 'verified'])->group(function () {
     
+    // Tour Completed
+    Route::post('/user/tour-completed', function () {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->has_seen_tour = true;
+        $user->save();
+        return redirect()->back();
+    })->name('user.tour_completed');
+
     // "Smart Root" -> Directs to Setup or Dashboard
     Route::get('/alumni', [AlumniProfileController::class, 'root'])->name('alumni.root');
 

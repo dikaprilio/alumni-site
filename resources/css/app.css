@@ -242,3 +242,277 @@ body {
     animation: content-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     animation-delay: 0.5s;
 }
+
+/* =========================================
+   DRIVER.JS CUSTOM THEME (INDUSTRIAL LOOK)
+   ========================================= */
+
+/* Force Font Family on EVERYTHING inside the popover */
+.driver-popover,
+.driver-popover * {
+    font-family: 'Poppins', sans-serif !important;
+}
+
+.driver-popover.driver-theme-industrial,
+.driver-popover.driver-theme-industrial * {
+    font-family: 'Poppins', sans-serif !important;
+    box-sizing: border-box !important;
+}
+
+/* Base Popover Container */
+.driver-popover.driver-theme-industrial {
+    background-color: #ffffff !important;
+    color: #0f172a !important; /* slate-900 */
+    border: 1px solid #e2e8f0 !important; /* slate-200 */
+    border-radius: 1rem !important; /* rounded-2xl */
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important; /* shadow-xl */
+    padding: 0 !important;
+    overflow: hidden !important;
+    max-width: 400px !important;
+}
+
+/* Dark Mode Override for Container */
+.dark .driver-popover.driver-theme-industrial {
+    background-color: #0f172a !important; /* slate-900 */
+    color: #ffffff !important;
+    border-color: #1e293b !important; /* slate-800 */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important; /* shadow-2xl strong */
+}
+
+/* Title */
+.driver-theme-industrial .driver-popover-title {
+    font-size: 1.125rem !important; /* text-lg */
+    font-weight: 800 !important; /* font-extrabold */
+    text-transform: uppercase !important;
+    letter-spacing: -0.025em !important;
+    color: #0f172a !important; /* slate-900 */
+    padding: 1.5rem 1.5rem 0.5rem 1.5rem !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+}
+
+.dark .driver-theme-industrial .driver-popover-title {
+    color: #ffffff !important;
+}
+
+/* Description */
+.driver-theme-industrial .driver-popover-description {
+    font-size: 0.875rem !important; /* text-sm */
+    color: #64748b !important; /* slate-500 */
+    line-height: 1.6 !important;
+    padding: 0 1.5rem 1.5rem 1.5rem !important;
+    margin: 0 !important;
+}
+
+.dark .driver-theme-industrial .driver-popover-description {
+    color: #94a3b8 !important; /* slate-400 */
+}
+
+/* Footer Container */
+.driver-theme-industrial .driver-popover-footer {
+    background-color: #f8fafc !important; /* slate-50 */
+    border-top: 1px solid #f1f5f9 !important; /* slate-100 */
+    padding: 1rem 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-top: 0 !important;
+    gap: 1rem !important;
+}
+
+.dark .driver-theme-industrial .driver-popover-footer {
+    background-color: #020617 !important; /* slate-950 */
+    border-top-color: #1e293b !important; /* slate-800 */
+}
+
+/* Progress Text */
+.driver-theme-industrial .driver-popover-progress-text {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-size: 0.75rem !important; /* text-xs */
+    font-weight: 700 !important;
+    color: #94a3b8 !important; /* slate-400 */
+    letter-spacing: 0.1em !important; /* tracking-widest */
+}
+
+.dark .driver-theme-industrial .driver-popover-progress-text {
+    color: #475569 !important; /* slate-600 */
+}
+
+/* Navigation Buttons Wrapper */
+.driver-theme-industrial .driver-popover-navigation-btns {
+    display: flex !important;
+    gap: 0.75rem !important;
+}
+
+/* Buttons (Base) */
+.driver-theme-industrial .driver-popover-btn {
+    padding: 0.6rem 1.2rem !important;
+    font-size: 0.75rem !important; /* text-xs */
+    font-weight: 600 !important; /* Reduced further to prevent fake-bold rendering issues */
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    
+    /* AGGRESSIVE RESET FOR DOUBLE TEXT ISSUE */
+    text-shadow: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-text-stroke: 0 !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    
+    line-height: 1 !important;
+    height: auto !important;
+    animation: none !important;
+    background-image: none !important; /* Prevent gradients */
+}
+
+/* Ensure NO pseudo-elements are creating ghosts */
+.driver-theme-industrial .driver-popover-btn::before,
+.driver-theme-industrial .driver-popover-btn::after {
+    content: "" !important;
+    display: none !important;
+    background: none !important;
+    box-shadow: none !important;
+}
+
+/* Previous Button */
+.driver-theme-industrial .driver-popover-prev-btn {
+    background-color: transparent !important;
+    color: #64748b !important; /* slate-500 */
+    border: 1px solid #cbd5e1 !important; /* slate-300 */
+}
+
+.driver-theme-industrial .driver-popover-prev-btn:hover {
+    background-color: #f1f5f9 !important; /* slate-100 */
+    color: #0f172a !important; /* slate-900 */
+    border-color: #94a3b8 !important; /* slate-400 */
+}
+
+.dark .driver-theme-industrial .driver-popover-prev-btn {
+    color: #94a3b8 !important; /* slate-400 */
+    border-color: #334155 !important; /* slate-700 */
+}
+
+.dark .driver-theme-industrial .driver-popover-prev-btn:hover {
+    background-color: #1e293b !important; /* slate-800 */
+    color: #ffffff !important;
+    border-color: #475569 !important; /* slate-600 */
+}
+
+/* Next/Done Button */
+.driver-theme-industrial .driver-popover-next-btn {
+    background-color: #F52A91 !important; /* brand-500 */
+    color: #ffffff !important;
+    border: 1px solid #F52A91 !important;
+    box-shadow: 0 4px 6px -1px rgba(245, 42, 145, 0.3) !important;
+}
+
+.driver-theme-industrial .driver-popover-next-btn:hover {
+    background-color: #D9117A !important; /* brand-600 */
+    border-color: #D9117A !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 8px -1px rgba(245, 42, 145, 0.4) !important;
+}
+
+.dark .driver-theme-industrial .driver-popover-next-btn {
+    background-color: #F52A91 !important;
+    color: #ffffff !important;
+    border-color: #F52A91 !important;
+}
+
+.dark .driver-theme-industrial .driver-popover-next-btn:hover {
+    background-color: #D9117A !important;
+    border-color: #D9117A !important;
+}
+
+/* Close Button (X) */
+.driver-theme-industrial .driver-popover-close-btn {
+    color: #94a3b8 !important; /* slate-400 */
+    padding: 0.5rem !important;
+    top: 0.5rem !important;
+    right: 0.5rem !important;
+}
+
+.driver-theme-industrial .driver-popover-close-btn:hover {
+    color: #ef4444 !important; /* red-500 */
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    border-radius: 0.375rem !important;
+}
+
+/* Arrow (The little triangle) */
+.driver-theme-industrial .driver-popover-arrow-side-left.driver-popover-arrow {
+    border-left-color: #ffffff !important;
+}
+.dark .driver-theme-industrial .driver-popover-arrow-side-left.driver-popover-arrow {
+    border-left-color: #0f172a !important;
+}
+
+.driver-theme-industrial .driver-popover-arrow-side-right.driver-popover-arrow {
+    border-right-color: #ffffff !important;
+}
+.dark .driver-theme-industrial .driver-popover-arrow-side-right.driver-popover-arrow {
+    border-right-color: #0f172a !important;
+}
+
+.driver-theme-industrial .driver-popover-arrow-side-top.driver-popover-arrow {
+    border-top-color: #ffffff !important;
+}
+.dark .driver-theme-industrial .driver-popover-arrow-side-top.driver-popover-arrow {
+    border-top-color: #0f172a !important;
+}
+
+.driver-theme-industrial .driver-popover-arrow-side-bottom.driver-popover-arrow {
+    border-bottom-color: #ffffff !important;
+}
+.dark .driver-theme-industrial .driver-popover-arrow-side-bottom.driver-popover-arrow {
+    border-bottom-color: #0f172a !important;
+}
+
+/* =========================================
+   MOBILE RESPONSIVENESS FOR TOUR
+   ========================================= */
+@media (max-width: 768px) {
+    /* Make popover fit the screen width with some margin */
+    .driver-popover.driver-theme-industrial {
+        max-width: calc(100vw - 32px) !important;
+        min-width: 280px !important;
+        width: auto !important;
+        left: 16px !important; /* Force alignment if needed, though driver.js handles this usually */
+        right: 16px !important;
+        margin: 0 auto !important;
+        position: fixed !important; /* Ensure it stays on top */
+    }
+
+    /* Adjust typography for smaller screens */
+    .driver-theme-industrial .driver-popover-title {
+        font-size: 1rem !important;
+        padding: 1.25rem 1.25rem 0.5rem 1.25rem !important;
+    }
+
+    .driver-theme-industrial .driver-popover-description {
+        font-size: 0.8125rem !important; /* 13px */
+        line-height: 1.5 !important;
+        padding: 0 1.25rem 1.25rem 1.25rem !important;
+    }
+
+    /* Compact Footer */
+    .driver-theme-industrial .driver-popover-footer {
+        padding: 0.75rem 1.25rem !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Smaller Buttons */
+    .driver-theme-industrial .driver-popover-btn {
+        padding: 0.5rem 0.9rem !important;
+        font-size: 0.7rem !important;
+    }
+
+    /* Hide Progress Text on very small screens if needed, or make it smaller */
+    .driver-theme-industrial .driver-popover-progress-text {
+        font-size: 0.65rem !important;
+    }
+}
