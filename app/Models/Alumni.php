@@ -18,15 +18,15 @@ class Alumni extends Model
         'phone_number',
         'gender',
         'address',
-        'current_position',
-        'company_name',
+        // 'current_position', // Dihapus (Normalized)
+        // 'company_name',     // Dihapus (Normalized)
         'linkedin_url',
         'avatar',
         'bio',
-        'private_email', // Added
-        'private_phone', // Added
-        'featured_at',  // Added
-        'featured_reason', // Added
+        'private_email',
+        'private_phone',
+        'featured_at',
+        'featured_reason',
     ];
 
     protected $casts = [
@@ -35,28 +35,62 @@ class Alumni extends Model
         'featured_at' => 'datetime',
     ];
 
-    // Automatically verify user relationship
     protected $with = ['user'];
 
-    // Append completeness score to JSON responses
-    protected $appends = ['profile_completeness'];
+    // Tambahkan 'current_job' ke output JSON
+    protected $appends = ['profile_completeness', 'current_job'];
 
-    // Relasi ke User
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Alumni punya banyak Riwayat Kerja
     public function jobHistories()
     {
         return $this->hasMany(JobHistory::class)->orderBy('start_date', 'desc');
     }
 
-    // Alumni punya banyak Skill
+    // Helper: Ambil pekerjaan terbaru (yang end_date-nya kosong atau paling baru)
+    public function latestJob()
+    {
+        return $this->hasOne(JobHistory::class)->latestOfMany('start_date');
+    }
+
     public function skills()
     {
         return $this->belongsToMany(Skill::class, 'alumni_skill');
+    }
+
+    public function opportunities()
+    {
+        return $this->hasMany(Opportunity::class);
+    }
+
+    /**
+     * Accessor: Mendapatkan Current Position & Company secara dinamis
+     * Mengembalikan null jika tidak ada pekerjaan, atau object job history jika ada.
+     */
+    public function getCurrentJobAttribute()
+    {
+        // Cari pekerjaan yang sedang aktif (end_date NULL)
+        $activeJob = $this->jobHistories->whereNull('end_date')->first();
+        
+        if ($activeJob) {
+            return $activeJob;
+        }
+
+        // Jika tidak ada yang aktif, kembalikan pekerjaan terakhir (opsional)
+        return $this->latestJob;
+    }
+
+    public function getCurrentPositionAttribute()
+    {
+        return $this->current_job ? $this->current_job->job_title : null;
+    }
+
+    public function getCompanyNameAttribute()
+    {
+        return $this->current_job ? $this->current_job->company_name : null;
     }
 
     /**
@@ -67,7 +101,7 @@ class Alumni extends Model
         $points = 0;
         $total_criteria = 5; 
 
-        // 1. Contact Info (Phone & Address)
+        // 1. Contact Info
         if (!empty($this->phone_number) && !empty($this->address)) {
             $points++;
         }
@@ -77,18 +111,19 @@ class Alumni extends Model
             $points++;
         }
 
-        // 3. Job Status
-        if (!empty($this->current_position)) {
+        // 3. Job Status (Cek dari relasi, bukan kolom tabel lagi)
+        if ($this->jobHistories()->exists()) {
             $points++;
         }
 
-        // 4. Skills (At least 1)
+        // 4. Skills
         if ($this->skills()->exists()) {
             $points++;
         }
 
-        // 5. Experience (At least 1 job history)
-        if ($this->jobHistories()->exists()) {
+        // 5. Experience (Sama dengan poin 3, bisa disesuaikan logikanya)
+        // Misalnya: Poin 3 untuk "Punya Pekerjaan Saat Ini", Poin 5 untuk "Punya Riwayat Apapun"
+        if ($this->jobHistories()->whereNotNull('end_date')->exists() || $this->jobHistories()->exists()) {
             $points++;
         }
 

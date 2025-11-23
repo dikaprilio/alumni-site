@@ -7,6 +7,7 @@ use App\Models\JobPosting;
 use App\Models\News;
 use App\Models\Event;
 use App\Models\User;
+use App\Models\JobHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -38,10 +39,10 @@ class AdminController extends Controller
             ->values();
 
         // --- 3. DATA BARU: CAREER STATS (Employment Rate) ---
-        // Hitung yang sudah bekerja vs belum (berdasarkan current_position)
-        $employedCount = Alumni::whereNotNull('current_position')
-            ->where('current_position', '!=', '')
-            ->count();
+        // Hitung yang sudah bekerja vs belum (berdasarkan active job history)
+        $employedCount = Alumni::whereHas('jobHistories', function($q) {
+            $q->whereNull('end_date');
+        })->count();
         
         $unemployedCount = $totalAlumni - $employedCount;
 
@@ -52,10 +53,10 @@ class AdminController extends Controller
         ];
 
         // --- 4. DATA BARU: TOP 5 POSISI PEKERJAAN ---
-        $topPositions = Alumni::select('current_position', DB::raw('count(*) as total'))
-            ->whereNotNull('current_position')
-            ->where('current_position', '!=', '')
-            ->groupBy('current_position')
+        // Ambil dari JobHistory yang aktif
+        $topPositions = JobHistory::select('position as current_position', DB::raw('count(*) as total'))
+            ->whereNull('end_date')
+            ->groupBy('position')
             ->orderBy('total', 'desc')
             ->limit(5)
             ->get();

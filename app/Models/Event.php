@@ -10,6 +10,7 @@ class Event extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id', // Tambahkan ini
         'title',
         'category',
         'slug',
@@ -21,6 +22,9 @@ class Event extends Model
         'status'
     ];
 
-    // Nanti bisa tambah relasi ke pendaftar event disini
-    // public function registrations() { ... }
+    // Relasi: Event dibuat oleh User (Admin)
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

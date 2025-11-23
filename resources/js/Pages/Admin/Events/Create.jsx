@@ -4,6 +4,7 @@ import AdminLayout from '../../../Layouts/AdminLayout';
 import InputLabel from '../../../Components/InputLabel';
 import InputText from '../../../Components/InputText';
 import TextArea from '../../../Components/TextArea';
+import ImageCropperModal from '../../../Components/ImageCropperModal'; // Import Modal Cropper
 
 export default function CreateEvent() {
     const { data, setData, post, processing, errors } = useForm({
@@ -16,13 +17,30 @@ export default function CreateEvent() {
     });
 
     const [imagePreview, setImagePreview] = useState(null);
+    const [showCropper, setShowCropper] = useState(false);
+    const [cropperImageSrc, setCropperImageSrc] = useState(null);
 
+    // 1. Handle File Selection -> Open Cropper
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setData('image', file);
-            setImagePreview(URL.createObjectURL(file));
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                setCropperImageSrc(reader.result);
+                setShowCropper(true);
+            };
         }
+        e.target.value = null;
+    };
+
+    // 2. Handle Crop Complete
+    const handleCropComplete = async (croppedBlob) => {
+        const file = new File([croppedBlob], "event_banner.jpg", { type: "image/jpeg" });
+        
+        setData('image', file);
+        setImagePreview(URL.createObjectURL(croppedBlob));
+        setShowCropper(false);
     };
 
     const submit = (e) => {
@@ -34,6 +52,15 @@ export default function CreateEvent() {
         <AdminLayout>
             <Head title="Buat Event Baru" />
             
+            {/* --- CROPPER MODAL --- */}
+            <ImageCropperModal 
+                show={showCropper}
+                onClose={() => setShowCropper(false)}
+                imageSrc={cropperImageSrc}
+                onCropComplete={handleCropComplete}
+                aspectRatio={16/9} // Banner Event (Landscape)
+            />
+
             <div className="max-w-5xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
@@ -170,6 +197,7 @@ export default function CreateEvent() {
                                 </div>
                             </div>
                             {errors.image && <p className="text-red-500 text-xs mt-1">{errors.image}</p>}
+                            <p className="text-[10px] text-slate-400 mt-2 text-center">Format: 16:9 (Landscape)</p>
                         </div>
                     </div>
                 </form>

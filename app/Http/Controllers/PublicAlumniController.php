@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Alumni;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\DB; // <--- JANGAN LUPA INI
+use Illuminate\Support\Facades\DB;
 
 class PublicAlumniController extends Controller
 {
@@ -23,8 +23,11 @@ class PublicAlumniController extends Controller
                 // Teknik 'whereRaw' dengan 'LOWER()' memastikan pencarian tidak peduli kapitalisasi
                 // Ini bekerja aman di MySQL, PostgreSQL, dan SQLite
                 $q->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
-                  ->orWhereRaw('LOWER(current_position) LIKE ?', ["%{$term}%"])
-                  ->orWhereRaw('LOWER(company_name) LIKE ?', ["%{$term}%"])
+                  // Cari di Job History (Position & Company)
+                  ->orWhereHas('jobHistories', function($jq) use ($term) {
+                      $jq->whereRaw('LOWER(position) LIKE ?', ["%{$term}%"])
+                         ->orWhereRaw('LOWER(company_name) LIKE ?', ["%{$term}%"]);
+                  })
                   // Cari juga di dalam relasi Skills
                   ->orWhereHas('skills', function($sq) use ($term) {
                       $sq->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"]);
@@ -52,7 +55,10 @@ class PublicAlumniController extends Controller
                 $query->where(function($q) use ($keywords) {
                     foreach ($keywords as $word) {
                         // Kita juga pakai LOWER disini untuk konsistensi
-                        $q->orWhereRaw('LOWER(current_position) LIKE ?', ["%{$word}%"]);
+                        // Cari di Job History
+                        $q->orWhereHas('jobHistories', function($jq) use ($word) {
+                            $jq->whereRaw('LOWER(position) LIKE ?', ["%{$word}%"]);
+                        });
                     }
                 });
             }

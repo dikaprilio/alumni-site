@@ -13,7 +13,7 @@ export default function PublicLayout({ children }) {
     const prevPathRef = useRef(currentPath);
 
     // Logic Penentuan Animasi
-    const mainPages = ['/', '/directory', '/news', '/login', '/register', '/about', '/admin/login'];
+    const mainPages = ['/', '/directory', '/news', '/login', '/register', '/about', '/admin/login', '/opportunities'];
     const isMainPage = mainPages.includes(currentPath);
     
     // Cek apakah path berubah (Bukan sekadar query string)

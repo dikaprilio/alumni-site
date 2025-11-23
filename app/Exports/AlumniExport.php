@@ -3,14 +3,12 @@
 namespace App\Exports;
 
 use App\Models\Alumni;
-// --- ADD THESE IMPORTS (Fixes 'undefined type FromQuery' etc) ---
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-// ------------------------------------------------
 
 class AlumniExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
@@ -52,8 +50,8 @@ class AlumniExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $alumni->major,
             $alumni->user ? $alumni->user->email : '-', // Ambil email dari relasi user
             $alumni->phone_number,
-            $alumni->current_position,
-            $alumni->company_name,
+            $alumni->current_position, // Menggunakan Accessor (Normalized)
+            $alumni->company_name,     // Menggunakan Accessor (Normalized)
             $alumni->address,
         ];
     }

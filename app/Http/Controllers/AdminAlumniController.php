@@ -32,10 +32,13 @@ class AdminAlumniController extends Controller
                         $subQ->where('name', 'like', "%{$word}%")
                              ->orWhere('nim', 'like', "%{$word}%")
                              ->orWhere('major', 'like', "%{$word}%")
-                             ->orWhere('company_name', 'like', "%{$word}%")
-                             ->orWhere('current_position', 'like', "%{$word}%")
                              ->orWhere('address', 'like', "%{$word}%")
                              ->orWhere('graduation_year', 'like', "%{$word}%")
+                             // Search in Job History (Position & Company)
+                             ->orWhereHas('jobHistories', function($jobQ) use ($word) {
+                                 $jobQ->where('position', 'like', "%{$word}%")
+                                      ->orWhere('company_name', 'like', "%{$word}%");
+                             })
                              ->orWhereHas('user', function($u) use ($word) {
                                  $u->where('email', 'like', "%{$word}%");
                              });
@@ -52,10 +55,14 @@ class AdminAlumniController extends Controller
         if ($request->filled('employment_status')) {
             $status = $request->input('employment_status');
             if ($status === 'employed') {
-                $query->whereNotNull('current_position')->where('current_position', '!=', '');
+                // Has at least one active job (end_date is NULL)
+                $query->whereHas('jobHistories', function($q) {
+                    $q->whereNull('end_date');
+                });
             } elseif ($status === 'unemployed') {
-                $query->where(function($q) {
-                    $q->whereNull('current_position')->orWhere('current_position', '=', '');
+                // No active jobs
+                $query->whereDoesntHave('jobHistories', function($q) {
+                    $q->whereNull('end_date');
                 });
             }
         }
@@ -88,9 +95,8 @@ class AdminAlumniController extends Controller
                     (CASE WHEN phone_number IS NOT NULL AND phone_number != '' THEN 1 ELSE 0 END +
                      CASE WHEN address IS NOT NULL AND address != '' THEN 1 ELSE 0 END +
                      CASE WHEN linkedin_url IS NOT NULL AND linkedin_url != '' THEN 1 ELSE 0 END +
-                     CASE WHEN current_position IS NOT NULL AND current_position != '' THEN 1 ELSE 0 END +
-                     (SELECT COUNT(*) FROM alumni_skill WHERE alumni_skill.alumni_id = alumnis.id LIMIT 1) +
-                     (SELECT COUNT(*) FROM job_histories WHERE job_histories.alumni_id = alumnis.id LIMIT 1)
+                     (SELECT COUNT(*) FROM job_histories WHERE job_histories.alumni_id = alumnis.id LIMIT 1) +
+                     (SELECT COUNT(*) FROM alumni_skill WHERE alumni_skill.alumni_id = alumnis.id LIMIT 1)
                     ) $sortDir
                 ");
             } else {
@@ -107,7 +113,10 @@ class AdminAlumniController extends Controller
     {
         $query = $this->getFilteredQuery($request);
 
-        $alumni = $query->paginate(10)->withQueryString();
+        // Eager load jobHistories for display
+        $alumni = $query->with(['jobHistories' => function($q) {
+            $q->whereNull('end_date')->latest('start_date');
+        }])->paginate(10)->withQueryString();
 
         $graduationYears = Alumni::select('graduation_year')
             ->whereNotNull('graduation_year')
@@ -126,6 +135,11 @@ class AdminAlumniController extends Controller
     {
         $query = $this->getFilteredQuery($request);
         
+        // Eager load jobHistories to avoid N+1 in Export
+        $query->with(['jobHistories' => function($q) {
+            $q->whereNull('end_date')->latest('start_date');
+        }]);
+
         $type = $request->input('type', 'xlsx');
         $timestamp = date('Y-m-d_H-i');
         $filename = "data_alumni_{$timestamp}.{$type}";
@@ -168,7 +182,7 @@ class AdminAlumniController extends Controller
                 $userId = $user->id;
             }
 
-            Alumni::create([
+            $alumni = Alumni::create([
                 'user_id' => $userId,
                 'name' => $request->name,
                 'nim' => $request->nim,
@@ -178,9 +192,19 @@ class AdminAlumniController extends Controller
                 'date_of_birth' => $request->date_of_birth,
                 'address' => $request->address,
                 'phone_number' => $request->phone_number,
-                'current_position' => $request->current_position,
-                'company_name' => $request->company_name,
+                // 'current_position' => $request->current_position, // Removed
+                // 'company_name' => $request->company_name, // Removed
             ]);
+
+            // Create Job History if provided
+            if ($request->filled('current_position') && $request->filled('company_name')) {
+                $alumni->jobHistories()->create([
+                    'position' => $request->current_position,
+                    'company_name' => $request->company_name,
+                    'start_date' => now(),
+                    'end_date' => null, // Active
+                ]);
+            }
 
             DB::commit();
             return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil ditambahkan.');
@@ -192,8 +216,18 @@ class AdminAlumniController extends Controller
 
     public function edit($id)
     {
-        $alumni = Alumni::with('user')->findOrFail($id);
+        // Load active job for editing
+        $alumni = Alumni::with(['user', 'jobHistories' => function($q) {
+            $q->whereNull('end_date')->latest('start_date');
+        }])->findOrFail($id);
 
+        // Append current_position and company_name for frontend compatibility if needed, 
+        // or let the frontend read from jobHistories[0]
+        // But since we added accessors in Model, it might be auto-appended if we used append.
+        // However, for editing, we might want to explicitly pass it if the frontend expects it in the root object.
+        // The frontend Edit.jsx likely expects 'current_position' in the alumni object.
+        // The accessors I added to the model should handle `$alumni->current_position` reads.
+        
         return Inertia::render('Admin/Alumni/Edit', [
             'alumni' => $alumni
         ]);
@@ -218,12 +252,44 @@ class AdminAlumniController extends Controller
                 'nim' => $request->nim,
                 'graduation_year' => $request->graduation_year,
                 'major' => $request->major,
-                'current_position' => $request->current_position,
-                'company_name' => $request->company_name,
+                // 'current_position' => $request->current_position, // Removed
+                // 'company_name' => $request->company_name, // Removed
                 'address' => $request->address,
                 'phone_number' => $request->phone_number,
                 'bio' => $request->bio,
             ]);
+
+            // Update Job History
+            if ($request->has('current_position') || $request->has('company_name')) {
+                $position = $request->input('current_position');
+                $company = $request->input('company_name');
+
+                // Find active job
+                $activeJob = $alumni->jobHistories()->whereNull('end_date')->first();
+
+                if ($position && $company) {
+                    if ($activeJob) {
+                        $activeJob->update([
+                            'position' => $position,
+                            'company_name' => $company,
+                        ]);
+                    } else {
+                        $alumni->jobHistories()->create([
+                            'position' => $position,
+                            'company_name' => $company,
+                            'start_date' => now(),
+                            'end_date' => null,
+                        ]);
+                    }
+                } elseif ($activeJob && empty($position) && empty($company)) {
+                    // If fields cleared, maybe end the job? Or delete?
+                    // For now, let's assume clearing means "no longer working there" -> end date now?
+                    // Or just delete if it was a mistake?
+                    // Let's just update it to empty or delete if that's the intention.
+                    // But usually "required" validation prevents empty.
+                    // If not required, and empty, maybe do nothing or remove.
+                }
+            }
 
             if ($request->filled('email')) {
                 if ($alumni->user) {

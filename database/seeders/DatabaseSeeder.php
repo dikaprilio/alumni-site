@@ -38,7 +38,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Isi data detail alumninya
-        Alumni::create([
+        $alumni1 = Alumni::create([
             'user_id' => $alumniUser->id,
             'name' => 'Budi Santoso',
             'nim' => 'J3D119001',
@@ -47,10 +47,17 @@ class DatabaseSeeder extends Seeder
             'phone_number' => '081234567890',
             'gender' => 'L',
             'address' => 'Jl. Kumbang No. 1, Bogor',
-            'current_position' => 'Backend Developer (Laravel)',
-            'company_name' => 'Tokopedia',
             'linkedin_url' => 'https://linkedin.com/in/budisantoso',
             'created_at' => now()->subMonths(6)
+        ]);
+
+        // Create Job History for Budi
+        $alumni1->jobHistories()->create([
+            'position' => 'Backend Developer (Laravel)',
+            'company_name' => 'Tokopedia',
+            'start_date' => now()->subMonths(6),
+            'end_date' => null, // Active
+            'description' => 'Developing backend services.'
         ]);
 
         // 3. Bikin Data Alumni TANPA AKUN (Untuk tes registrasi)
@@ -63,22 +70,20 @@ class DatabaseSeeder extends Seeder
             'phone_number' => '08987654321',
             'gender' => 'P',
             'address' => 'Jl. Pajajaran No. 10, Bogor',
-            'current_position' => null,
-            'company_name' => null,
             'linkedin_url' => null,
             'created_at' => now()->subMonths(1)
         ]);
 
 
-        // --- 4. GENERATE 200 DUMMY ALUMNI ---
-        // Alumni dengan akun terverifikasi (80%)
-        Alumni::factory()->count(160)->create(); 
+        // --- 4. GENERATE DUMMY ALUMNI (Reduced) ---
+        // Alumni dengan akun terverifikasi
+        Alumni::factory()->count(10)->create(); 
         
-        // Alumni dengan akun BELUM terverifikasi (10%)
-        Alumni::factory()->count(20)->unverified()->create(); 
+        // Alumni dengan akun BELUM terverifikasi
+        Alumni::factory()->count(2)->unverified()->create(); 
 
-        // Alumni yang datanya ada, tapi belum punya akun user (10%)
-        Alumni::factory()->count(20)->unlinked()->create(); 
+        // Alumni yang datanya ada, tapi belum punya akun user
+        Alumni::factory()->count(2)->unlinked()->create(); 
 
         
         // 5. Bikin Data Master SKILL (Unchanged)
@@ -106,10 +111,10 @@ class DatabaseSeeder extends Seeder
             'created_at' => now()->subDays(2)
         ]);
 
-        // Generate random News
-        News::factory()->count(20)->create();
+        // Generate random News (Reduced)
+        News::factory()->count(5)->create();
 
-        // 7. DUMMY EVENTS
-        \App\Models\Event::factory()->count(10)->create();
+        // 7. DUMMY EVENTS (Reduced)
+        \App\Models\Event::factory()->count(3)->create();
     }
 }

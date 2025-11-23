@@ -40,13 +40,11 @@ export default function NewsSection({ latestUpdates = [] }) {
                 <div className="border-t border-l border-slate-200 dark:border-slate-800 grid grid-cols-1 md:grid-cols-12">
                     
                     {/* 1. HERO ITEM */}
-                    {/* Mobile: Full Width, Height 300px. Desktop: 7/12 Width, Height 500px */}
                     <div className="col-span-1 md:col-span-12 lg:col-span-7 border-r border-b border-slate-200 dark:border-slate-800 min-h-[300px] md:min-h-[500px] relative group overflow-hidden">
                         <NewsCard item={displayItems[0]} size="hero" />
                     </div>
 
                     {/* 2. SIDE STACK */}
-                    {/* Mobile: Stacked. Tablet: Side-by-side. Desktop: Stacked Vertical */}
                     <div className="col-span-1 md:col-span-12 lg:col-span-5 flex flex-col md:flex-row lg:flex-col">
                         {/* Item 1 */}
                         <div className="flex-1 border-r border-b border-slate-200 dark:border-slate-800 min-h-[220px] md:min-h-[250px] relative group overflow-hidden">
@@ -59,7 +57,6 @@ export default function NewsSection({ latestUpdates = [] }) {
                     </div>
 
                     {/* 3. BOTTOM STRIP */}
-                    {/* Mobile: Stacked. Tablet/Desktop: 3 Columns */}
                     {displayItems.slice(3, 6).map((item) => (
                         <div key={item.id} className="col-span-1 md:col-span-4 border-r border-b border-slate-200 dark:border-slate-800 min-h-[250px] md:min-h-[350px] relative group overflow-hidden">
                             <NewsCard item={item} size="standard" />
@@ -76,15 +73,24 @@ export default function NewsSection({ latestUpdates = [] }) {
 function NewsCard({ item, size }) {
     if (!item) return null;
     const isEvent = item.type === 'EVENT';
-    const dateObj = new Date(item.date);
+    const dateObj = new Date(item.date || item.created_at); // Handle created_at fallback
     const day = dateObj.getDate();
     const month = dateObj.toLocaleString('default', { month: 'short' }).toUpperCase();
+
+    // --- LOGIC IMAGE FIX ---
+    // Jika item.image ada:
+    // 1. Cek apakah diawali 'http' (untuk dummy data / external link) -> Pakai langsung
+    // 2. Jika tidak (berarti dari DB / storage local) -> Tambahkan '/storage/'
+    // 3. Jika null -> Pakai default unsplash
+    const imageUrl = item.image 
+        ? (item.image.startsWith('http') ? item.image : `/storage/${item.image}`)
+        : "https://images.unsplash.com/photo-1504384308090-c54be3852f33?q=80&w=800";
 
     return (
         <Link href={isEvent ? `/events/${item.id}` : `/news/${item.id}`} className="block w-full h-full relative">
             <div className="absolute inset-0 bg-slate-200 dark:bg-slate-900 overflow-hidden">
                 <img 
-                    src={item.image || "https://images.unsplash.com/photo-1504384308090-c54be3852f33?q=80&w=800"} 
+                    src={imageUrl} 
                     alt={item.title} 
                     className={`
                         w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105 grayscale group-hover:grayscale-0

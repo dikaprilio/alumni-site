@@ -13,14 +13,20 @@ return new class extends Migration
     {
         Schema::create('events', function (Blueprint $table) {
             $table->id();
+            
+            // Menghubungkan Event dengan User (Admin) yang membuatnya
+            $table->foreignId('user_id')
+                  ->nullable() // Boleh null jika admin dihapus
+                  ->constrained('users')
+                  ->onDelete('set null');
+
             $table->string('title');
             $table->string('slug')->unique();
             $table->text('description');
-            $table->dateTime('event_date'); // Tanggal & Jam
+            $table->dateTime('event_date'); 
             $table->string('location');
             $table->string('image')->nullable();
             
-            // Status acara: Akan datang, Sedang jalan, atau Selesai
             $table->enum('status', ['upcoming', 'ongoing', 'finished'])->default('upcoming');
             
             $table->timestamps();

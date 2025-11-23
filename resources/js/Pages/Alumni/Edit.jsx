@@ -78,6 +78,7 @@ const CompletenessWidget = ({ completeness, missingFields }) => {
 export default function Edit({ alumni, user_name, allSkills = [] }) {
 
     // 1. MAIN FORM STATE (PROFILE)
+    // REMOVED current_position and company_name from here as requested
     const { data, setData, post, processing, errors } = useForm({
         _method: 'POST',
         avatar: null,
@@ -86,8 +87,6 @@ export default function Edit({ alumni, user_name, allSkills = [] }) {
         address: alumni.address || '',
         graduation_year: alumni.graduation_year || new Date().getFullYear(),
         major: alumni.major || 'Teknik Komputer',
-        current_position: alumni.current_position || '',
-        company_name: alumni.company_name || '',
         linkedin_url: alumni.linkedin_url || '', // NEW FIELD
         bio: alumni.bio || '',
         skills: alumni.skills ? alumni.skills.map(s => s.id) : [],
@@ -140,7 +139,9 @@ export default function Edit({ alumni, user_name, allSkills = [] }) {
         }
 
         // 3. Job Status
-        if (data.current_position) {
+        // Check dynamically from alumni.job_histories
+        const hasCurrentJob = alumni.job_histories && alumni.job_histories.some(job => !job.end_date);
+        if (hasCurrentJob) {
             score++;
         } else {
             missing.push('Current Position');
@@ -349,20 +350,18 @@ export default function Edit({ alumni, user_name, allSkills = [] }) {
                         </div>
                     </div>
 
-                    {/* 3. PROFESSIONAL DATA */}
+                    {/* 3. PROFESSIONAL DATA - Updated: Removed manual Current Position inputs */}
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 md:p-8 rounded-2xl shadow-sm">
                         <div className="flex items-center gap-3 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
                             <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
-                                <i className="fa-solid fa-briefcase"></i>
+                                <i className="fa-solid fa-graduation-cap"></i>
                             </div>
                             <h3 className="font-bold text-lg text-slate-900 dark:text-white uppercase tracking-wide">
-                                Current Status
+                                Academic Info
                             </h3>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <InputGroup label="Current Position" id="job" value={data.current_position} onChange={e => setData('current_position', e.target.value)} error={errors.current_position} placeholder="e.g. Software Engineer" />
-                            <InputGroup label="Company Name" id="company" value={data.company_name} onChange={e => setData('company_name', e.target.value)} error={errors.company_name} placeholder="e.g. Google Indonesia" />
                             <InputGroup label="Graduation Year" id="year" type="number" value={data.graduation_year} onChange={e => setData('graduation_year', e.target.value)} error={errors.graduation_year} />
                             <InputGroup label="Major / Jurusan" id="major" value={data.major} onChange={e => setData('major', e.target.value)} error={errors.major} />
                         </div>
@@ -386,6 +385,12 @@ export default function Edit({ alumni, user_name, allSkills = [] }) {
                             >
                                 <i className="fa-solid fa-plus"></i> Add Job
                             </button>
+                        </div>
+
+                         {/* Note explaining normalization */}
+                        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-lg flex items-start gap-2">
+                            <i className="fa-solid fa-circle-info mt-0.5"></i>
+                            <p>Your "Current Position" is determined automatically by the job marked as <strong>Present</strong> below.</p>
                         </div>
 
                         <div className="space-y-6 relative">
