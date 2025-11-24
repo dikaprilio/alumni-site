@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Daftarkan alias 'admin' agar bisa dipanggil di route
         $middleware->alias([
             'admin' => \App\Http\Middleware\IsAdmin::class,
+            'redirect.admin' => \App\Http\Middleware\RedirectAdmin::class,
         ]);
         // -------------------------
 

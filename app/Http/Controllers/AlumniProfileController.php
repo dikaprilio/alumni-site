@@ -11,9 +11,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use App\Services\ActivityLogger; // Import Logger
+use App\Services\ImageUploadService;
 
 class AlumniProfileController extends Controller
 {
+    protected $imageUploadService;
+
+    public function __construct(ImageUploadService $imageUploadService)
+    {
+        $this->imageUploadService = $imageUploadService;
+    }
+
     // --- ROOT & SETUP ---
 
     public function root(Request $request)
@@ -138,25 +146,34 @@ class AlumniProfileController extends Controller
         $user = $request->user();
         $alumni = $user->alumni;
 
+        // Sanitize bio to prevent XSS attacks
+        if ($request->has('bio')) {
+            $request->merge(['bio' => clean($request->input('bio'))]);
+        }
+
         // PERBAIKAN: Hapus current_position & company_name dari validasi Update Profil Utama
         // User harus mengedit pekerjaan lewat fitur Job History
         $validated = $request->validate([
             'phone_number'      => 'required|string|max:20',
             'address'           => 'required|string|max:500',
-            'bio'               => 'nullable|string|max:1000',
+            'bio'               => 'nullable|string|min:21|max:1000', // Minimum 21 chars to count for profile strength
             'linkedin_url'      => 'nullable|url|max:255',
             'graduation_year'   => 'required|integer|min:1900|max:' . (date('Y') + 1),
             'major'             => 'nullable|string|max:100',
-            'avatar'            => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'avatar'            => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             // KEMBALI: validasi skills wajib ada agar sync aman
             'skills'            => 'array',
             'skills.*'          => 'exists:skills,id',
         ]);
 
         if ($request->hasFile('avatar')) {
-            if ($alumni->avatar) Storage::disk('public')->delete($alumni->avatar);
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $validated['avatar'] = $path;
+            // Delete old avatar
+            $this->imageUploadService->delete($alumni->avatar);
+            // Upload new avatar (resize to 500x500)
+            $validated['avatar'] = $this->imageUploadService->upload($request->file('avatar'), 'avatars', 500, 500);
+        } else {
+            // Prevent overwriting existing avatar with null if no new file is uploaded
+            unset($validated['avatar']);
         }
 
         // Update alumni hanya dengan data yang valid
@@ -193,6 +210,11 @@ class AlumniProfileController extends Controller
     // method addJobHistory()
     public function addJobHistory(Request $request)
     {
+        // Sanitize description to prevent XSS
+        if ($request->has('description')) {
+            $request->merge(['description' => clean($request->input('description'))]);
+        }
+
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'position'     => 'required|string|max:255',
@@ -221,16 +243,16 @@ class AlumniProfileController extends Controller
     public function updateAvatar(Request $request)
     {
         $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         $alumni = $request->user()->alumni;
 
         if ($request->file('avatar')) {
-            if ($alumni->avatar) {
-                Storage::disk('public')->delete($alumni->avatar);
-            }
-            $path = $request->file('avatar')->store('avatars', 'public');
+            // Delete old avatar
+            $this->imageUploadService->delete($alumni->avatar);
+            // Upload new avatar (resize to 500x500)
+            $path = $this->imageUploadService->upload($request->file('avatar'), 'avatars', 500, 500);
             $alumni->update(['avatar' => $path]);
         }
 

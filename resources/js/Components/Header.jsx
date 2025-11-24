@@ -56,21 +56,30 @@ export default function Header() {
                         transition-all duration-500 ease-in-out border
                         ${isScrolled
                             ? 'w-[95%] md:w-[85%] max-w-6xl py-3 px-6 rounded-full shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-slate-700'
-                            : 'w-full max-w-[1920px] py-5 px-6 md:px-12 bg-white/0 dark:bg-slate-900/0 border-white/0 dark:border-slate-700/0 shadow-none'
+                            : 'w-full max-w-7xl py-4 px-4 bg-transparent border-transparent'
                         }
                     `}
                 >
-                    {/* Logo Section - CHANGED TO LINK */}
+                    {/* Logo Section */}
                     <Link href="/" className="flex items-center gap-2 group cursor-pointer">
-                        <div className={`
-                            w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-500
-                            ${isScrolled
-                                ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
-                                : 'bg-brand-600 text-white dark:bg-white/10 dark:text-white backdrop-blur-md'
-                            }
-                        `}>
-                            <i className="fa-solid fa-graduation-cap text-lg"></i>
+                        <div
+                            className={`
+                                w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 overflow-hidden
+                                ${isScrolled
+                                    ? `
+                                        bg-white/80 text-slate-900
+                                        dark:bg-white/10 dark:text-white backdrop-blur-md shadow-md
+                                    `
+                                    : `
+                                        bg-transparent text-slate-900
+                                        dark:bg-white/10 dark:text-white backdrop-blur-md
+                                    `
+                                }
+                            `}
+                        >
+                            <img src="/images/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
                         </div>
+
                         <span className={`
                             text-xl font-bold tracking-tight transition-colors duration-500
                             ${isScrolled
@@ -85,10 +94,10 @@ export default function Header() {
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex relative items-center justify-center">
                         <div className={`
-                            absolute inset-0 rounded-full transition-opacity duration-500 ease-in-out
-                            bg-white/50 dark:bg-white/5 backdrop-blur-sm border border-white/10
-                            ${isScrolled ? 'opacity-0' : 'opacity-100'}
-                        `}></div>
+                                    absolute inset-0 rounded-full transition-opacity duration-500 ease-in-out
+                                    bg-white/50 dark:bg-white/5 backdrop-blur-sm border border-white/10
+                                    ${isScrolled ? 'opacity-0' : 'opacity-100'}
+                                `}></div>
 
                         <div className="relative z-10 flex items-center gap-1 px-2 py-1.5">
                             <NavLink href="/" active={url === '/'} isScrolled={isScrolled} isDark={isDark}>Home</NavLink>

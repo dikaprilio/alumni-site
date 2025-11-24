@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Alumni;
 use App\Models\User;
 use App\Exports\AlumniExport;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -207,8 +208,16 @@ class AdminAlumniController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil ditambahkan.');
-        } catch (\Exception $e) {
+        
+        // Log activity
+        ActivityLogger::log(
+            'ADMIN_CREATE_ALUMNI', 
+            "Membuat data alumni: {$alumni->name} (NIM: {$alumni->nim})" . ($userId ? ' dengan akun user' : ' tanpa akun user'),
+            ['alumni_id' => $alumni->id, 'nim' => $alumni->nim, 'has_account' => (bool)$userId]
+        );
+        
+        return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil ditambahkan.');
+    } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Terjadi kesalahan saat menyimpan data. ' . $e->getMessage()]);
         }
@@ -310,26 +319,44 @@ class AdminAlumniController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil diperbarui.');
+        
+        // Log activity
+        ActivityLogger::log(
+            'ADMIN_UPDATE_ALUMNI',
+            "Memperbarui data alumni: {$alumni->name} (NIM: {$alumni->nim})",
+            ['alumni_id' => $alumni->id, 'nim' => $alumni->nim]
+        );
+        
+        return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil diperbarui.');
 
-        } catch (\Exception $e) {
+    } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Gagal memperbarui data: ' . $e->getMessage()]);
         }
     }
 
     public function destroy($id)
-    {
-        $alumni = Alumni::findOrFail($id);
-        
-        if ($alumni->user_id) {
-            User::destroy($alumni->user_id);
-        }
-        
-        $alumni->delete();
-
-        return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil dihapus.');
+{
+    $alumni = Alumni::findOrFail($id);
+    $alumniName = $alumni->name;
+    $alumniNim = $alumni->nim;
+    $hadAccount = (bool)$alumni->user_id;
+    
+    if ($alumni->user_id) {
+        User::destroy($alumni->user_id);
     }
+    
+    $alumni->delete();
+    
+    // Log activity
+    ActivityLogger::log(
+        'ADMIN_DELETE_ALUMNI',
+        "Menghapus data alumni: {$alumniName} (NIM: {$alumniNim})" . ($hadAccount ? ' beserta akun user' : ''),
+        ['nim' => $alumniNim, 'had_account' => $hadAccount]
+    );
+
+    return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil dihapus.');
+}    
 
     public function toggleFeatured(Request $request, $id)
     {

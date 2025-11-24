@@ -38,7 +38,7 @@ class Alumni extends Model
     protected $with = ['user'];
 
     // Tambahkan 'current_job' ke output JSON
-    protected $appends = ['profile_completeness', 'current_job', 'missing_fields'];
+    protected $appends = ['profile_completeness', 'current_job', 'current_position', 'company_name', 'missing_fields'];
 
     public function user()
     {
@@ -85,7 +85,7 @@ class Alumni extends Model
 
     public function getCurrentPositionAttribute()
     {
-        return $this->current_job ? $this->current_job->job_title : null;
+        return $this->current_job ? $this->current_job->position : null; // Fix: property name is 'position' not 'job_title'
     }
 
     public function getCompanyNameAttribute()
@@ -99,7 +99,7 @@ class Alumni extends Model
     public function getProfileCompletenessAttribute()
     {
         $points = 0;
-        $total_criteria = 6; // HARUS 6 KRITERIA
+        $total_criteria = 7; // INCREASED TO 7 (Added Avatar)
 
         // 1. Contact Info (Phone & Address)
         if (!empty($this->phone_number) && !empty($this->address)) {
@@ -112,7 +112,6 @@ class Alumni extends Model
         }
 
         // 3. Job Status (Current Position) - Cek apakah ada pekerjaan aktif (end_date NULL)
-        // Logika di Edit.jsx: alumni.job_histories.some(job => !job.end_date)
         if ($this->jobHistories()->whereNull('end_date')->exists()) {
             $points++;
         }
@@ -123,19 +122,23 @@ class Alumni extends Model
         }
 
         // 5. Bio (Harus ada dan > 20 karakter)
-        // Logika di Edit.jsx: data.bio && data.bio.length > 20
         if (!empty($this->bio) && strlen($this->bio) > 20) {
             $points++;
         }
         
         // 6. Experience (Work History) - Cek apakah ada riwayat pekerjaan sama sekali
-        // Logika di Edit.jsx: alumni.job_histories.length > 0
         if ($this->jobHistories()->exists()) {
+            $points++;
+        }
+
+        // 7. Avatar (New Criteria)
+        if (!empty($this->avatar)) {
             $points++;
         }
 
         return round(($points / $total_criteria) * 100);
     }
+
     public function getMissingFieldsAttribute()
     {
         $missing = [];
@@ -165,6 +168,11 @@ class Alumni extends Model
         // 6. Experience (Work History)
         if (!$this->jobHistories()->exists()) {
             $missing[] = 'Work History';
+        }
+
+        // 7. Avatar
+        if (empty($this->avatar)) {
+            $missing[] = 'Profile Picture';
         }
 
         return $missing;

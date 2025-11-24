@@ -4,9 +4,11 @@ import AdminLayout from '../../../Layouts/AdminLayout';
 import InputLabel from '../../../Components/InputLabel';
 import InputText from '../../../Components/InputText';
 import TextArea from '../../../Components/TextArea';
-import ImageCropperModal from '../../../Components/ImageCropperModal'; // Import Modal Cropper
+import ImageCropperModal from '../../../Components/ImageCropperModal';
+import { useToast } from '../../../Components/ToastContext';
 
 export default function EditNews({ news }) {
+    const { addToast } = useToast();
     const { data, setData, processing, errors } = useForm({
         title: news.title || '',
         category: news.category || 'General',
@@ -37,7 +39,7 @@ export default function EditNews({ news }) {
     // 2. Handle Crop Complete
     const handleCropComplete = async (croppedBlob) => {
         const file = new File([croppedBlob], "news_cover_edit.jpg", { type: "image/jpeg" });
-        
+
         setData('image', file);
         setImagePreview(URL.createObjectURL(croppedBlob));
         setShowCropper(false);
@@ -46,20 +48,23 @@ export default function EditNews({ news }) {
     const submit = (e) => {
         e.preventDefault();
         // Gunakan POST karena kita mengirim FormData (file), tapi Laravel akan membacanya sebagai PUT via _method
-        router.post(route('admin.news.update', news.id), data);
+        router.post(route('admin.news.update', news.id), data, {
+            onSuccess: () => addToast('Berita berhasil diperbarui.', 'success'),
+            onError: () => addToast('Gagal memperbarui berita.', 'error'),
+        });
     };
 
     return (
         <AdminLayout>
             <Head title="Edit Artikel" />
-            
+
             {/* --- CROPPER MODAL --- */}
-            <ImageCropperModal 
+            <ImageCropperModal
                 show={showCropper}
                 onClose={() => setShowCropper(false)}
                 imageSrc={cropperImageSrc}
                 onCropComplete={handleCropComplete}
-                aspectRatio={16/9} // RUMUS: 16:9 untuk Berita
+                aspectRatio={16 / 9} // RUMUS: 16:9 untuk Berita
             />
 
             <div className="max-w-5xl mx-auto">
@@ -77,17 +82,17 @@ export default function EditNews({ news }) {
                         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
                             <div>
                                 <InputLabel htmlFor="title" value="Judul Artikel" />
-                                <InputText 
-                                    id="title" 
-                                    value={data.title} 
-                                    onChange={(e) => setData('title', e.target.value)} 
+                                <InputText
+                                    id="title"
+                                    value={data.title}
+                                    onChange={(e) => setData('title', e.target.value)}
                                     className="mt-1 font-bold text-lg"
                                 />
                                 {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
                             </div>
                             <div>
                                 <InputLabel htmlFor="content" value="Isi Konten" />
-                                <TextArea 
+                                <TextArea
                                     id="content"
                                     value={data.content}
                                     onChange={(e) => setData('content', e.target.value)}
@@ -104,7 +109,7 @@ export default function EditNews({ news }) {
                             <h3 className="font-bold text-sm border-b border-slate-100 dark:border-slate-800 pb-3">Pengaturan</h3>
                             <div>
                                 <InputLabel htmlFor="category" value="Kategori" />
-                                <select 
+                                <select
                                     id="category"
                                     value={data.category}
                                     onChange={(e) => setData('category', e.target.value)}
@@ -119,8 +124,8 @@ export default function EditNews({ news }) {
                                 {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category}</p>}
                             </div>
                             <div className="pt-2">
-                                <button 
-                                    type="submit" 
+                                <button
+                                    type="submit"
                                     disabled={processing}
                                     className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow-lg transition-all"
                                 >

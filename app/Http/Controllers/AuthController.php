@@ -209,6 +209,13 @@ class AuthController extends Controller
 
         if ($user->markEmailAsVerified()) {
             event(new \Illuminate\Auth\Events\Verified($user));
+            
+            // Log account activation
+            ActivityLogger::log(
+                'ACCOUNT_ACTIVATED',
+                "Alumni mengaktifkan akun melalui verifikasi email: {$user->email}",
+                ['user_id' => $user->id, 'email' => $user->email]
+            );
         }
 
         return redirect()->route('alumni.root')->with('verified', true);

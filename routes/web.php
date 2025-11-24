@@ -10,9 +10,10 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminAlumniController;
 use App\Http\Controllers\AdminNewsController;
 use App\Http\Controllers\AdminEventController;
-use App\Http\Controllers\AdminJobController;
+use App\Http\Controllers\AdminOpportunityController; // Changed from AdminJobController
 use App\Http\Controllers\AlumniProfileController;
 use App\Http\Controllers\AdminSettingsController;
+use App\Http\Controllers\OpportunityController;
 use App\Models\Alumni;
 use App\Models\News;
 use App\Models\Event;
@@ -29,7 +30,6 @@ Route::get('/directory/{id}', [PublicAlumniController::class, 'show'])->name('pu
 Route::get('/', function () {
 
     // 1. Fetch Alumni Acak untuk Card
-    // 1. Fetch Alumni Acak untuk Card
     $alumniList = Alumni::with(['skills', 'jobHistories' => function ($query) {
             $query->whereNull('end_date'); // Ambil pekerjaan aktif
         }])
@@ -38,14 +38,12 @@ Route::get('/', function () {
         ->limit(8)
         ->get()
         ->map(function ($alumni) {
-            // Map legacy attributes to relationship data for frontend compatibility
             $alumni->current_position = $alumni->jobHistories->first()?->position;
             $alumni->company_name = $alumni->jobHistories->first()?->company_name;
             return $alumni;
         });
 
     // 2. Statistik Pekerjaan (Top 5)
-    // Query langsung ke tabel job_histories untuk performa dan akurasi
     $jobStats = \App\Models\JobHistory::select('position as current_position', DB::raw('count(*) as total'))
         ->whereNull('end_date') // Hanya pekerjaan aktif
         ->groupBy('position')
@@ -79,8 +77,7 @@ Route::get('/', function () {
     // 6. Merge & Sort News + Events
     $latestUpdates = $news->concat($events)->sortByDesc('date')->take(6)->values();
 
-    // 7. (BARU) Fetch Alumni of the Month
-    // Ambil satu alumni yang punya timestamp 'featured_at' paling baru
+    // 7. Fetch Alumni of the Month
     $alumniOfTheMonth = Alumni::whereNotNull('featured_at')
         ->orderByDesc('featured_at')
         ->first();
@@ -92,7 +89,7 @@ Route::get('/', function () {
         'jobStats'     => $jobStats,
         'totalAlumni'  => $totalAlumni,
         'latestUpdates' => $latestUpdates,
-        'alumniOfTheMonth' => $alumniOfTheMonth, // <-- Kirim data ini ke frontend
+        'alumniOfTheMonth' => $alumniOfTheMonth,
     ]);
 
 })->name('home');
@@ -108,12 +105,12 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegisterStep1'])->name('register.step1');
     Route::post('/register/check-nim', [AuthController::class, 'checkNim'])->middleware('throttle:10,1')->name('register.checkNim');
     Route::get('/register/create', [AuthController::class, 'showRegisterStep2'])->name('register.step2');
-    Route::post('/register', [AuthController::class, 'register'])->name('register.process');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:3,1')->name('register.process');
 
     Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
-    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->middleware('throttle:3,1')->name('password.email');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
-    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:3,1')->name('password.update');
 });
 
 // 3. Verification Routes
@@ -142,7 +139,9 @@ Route::middleware(['auth', 'admin', 'verified'])->group(function () {
     Route::resource('/admin/alumni', AdminAlumniController::class)->names('admin.alumni');
     Route::resource('/admin/news', AdminNewsController::class)->names('admin.news');
     Route::resource('/admin/events', AdminEventController::class)->names('admin.events');
-    Route::resource('/admin/jobs', AdminJobController::class)->names('admin.jobs');
+    
+    // REPLACED: Jobs with Opportunities
+    Route::resource('/admin/opportunities', AdminOpportunityController::class)->names('admin.opportunities');
 
     // Settings Routes
     Route::get('/admin/settings', [AdminSettingsController::class, 'index'])->name('admin.settings');
@@ -154,8 +153,9 @@ Route::middleware(['auth', 'admin', 'verified'])->group(function () {
 Route::get('/program', function () {
     return Inertia::render('Program/Index');
 })->name('public.program');
+
 // 5. ALUMNI ROUTES (PROFILE & DASHBOARD)
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'redirect.admin'])->group(function () {
     
     // Tour Completed
     Route::post('/user/tour-completed', function () {
@@ -184,13 +184,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/alumni/settings', [AlumniProfileController::class, 'settings'])->name('alumni.settings');
     Route::post('/alumni/settings/password', [AlumniProfileController::class, 'updatePassword'])->name('alumni.update.password');
     Route::post('/alumni/settings/email', [AlumniProfileController::class, 'updateEmail'])->name('alumni.update.email');
-    Route::post('/alumni/jobs', [App\Http\Controllers\AlumniProfileController::class, 'addJobHistory'])->name('alumni.jobs.add');
-    Route::delete('/alumni/jobs/{id}', [App\Http\Controllers\AlumniProfileController::class, 'deleteJobHistory'])->name('alumni.jobs.delete');
+    Route::post('/alumni/jobs', [AlumniProfileController::class, 'addJobHistory'])->name('alumni.jobs.add');
+    Route::delete('/alumni/jobs/{id}', [AlumniProfileController::class, 'deleteJobHistory'])->name('alumni.jobs.delete');
 
     // OPPORTUNITIES (JOBS & MENTORING)
-    Route::get('/opportunities', [App\Http\Controllers\OpportunityController::class, 'index'])->name('opportunities.index');
-    Route::post('/opportunities', [App\Http\Controllers\OpportunityController::class, 'store'])->name('opportunities.store');
-    Route::delete('/opportunities/{id}', [App\Http\Controllers\OpportunityController::class, 'destroy'])->name('opportunities.destroy');
+    Route::get('/opportunities', [OpportunityController::class, 'index'])->name('opportunities.index');
+    Route::post('/opportunities', [OpportunityController::class, 'store'])->name('opportunities.store');
+    Route::delete('/opportunities/{id}', [OpportunityController::class, 'destroy'])->name('opportunities.destroy');
 });
 
 // 6. Logout
