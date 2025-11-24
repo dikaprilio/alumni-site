@@ -2,19 +2,304 @@
 
 Panduan lengkap untuk deploy aplikasi Alumni Site ke Hostinger.
 
+**Dua Metode Deployment:**
+
+| Fitur | 🚀 Metode Git | 📁 Metode Manual |
+|-------|---------------|------------------|
+| **Kesulitan** | Sedang (perlu Git & SSH) | Mudah (hanya File Manager) |
+| **Update** | Mudah (`git pull`) | Manual upload ulang |
+| **Version Control** | ✅ Terintegrasi | ❌ Tidak ada |
+| **SSH Required** | ✅ Ya | ❌ Tidak (opsional) |
+| **Cocok untuk** | Production, sering update | One-time deploy, pemula |
+| **Auto-deploy** | ✅ Bisa setup webhook | ❌ Tidak |
+
+**Rekomendasi:**
+- **Gunakan Metode Git** jika Anda familiar dengan Git dan ingin mudah update di masa depan
+- **Gunakan Metode Manual** jika ini deployment pertama kali dan ingin lebih simple
+
 ---
 
 ## 📋 Prasyarat
 
 1. **Akun Hostinger** dengan akses ke:
-   - File Manager atau SSH
-   - Database Manager (phpPgAdmin atau cPanel)
+   - **File Manager** (wajib - untuk upload file)
+   - **Database Manager** (phpPgAdmin atau cPanel) - untuk setup database
+   - **SSH Access** (opsional - hanya jika perlu run command `php artisan`)
    - Domain atau subdomain yang sudah dikonfigurasi
 
 2. **Persiapan Lokal:**
    - Aplikasi sudah berjalan dengan baik di localhost
    - Semua test sudah passing
    - Build production sudah siap
+
+### ⚠️ Kapan Butuh SSH/Putty?
+
+**TIDAK PERLU SSH jika:**
+- ✅ Upload file via File Manager
+- ✅ Setup database via Database Manager
+- ✅ Edit file `.env` via File Manager
+- ✅ Set permission via File Manager
+
+**PERLU SSH jika:**
+- ⚠️ Ingin run command `php artisan migrate`
+- ⚠️ Ingin run command `php artisan key:generate`
+- ⚠️ Ingin run command `php artisan storage:link`
+- ⚠️ Ingin run command `php artisan config:cache`
+
+**Alternatif tanpa SSH:**
+- Banyak command bisa dijalankan via **Hostinger's Terminal** di hPanel (jika tersedia)
+- Atau jalankan semua command di lokal sebelum upload (recommended!)
+
+---
+
+## 🚀 METODE 1: Deployment via Git (Recommended)
+
+Metode ini menggunakan Git/GitHub untuk deployment, lebih efisien dan mudah di-update.
+
+### Keuntungan Metode Git:
+- ✅ Mudah update (tinggal `git pull`)
+- ✅ Version control terintegrasi
+- ✅ Potensi auto-deploy dengan webhook
+- ✅ Tidak perlu upload file manual berulang kali
+- ✅ Lebih profesional dan scalable
+
+### Step 1: Persiapan GitHub Repository
+
+1. **Buat Repository di GitHub:**
+   - Login ke GitHub
+   - Buat repository baru (misalnya: `alumni-site`)
+   - Jangan centang "Initialize with README" (karena kita sudah punya project)
+
+2. **Inisialisasi Git di Project Lokal:**
+   ```bash
+   # Di folder project lokal
+   git init
+   git add .
+   git commit -m "Initial commit - Alumni Site"
+   git branch -M main
+   git remote add origin https://github.com/username/alumni-site.git
+   git push -u origin main
+   ```
+
+3. **Pastikan file penting sudah di-commit:**
+   - ✅ Semua source code
+   - ✅ `composer.json` dan `composer.lock`
+   - ✅ `package.json` dan `package-lock.json`
+   - ✅ `.env.example`
+   - ❌ Jangan commit: `.env`, `vendor/`, `node_modules/`
+
+### Step 2: Setup di Hostinger hPanel
+
+1. **Buat Website Baru:**
+   - Login ke hPanel Hostinger
+   - Pilih **Websites** → **Add Website**
+   - Pilih **Custom PHP** atau **HTML website**
+   - Buat sebagai subdomain atau domain utama
+
+2. **Setup Git di hPanel:**
+   - Masuk ke **Advanced** → **Git**
+   - Klik **Create**
+   - Masukkan:
+     - **Repository URL:** `https://github.com/username/alumni-site.git`
+     - **Branch:** `main`
+     - **Directory:** `domains/yourdomain.com/public_html` (atau sesuai path Anda)
+   - Klik **Create**
+
+3. **Cek PHP Version:**
+   - Pastikan PHP version sudah **8.2 atau lebih tinggi**
+   - Bisa diubah di **Advanced** → **PHP Configuration**
+
+4. **Aktifkan SSH:**
+   - Pastikan **SSH Status** sudah aktif
+   - Download SSH credentials (IP, Port, Username) dari hPanel
+
+### Step 3: Install Dependencies via SSH
+
+1. **Login ke SSH:**
+   ```bash
+   # Windows: Gunakan Putty atau PowerShell
+   ssh username@your-server-ip -p port
+   
+   # Mac/Linux: Gunakan Terminal
+   ssh username@your-server-ip -p port
+   ```
+
+2. **Masuk ke Direktori Project:**
+   ```bash
+   cd domains/yourdomain.com/public_html
+   # atau
+   cd public_html
+   ```
+
+3. **Pull dari GitHub:**
+   ```bash
+   git pull origin main
+   ```
+
+4. **Install Composer Dependencies:**
+   
+   **Opsi A: Gunakan Composer.phar (Recommended - untuk menghindari versi lama)**
+   
+   Download composer.phar di lokal:
+   ```bash
+   # Di lokal, download composer.phar
+   curl -sS https://getcomposer.org/installer | php
+   ```
+   
+   Commit composer.phar ke GitHub:
+   ```bash
+    git add composer.phar
+   git commit -m "Add composer.phar"
+   git push origin main
+   ```
+   
+   Di server, pull dan install:
+   ```bash
+   git pull origin main
+   php composer.phar install --optimize-autoloader --no-dev
+   ```
+   
+   **Opsi B: Gunakan Composer Global (jika sudah terinstall di server)**
+   ```bash
+   composer install --optimize-autoloader --no-dev
+   ```
+
+5. **Install NPM Dependencies & Build:**
+   ```bash
+   npm install
+   npm run build
+   ```
+
+### Step 4: Setup Database & Environment
+
+1. **Buat Database di hPanel:**
+   - Masuk ke **Database** → **PostgreSQL Databases**
+   - Buat database baru (contoh: `alumni_site_db`)
+   - Buat user baru dan berikan akses
+   - Catat: Database Name, Username, Password, Host
+
+2. **Buat File .env:**
+   ```bash
+   # Di SSH
+   cd domains/yourdomain.com/public_html
+   cp .env.example .env
+   nano .env
+   ```
+   
+   Atau via **File Manager**:
+   - Upload `.env.example` ke `public_html`
+   - Rename menjadi `.env`
+   - Edit dan isi dengan konfigurasi:
+   
+   ```dotenv
+   APP_NAME="Alumni Site"
+   APP_ENV=production
+   APP_KEY=
+   APP_DEBUG=false
+   APP_TIMEZONE=Asia/Jakarta
+   APP_URL=https://yourdomain.com
+   
+   DB_CONNECTION=pgsql
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_DATABASE=your_database_name
+   DB_USERNAME=your_database_user
+   DB_PASSWORD=your_database_password
+   
+   LOG_CHANNEL=production
+   LOG_STACK=daily
+   LOG_LEVEL=error
+   ```
+
+3. **Generate App Key:**
+   ```bash
+   php artisan key:generate
+   ```
+
+4. **Run Migrations:**
+   ```bash
+   php artisan migrate --force
+   ```
+
+5. **Link Storage:**
+   ```bash
+   php artisan storage:link
+   ```
+
+### Step 5: Setup URL tanpa /public
+
+Secara default, Laravel perlu diakses via `/public`. Untuk menghilangkan `/public` dari URL:
+
+1. **Pindahkan File dari `public/` ke Root:**
+   - Pindahkan `.htaccess` dari `public/` ke `public_html/`
+   - Pindahkan `index.php` dari `public/` ke `public_html/`
+   - Pindahkan `favicon.ico` (jika ada) ke `public_html/`
+   - Pindahkan `robots.txt` (jika ada) ke `public_html/`
+
+2. **Edit `index.php` di Root:**
+   
+   Buka `public_html/index.php` dan ubah path:
+   
+   **Dari:**
+   ```php
+   require __DIR__.'/../vendor/autoload.php';
+   $app = require_once __DIR__.'/../bootstrap/app.php';
+   ```
+   
+   **Menjadi:**
+   ```php
+   require __DIR__.'/vendor/autoload.php';
+   $app = require_once __DIR__.'/bootstrap/app.php';
+   ```
+
+3. **Commit Perubahan:**
+   ```bash
+   # Di lokal
+   git add .
+   git commit -m "Move public files to root for clean URL"
+   git push origin main
+   
+   # Di server
+   git pull origin main
+   ```
+
+4. **Set Permission:**
+   ```bash
+   chmod -R 775 storage bootstrap/cache
+   ```
+
+### Step 6: Optimize untuk Production
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+### Step 7: Update di Masa Depan
+
+Untuk update aplikasi di masa depan, cukup:
+
+```bash
+# Di server via SSH
+cd domains/yourdomain.com/public_html
+git pull origin main
+php composer.phar install --optimize-autoloader --no-dev
+npm install
+npm run build
+php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+---
+
+## 📁 METODE 2: Deployment Manual (Alternatif)
+
+Metode ini menggunakan File Manager untuk upload file secara manual. Cocok jika tidak ingin menggunakan Git atau SSH.
+
+> **Note:** Jika Anda sudah menggunakan Metode Git di atas, skip bagian ini.
 
 ---
 
@@ -75,14 +360,18 @@ Upload file/folder berikut ke server:
 
 ### 2.1 Upload File ke Server
 
-**Via File Manager:**
+**Via File Manager (Paling Mudah - Recommended):**
 1. Login ke hPanel Hostinger
-2. Buka File Manager
+2. Buka **File Manager**
 3. Navigasi ke `public_html` (atau folder domain/subdomain Anda)
-4. Upload semua file yang sudah disiapkan
-5. Extract jika menggunakan ZIP
+4. Upload semua file yang sudah disiapkan (bisa ZIP dulu, lalu extract di server)
+5. Extract jika menggunakan ZIP (klik kanan → Extract)
 
-**Via SSH (Recommended):**
+**Via SSH (Opsional - untuk yang sudah familiar dengan command line):**
+Jika Anda lebih nyaman dengan command line, bisa menggunakan SSH:
+- **Windows:** Gunakan Putty atau PowerShell (Windows 10+)
+- **Mac/Linux:** Gunakan Terminal built-in
+
 ```bash
 # Connect ke server
 ssh username@your-server-ip
@@ -93,6 +382,8 @@ cd public_html
 # Upload via SCP dari lokal (jalankan di terminal lokal)
 scp -r ./alumni-site/* username@your-server-ip:/home/username/public_html/
 ```
+
+**Catatan:** File Manager sudah cukup untuk deployment. SSH hanya diperlukan jika Anda ingin menjalankan command seperti `php artisan migrate` langsung di server.
 
 ### 2.2 Struktur Folder di Hostinger
 
@@ -205,8 +496,15 @@ Pastikan `.htaccess` ada dan berisi:
 
 Buat file `.env` di root aplikasi (bukan di `public_html`):
 
+**Via File Manager (Paling Mudah):**
+1. Di File Manager, navigasi ke root aplikasi (misalnya `/home/username/alumni-site/`)
+2. Klik **New File**
+3. Beri nama: `.env`
+4. Klik kanan file → **Edit**
+5. Copy-paste isi dari template di bawah
+
+**Via SSH (Opsional):**
 ```bash
-# Via SSH
 cd /home/username/alumni-site
 nano .env
 ```
@@ -272,6 +570,14 @@ FILESYSTEM_DISK=local
 
 ### 3.3 Generate App Key
 
+**Opsi 1: Generate di Lokal (Recommended - Tidak Perlu SSH)**
+Jalankan di komputer lokal Anda sebelum upload:
+```bash
+php artisan key:generate
+```
+Copy isi `APP_KEY=` dari `.env` lokal ke `.env` di server.
+
+**Opsi 2: Generate di Server (Perlu SSH atau Terminal hPanel)**
 ```bash
 cd /home/username/alumni-site
 php artisan key:generate
@@ -279,6 +585,13 @@ php artisan key:generate
 
 ### 3.4 Set Permission
 
+**Via File Manager (Paling Mudah):**
+1. Di File Manager, klik kanan folder `storage` → **Change Permissions**
+2. Set ke `775` (atau `755`)
+3. Ulangi untuk folder `bootstrap/cache`
+4. Centang **Recursive** untuk apply ke semua subfolder
+
+**Via SSH (Opsional):**
 ```bash
 # Set permission untuk storage dan bootstrap/cache
 chmod -R 775 storage bootstrap/cache
@@ -291,6 +604,14 @@ chown -R www-data:www-data storage bootstrap/cache
 
 ### 4.1 Jalankan Migrasi
 
+**Opsi 1: Import SQL Manual (Tidak Perlu SSH)**
+1. Di lokal, export database:
+   ```bash
+   pg_dump -U postgres alumni_site_db > database.sql
+   ```
+2. Di Hostinger Database Manager, import file `database.sql`
+
+**Opsi 2: Via Artisan Command (Perlu SSH atau Terminal hPanel)**
 ```bash
 cd /home/username/alumni-site
 php artisan migrate --force
@@ -309,6 +630,11 @@ php artisan db:seed --class=DatabaseSeeder --force
 
 ## 🔗 Step 5: Link Storage
 
+**Opsi 1: Manual Link (Tidak Perlu SSH)**
+1. Di File Manager, buat folder `storage` di dalam `public/`
+2. Atau copy folder `storage/app/public` ke `public/storage`
+
+**Opsi 2: Via Artisan (Perlu SSH atau Terminal hPanel)**
 ```bash
 cd /home/username/alumni-site
 php artisan storage:link
