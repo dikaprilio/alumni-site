@@ -4,9 +4,11 @@ import AdminLayout from '../../../Layouts/AdminLayout';
 import InputLabel from '../../../Components/InputLabel';
 import InputText from '../../../Components/InputText';
 import TextArea from '../../../Components/TextArea';
-import ImageCropperModal from '../../../Components/ImageCropperModal'; // Import Modal Cropper
+import ImageCropperModal from '../../../Components/ImageCropperModal';
+import { useToast } from '../../../Components/ToastContext';
 
 export default function CreateNews() {
+    const { addToast } = useToast();
     const { data, setData, post, processing, errors } = useForm({
         title: '',
         category: 'General',
@@ -37,7 +39,7 @@ export default function CreateNews() {
     const handleCropComplete = async (croppedBlob) => {
         // Convert Blob to File
         const file = new File([croppedBlob], "news_cover.jpg", { type: "image/jpeg" });
-        
+
         setData('image', file);
         setImagePreview(URL.createObjectURL(croppedBlob));
         setShowCropper(false);
@@ -45,20 +47,23 @@ export default function CreateNews() {
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('admin.news.store'));
+        post(route('admin.news.store'), {
+            onSuccess: () => addToast('Berita berhasil diterbitkan.', 'success'),
+            onError: () => addToast('Gagal menerbitkan berita.', 'error'),
+        });
     };
 
     return (
         <AdminLayout>
             <Head title="Buat Berita Baru" />
-            
+
             {/* --- CROPPER MODAL --- */}
-            <ImageCropperModal 
+            <ImageCropperModal
                 show={showCropper}
                 onClose={() => setShowCropper(false)}
                 imageSrc={cropperImageSrc}
                 onCropComplete={handleCropComplete}
-                aspectRatio={16/9} // NEWS PAKE 16:9
+                aspectRatio={16 / 9} // NEWS PAKE 16:9
             />
 
             <div className="max-w-5xl mx-auto">
@@ -73,16 +78,16 @@ export default function CreateNews() {
                 </div>
 
                 <form onSubmit={submit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
+
                     {/* Left: Main Content */}
                     <div className="lg:col-span-2 space-y-6">
                         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
                             <div>
                                 <InputLabel htmlFor="title" value="Judul Artikel" />
-                                <InputText 
-                                    id="title" 
-                                    value={data.title} 
-                                    onChange={(e) => setData('title', e.target.value)} 
+                                <InputText
+                                    id="title"
+                                    value={data.title}
+                                    onChange={(e) => setData('title', e.target.value)}
                                     placeholder="Masukkan judul yang menarik..."
                                     className="mt-1 font-bold text-lg"
                                 />
@@ -91,7 +96,7 @@ export default function CreateNews() {
 
                             <div>
                                 <InputLabel htmlFor="content" value="Isi Konten" />
-                                <TextArea 
+                                <TextArea
                                     id="content"
                                     value={data.content}
                                     onChange={(e) => setData('content', e.target.value)}
@@ -109,16 +114,16 @@ export default function CreateNews() {
 
                     {/* Right: Sidebar Settings */}
                     <div className="space-y-6">
-                        
+
                         {/* Publish Settings */}
                         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
                             <h3 className="font-bold text-sm text-slate-800 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
                                 Pengaturan Publikasi
                             </h3>
-                            
+
                             <div>
                                 <InputLabel htmlFor="category" value="Kategori" />
-                                <select 
+                                <select
                                     id="category"
                                     value={data.category}
                                     onChange={(e) => setData('category', e.target.value)}
@@ -134,8 +139,8 @@ export default function CreateNews() {
                             </div>
 
                             <div className="pt-2">
-                                <button 
-                                    type="submit" 
+                                <button
+                                    type="submit"
                                     disabled={processing}
                                     className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-brand-500/30 transition-all flex items-center justify-center gap-2"
                                 >
@@ -147,11 +152,11 @@ export default function CreateNews() {
                         {/* Image Upload */}
                         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
                             <InputLabel value="Gambar Unggulan (Cover)" />
-                            
+
                             <div className="mt-2 relative group">
                                 <div className={`w-full aspect-video rounded-xl overflow-hidden border-2 border-dashed flex items-center justify-center relative transition-all
                                     ${imagePreview ? 'border-transparent' : 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'}`}>
-                                    
+
                                     {imagePreview ? (
                                         <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                                     ) : (
@@ -161,8 +166,8 @@ export default function CreateNews() {
                                         </div>
                                     )}
 
-                                    <input 
-                                        type="file" 
+                                    <input
+                                        type="file"
                                         accept="image/*"
                                         onChange={handleImageChange}
                                         className="absolute inset-0 opacity-0 cursor-pointer z-10"

@@ -1,30 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '../../../Layouts/AdminLayout';
 import InputLabel from '../../../Components/InputLabel';
 import InputText from '../../../Components/InputText';
+import TextArea from '../../../Components/TextArea';
+import { useToast } from '../../../Components/ToastContext';
 
 export default function CreateAlumni() {
+    const { addToast } = useToast();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         nim: '',
-        graduation_year: new Date().getFullYear(),
+        graduation_year: '',
         major: '',
         phone_number: '',
-        email: '', // Jika diisi, otomatis buat akun
+        email: '',
+        bio: '',
+        current_position: '',
+        company_name: '',
     });
+
+    // Inisial untuk avatar preview (Live typing)
+    const avatarInitial = data.name ? data.name.charAt(0).toUpperCase() : '?';
+
+    // Logic for willCreateAccount
+    const willCreateAccount = data.email && data.email.length > 0;
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('admin.alumni.store'));
+        post(route('admin.alumni.store'), {
+            onSuccess: () => addToast('Data alumni berhasil ditambahkan.', 'success'),
+            onError: () => addToast('Gagal menambahkan data alumni. Periksa inputan anda.', 'error'),
+        });
     };
-
-    // --- UI HELPERS ---
-    // Deteksi apakah admin berniat membuatkan akun login
-    const willCreateAccount = data.email && data.email.length > 0;
-    
-    // Inisial untuk avatar preview (Live typing)
-    const avatarInitial = data.name ? data.name.charAt(0).toUpperCase() : '?';
 
     return (
         <AdminLayout>
@@ -49,27 +57,27 @@ export default function CreateAlumni() {
 
                 {/* --- KOLOM KIRI: LIVE PREVIEW & STATUS --- */}
                 <div className="xl:col-span-1 space-y-6">
-                    
+
                     {/* KARTU INDIKATOR AKUN */}
                     <div className={`border rounded-2xl p-6 shadow-sm relative overflow-hidden transition-colors duration-300 
-                        ${willCreateAccount 
-                            ? 'bg-blue-50 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800' 
+                            ${willCreateAccount
+                            ? 'bg-blue-50 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800'
                             : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800'
                         }`}>
                         <div className="flex items-start gap-4 relative z-10">
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0 transition-colors duration-300
-                                ${willCreateAccount ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}>
+                                    ${willCreateAccount ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}>
                                 <i className={`fa-solid ${willCreateAccount ? 'fa-user-plus' : 'fa-database'}`}></i>
                             </div>
                             <div>
                                 <h3 className={`font-bold text-lg transition-colors duration-300
-                                    ${willCreateAccount ? 'text-blue-800 dark:text-blue-300' : 'text-amber-800 dark:text-amber-300'}`}>
+                                        ${willCreateAccount ? 'text-blue-800 dark:text-blue-300' : 'text-amber-800 dark:text-amber-300'}`}>
                                     {willCreateAccount ? 'Buat Akun Login' : 'Hanya Data Master'}
                                 </h3>
                                 <p className={`text-xs mt-1 leading-relaxed transition-colors duration-300
-                                    ${willCreateAccount ? 'text-blue-700 dark:text-blue-400' : 'text-amber-700 dark:text-amber-400'}`}>
-                                    {willCreateAccount 
-                                        ? 'Email diisi. Sistem akan otomatis membuatkan User Login untuk alumni ini dengan password default "password".' 
+                                        ${willCreateAccount ? 'text-blue-700 dark:text-blue-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                                    {willCreateAccount
+                                        ? 'Email diisi. Sistem akan otomatis membuatkan User Login untuk alumni ini dengan password default "password".'
                                         : 'Email kosong. Alumni ini hanya akan disimpan sebagai data arsip dan tidak bisa login ke aplikasi.'}
                                 </p>
                             </div>
@@ -90,7 +98,7 @@ export default function CreateAlumni() {
                         <p className="text-xs text-slate-500 font-mono uppercase tracking-wider mt-1 min-h-[1rem]">
                             {data.nim || 'NIM...'}
                         </p>
-                        
+
                         <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                             <span className="inline-block px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                 {data.graduation_year || 'Tahun Lulus'}
@@ -117,41 +125,41 @@ export default function CreateAlumni() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
                                 <InputLabel htmlFor="name" value="Nama Lengkap *" />
-                                <InputText 
-                                    id="name" 
-                                    value={data.name} 
-                                    onChange={(e) => setData('name', e.target.value)} 
-                                    className="mt-1" 
+                                <InputText
+                                    id="name"
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    className="mt-1"
                                     placeholder="Masukkan nama lengkap sesuai ijazah"
-                                    required 
+                                    required
                                 />
                                 {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                             </div>
 
                             <div>
                                 <InputLabel htmlFor="nim" value="NIM *" />
-                                <InputText 
-                                    id="nim" 
-                                    value={data.nim} 
-                                    onChange={(e) => setData('nim', e.target.value)} 
-                                    className="mt-1 font-mono bg-slate-50" 
+                                <InputText
+                                    id="nim"
+                                    value={data.nim}
+                                    onChange={(e) => setData('nim', e.target.value)}
+                                    className="mt-1 font-mono bg-slate-50"
                                     placeholder="Nomor Induk Mahasiswa"
-                                    required 
+                                    required
                                 />
                                 {errors.nim && <p className="text-red-500 text-xs mt-1">{errors.nim}</p>}
                             </div>
 
                             <div>
                                 <InputLabel htmlFor="graduation_year" value="Tahun Lulus *" />
-                                <InputText 
-                                    id="graduation_year" 
-                                    type="number" 
-                                    value={data.graduation_year} 
-                                    onChange={(e) => setData('graduation_year', e.target.value)} 
-                                    className="mt-1" 
+                                <InputText
+                                    id="graduation_year"
+                                    type="number"
+                                    value={data.graduation_year}
+                                    onChange={(e) => setData('graduation_year', e.target.value)}
+                                    className="mt-1"
                                     min="1900"
                                     max={new Date().getFullYear() + 1}
-                                    required 
+                                    required
                                 />
                                 {errors.graduation_year && <p className="text-red-500 text-xs mt-1">{errors.graduation_year}</p>}
                             </div>
@@ -176,12 +184,12 @@ export default function CreateAlumni() {
 
                             <div className="md:col-span-2">
                                 <InputLabel htmlFor="phone_number" value="Nomor Telepon / WA (Opsional)" />
-                                <InputText 
-                                    id="phone_number" 
-                                    value={data.phone_number} 
-                                    onChange={(e) => setData('phone_number', e.target.value)} 
-                                    className="mt-1" 
-                                    placeholder="Contoh: 081234567890" 
+                                <InputText
+                                    id="phone_number"
+                                    value={data.phone_number}
+                                    onChange={(e) => setData('phone_number', e.target.value)}
+                                    className="mt-1"
+                                    placeholder="Contoh: 081234567890"
                                 />
                                 {errors.phone_number && <p className="text-red-500 text-xs mt-1">{errors.phone_number}</p>}
                             </div>
@@ -202,31 +210,31 @@ export default function CreateAlumni() {
 
                         <div>
                             <InputLabel htmlFor="email" value="Email Akun" />
-                            <InputText 
-                                id="email" 
-                                type="email" 
-                                value={data.email} 
-                                onChange={(e) => setData('email', e.target.value)} 
-                                className="mt-1 bg-white" 
+                            <InputText
+                                id="email"
+                                type="email"
+                                value={data.email}
+                                onChange={(e) => setData('email', e.target.value)}
+                                className="mt-1 bg-white"
                                 placeholder="alumni@email.com"
                             />
                             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-                            
+
                             {/* INFO BOX DYNAMIC */}
                             <div className={`mt-3 flex gap-2 text-[11px] p-3 rounded-lg border transition-colors duration-300
-                                ${willCreateAccount 
-                                    ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800' 
+                                    ${willCreateAccount
+                                    ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800'
                                     : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:border-slate-700'}`}>
                                 <i className="fa-solid fa-circle-info mt-0.5"></i>
                                 <div>
                                     {willCreateAccount ? (
                                         <span>
-                                            <strong>Akun Aktif:</strong> Alumni akan bisa login menggunakan email ini. 
+                                            <strong>Akun Aktif:</strong> Alumni akan bisa login menggunakan email ini.
                                             Password default yang diset adalah <strong>'password'</strong>.
                                         </span>
                                     ) : (
                                         <span>
-                                            Kosongkan jika alumni belum memerlukan akses login saat ini. 
+                                            Kosongkan jika alumni belum memerlukan akses login saat ini.
                                             Akun bisa dibuatkan (generate) nanti.
                                         </span>
                                     )}
@@ -237,7 +245,7 @@ export default function CreateAlumni() {
 
                     {/* BUTTONS */}
                     <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                        <Link 
+                        <Link
                             href={route('admin.alumni.index')}
                             className="px-6 py-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-widest border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                         >

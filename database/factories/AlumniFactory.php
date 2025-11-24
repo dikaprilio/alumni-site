@@ -19,6 +19,11 @@ class AlumniFactory extends Factory
      */
     protected $model = Alumni::class;
 
+    /**
+     * Flag to track if jobs should be created
+     */
+    protected static $skipJobCreation = false;
+
     // Mapping bidang karir dan kata kunci pekerjaan
     private array $careerMapping = [
         'Web Development' => ['Frontend Developer', 'Backend Engineer (PHP)', 'Fullstack Developer (Vue)', 'Laravel Developer', 'React.js Developer'],
@@ -86,8 +91,28 @@ class AlumniFactory extends Factory
      */
     public function configure(): static
     {
+        // If noJobs was called, skip the default configure
+        if (static::$skipJobCreation) {
+            static::$skipJobCreation = false; // Reset for next use
+            return $this->afterCreating(function (Alumni $alumni) {
+                // Only create user if needed, skip job history
+                if ($alumni->user_id === null) {
+                    $alumniData = $alumni->only(['name']); 
+
+                    $user = User::create([
+                        'name' => $alumniData['name'],
+                        'email' => $this->faker->unique()->safeEmail(),
+                        'password' => Hash::make('password'),
+                        'role' => 'alumni',
+                        'email_verified_at' => now(),
+                    ]);
+                    $alumni->user_id = $user->id;
+                    $alumni->save();
+                }
+            });
+        }
+        
         return $this->afterCreating(function (Alumni $alumni) {
-            
             // 1. Create Job History
             $careerFields = array_keys($this->careerMapping);
             $randomField = $this->faker->randomElement($careerFields);
@@ -135,6 +160,15 @@ class AlumniFactory extends Factory
         ])->afterCreating(function (Alumni $alumni) {
             // Karena ini unlinked, kita tidak melakukan apa-apa di afterCreating
         });
+    }
+
+    /**
+     * Indicate that no job history should be created (for testing).
+     */
+    public function noJobs(): static
+    {
+        static::$skipJobCreation = true;
+        return $this->state(fn (array $attributes) => $attributes);
     }
 
     /**

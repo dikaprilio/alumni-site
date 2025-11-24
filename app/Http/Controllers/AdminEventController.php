@@ -3,14 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Services\ActivityLogger;
+use App\Services\ImageUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class AdminEventController extends Controller
 {
+    protected $imageUploadService;
+
+    public function __construct(ImageUploadService $imageUploadService)
+    {
+        $this->imageUploadService = $imageUploadService;
+    }
+
     public function index(Request $request)
     {
         $query = Event::latest('event_date'); // Urutkan berdasarkan tanggal event terdekat/terbaru
@@ -51,12 +59,13 @@ class AdminEventController extends Controller
             'event_date' => 'required|date',
             'location' => 'required|string|max:255',
             'description' => 'required', // Sesuaikan dengan nama kolom di DB (description/content)
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('events', 'public');
+            // Upload and convert to WebP, max width 1200px
+            $imagePath = $this->imageUploadService->upload($request->file('image'), 'events', 1200);
         }
 
         Event::create([
@@ -69,6 +78,13 @@ class AdminEventController extends Controller
             'description' => $request->description,
             'image' => $imagePath,
         ]);
+        
+        // Log activity
+        ActivityLogger::log(
+            'ADMIN_CREATE_EVENT',
+            "Membuat agenda acara: {$request->title}",
+            ['title' => $request->title, 'event_date' => $request->event_date, 'location' => $request->location]
+        );
 
         return redirect()->route('admin.events.index')->with('success', 'Agenda acara berhasil dibuat.');
     }
@@ -91,7 +107,7 @@ class AdminEventController extends Controller
             'event_date' => 'required|date',
             'location' => 'required|string|max:255',
             'description' => 'required',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         if ($request->title !== $event->title) {
@@ -99,10 +115,10 @@ class AdminEventController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            if ($event->image && Storage::disk('public')->exists($event->image)) {
-                Storage::disk('public')->delete($event->image);
-            }
-            $event->image = $request->file('image')->store('events', 'public');
+            // Delete old image
+            $this->imageUploadService->delete($event->image);
+            // Upload new image
+            $event->image = $this->imageUploadService->upload($request->file('image'), 'events', 1200);
         }
 
         $event->update([
@@ -112,6 +128,13 @@ class AdminEventController extends Controller
             'location' => $request->location,
             'description' => $request->description,
         ]);
+        
+        // Log activity
+        ActivityLogger::log(
+            'ADMIN_UPDATE_EVENT',
+            "Memperbarui agenda acara: {$event->title}",
+            ['event_id' => $event->id, 'title' => $event->title, 'event_date' => $event->event_date]
+        );
 
         return redirect()->route('admin.events.index')->with('success', 'Agenda acara berhasil diperbarui.');
     }
@@ -119,12 +142,20 @@ class AdminEventController extends Controller
     public function destroy($id)
     {
         $event = Event::findOrFail($id);
+        $eventTitle = $event->title;
+        $eventDate = $event->event_date;
         
-        if ($event->image && Storage::disk('public')->exists($event->image)) {
-            Storage::disk('public')->delete($event->image);
-        }
+        // Delete image using service
+        $this->imageUploadService->delete($event->image);
         
         $event->delete();
+        
+        // Log activity
+        ActivityLogger::log(
+            'ADMIN_DELETE_EVENT',
+            "Menghapus agenda acara: {$eventTitle}",
+            ['title' => $eventTitle, 'event_date' => $eventDate]
+        );
 
         return redirect()->back()->with('success', 'Agenda acara berhasil dihapus.');
     }

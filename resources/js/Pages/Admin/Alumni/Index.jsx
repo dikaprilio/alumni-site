@@ -7,7 +7,7 @@ import Modal from '@/Components/Modal';
 import InputLabel from '@/Components/InputLabel';
 import TextArea from '@/Components/TextArea';
 import { useToast } from '@/Components/ToastContext';
-import { debounce } from 'lodash'; 
+import { debounce } from 'lodash';
 
 // --- Status Badge Component ---
 const StatusBadge = ({ hasAccount, completeness }) => {
@@ -42,7 +42,7 @@ const StatusBadge = ({ hasAccount, completeness }) => {
 
 export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, filters = {}, graduationYears = [] }) {
     const { addToast } = useToast();
-    
+
     // --- STATE MANAGEMENT ---
     const [params, setParams] = useState({
         search: filters?.search || '',
@@ -50,7 +50,7 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
         employment_status: filters?.employment_status || '',
         has_account: filters?.has_account || '',
         location: filters?.location || '',
-        sort_by: filters?.sort_by || 'name', 
+        sort_by: filters?.sort_by || 'name',
         sort_dir: filters?.sort_dir || 'asc',
     });
 
@@ -66,6 +66,7 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
 
     // State untuk Expand Row di Mobile
     const [expandedRows, setExpandedRows] = useState({});
+    const [isExportOpen, setIsExportOpen] = useState(false); // [NEW] State for export dropdown
 
     const toggleRow = (id) => {
         setExpandedRows(prev => ({
@@ -73,6 +74,17 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
             [id]: !prev[id]
         }));
     };
+
+    // [NEW] Close dropdown when clicking outside
+    useEffect(() => {
+        const closeExport = (e) => {
+            if (isExportOpen && !e.target.closest('.export-dropdown-container')) {
+                setIsExportOpen(false);
+            }
+        };
+        document.addEventListener('click', closeExport);
+        return () => document.removeEventListener('click', closeExport);
+    }, [isExportOpen]);
 
     // Debounce Search
     const debouncedFetch = useCallback(
@@ -169,6 +181,7 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
         const currentParams = new URLSearchParams(window.location.search);
         currentParams.append('type', type);
         window.location.href = `${route('admin.alumni.export')}?${currentParams.toString()}`;
+        setIsExportOpen(false);
     };
 
     const alumniList = alumni?.data || [];
@@ -188,22 +201,29 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
                         Kelola data master, akun pengguna, dan pantau kelengkapan profil.
                     </p>
                 </div>
-                
+
                 <div className="flex flex-wrap items-center gap-3">
                     {/* EXPORT BUTTON */}
-                    <div className="relative group">
-                        <button className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm transition-all active:scale-95 flex items-center gap-2">
+                    <div className="relative export-dropdown-container">
+                        <button
+                            onClick={() => setIsExportOpen(!isExportOpen)}
+                            className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm transition-all active:scale-95 flex items-center gap-2"
+                        >
                             <i className="fa-solid fa-file-export"></i> Export
-                            <i className="fa-solid fa-chevron-down text-[10px] transition-transform group-hover:rotate-180"></i>
+                            <i className={`fa-solid fa-chevron-down text-[10px] transition-transform ${isExportOpen ? 'rotate-180' : ''}`}></i>
                         </button>
-                        <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right z-50 overflow-hidden">
-                            <button onClick={() => handleExport('xlsx')} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-3 border-b border-slate-50 dark:border-slate-700">
-                                <i className="fa-solid fa-file-excel text-green-600 text-base"></i> Excel (.xlsx)
-                            </button>
-                            <button onClick={() => handleExport('pdf')} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-3">
-                                <i className="fa-solid fa-file-pdf text-red-600 text-base"></i> PDF Document
-                            </button>
-                        </div>
+
+                        {/* Dropdown Menu */}
+                        {isExportOpen && (
+                            <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden animate-fade-in-up">
+                                <button onClick={() => handleExport('xlsx')} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-3 border-b border-slate-50 dark:border-slate-700">
+                                    <i className="fa-solid fa-file-excel text-green-600 text-base"></i> Excel (.xlsx)
+                                </button>
+                                <button onClick={() => handleExport('pdf')} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-3">
+                                    <i className="fa-solid fa-file-pdf text-red-600 text-base"></i> PDF Document
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* ADD BUTTON */}
@@ -217,9 +237,9 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 mb-6 shadow-sm space-y-4 transition-all hover:shadow-md">
                 <div className="relative group">
                     <i className={`fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-400 text-sm transition-colors ${isSearching ? 'text-brand-500' : ''}`}></i>
-                    <input 
-                        type="text" 
-                        placeholder="Cari Nama, NIM, Jurusan, Perusahaan, atau Email..." 
+                    <input
+                        type="text"
+                        placeholder="Cari Nama, NIM, Jurusan, Perusahaan, atau Email..."
                         value={params.search}
                         onChange={(e) => handleChange('search', e.target.value)}
                         autoComplete="off"
@@ -232,12 +252,12 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     {['graduation_year', 'employment_status', 'has_account'].map((filter) => (
                         <div key={filter} className="relative">
-                             <select 
-                                value={params[filter]} 
-                                onChange={(e) => handleChange(filter, e.target.value)} 
+                            <select
+                                value={params[filter]}
+                                onChange={(e) => handleChange(filter, e.target.value)}
                                 className="w-full py-2 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-300 focus:border-blue-500 outline-none cursor-pointer transition-colors hover:border-blue-300 appearance-none"
                             >
-                                <option value="">{filter.replace('_', ' ').toUpperCase()}</option> 
+                                <option value="">{filter.replace('_', ' ').toUpperCase()}</option>
                                 {filter === 'graduation_year' && graduationYears.map(y => <option key={y} value={y}>{y}</option>)}
                                 {filter === 'employment_status' && <><option value="employed">Employed</option><option value="unemployed">Unemployed</option></>}
                                 {filter === 'has_account' && <><option value="yes">Has Account</option><option value="no">No Account</option></>}
@@ -249,12 +269,12 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
                     ))}
                     <div className="relative">
                         <i className="fa-solid fa-location-dot absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                        <input 
-                            type="text" 
-                            placeholder="Location..." 
-                            value={params.location} 
-                            onChange={(e) => handleChange('location', e.target.value)} 
-                            className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-white focus:border-blue-500 outline-none transition-all hover:border-blue-300" 
+                        <input
+                            type="text"
+                            placeholder="Location..."
+                            value={params.location}
+                            onChange={(e) => handleChange('location', e.target.value)}
+                            className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-white focus:border-blue-500 outline-none transition-all hover:border-blue-300"
                         />
                     </div>
                 </div>
@@ -267,7 +287,7 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
                         <thead>
                             <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">
                                 {/* Mobile Chevron Header */}
-                                <th className="pl-4 pr-2 py-4 md:hidden w-8"></th> 
+                                <th className="pl-4 pr-2 py-4 md:hidden w-8"></th>
 
                                 {/* Sortable Name Header */}
                                 <th className="px-2 md:px-6 py-4 cursor-pointer hover:text-brand-600 transition-colors group" onClick={() => handleSort('name')}>
@@ -305,8 +325,8 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
                                 alumniList.map((alum, index) => (
                                     <React.Fragment key={alum.id}>
                                         {/* PRIMARY ROW */}
-                                        <tr 
-                                            className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group animate-fade-in-up ${alum.featured_at ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''} cursor-pointer md:cursor-default`} 
+                                        <tr
+                                            className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group animate-fade-in-up ${alum.featured_at ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''} cursor-pointer md:cursor-default`}
                                             style={{ animationDelay: `${index * 50}ms` }}
                                             onClick={() => toggleRow(alum.id)} // Only toggles on mobile via CSS display logic
                                         >
@@ -385,7 +405,7 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
                                             <tr className="md:hidden bg-slate-50/50 dark:bg-slate-800/30 animate-slide-down">
                                                 <td colSpan="2" className="px-4 py-4 border-b border-slate-100 dark:border-slate-800">
                                                     <div className="space-y-4 text-sm">
-                                                        
+
                                                         {/* 1. Career Info */}
                                                         <div className="grid grid-cols-3 gap-2">
                                                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider col-span-1">Karir & Lokasi</div>
@@ -422,19 +442,19 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
 
                                                         {/* 4. MOBILE ACTIONS (EDIT/DELETE/PROMOTE) - ADDED HERE */}
                                                         <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-700 mt-2">
-                                                            <button 
+                                                            <button
                                                                 onClick={(e) => { e.stopPropagation(); openPromoteModal(alum); }}
                                                                 className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${alum.featured_at ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-white border border-slate-200 text-slate-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300'}`}
                                                             >
                                                                 <i className="fa-solid fa-crown"></i> Promote
                                                             </button>
-                                                            <Link 
-                                                                href={route('admin.alumni.edit', alum.id)} 
+                                                            <Link
+                                                                href={route('admin.alumni.edit', alum.id)}
                                                                 className="flex-1 py-2 px-3 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
                                                             >
                                                                 <i className="fa-solid fa-pen"></i> Edit
                                                             </Link>
-                                                            <button 
+                                                            <button
                                                                 onClick={(e) => { e.stopPropagation(); confirmDelete(alum); }}
                                                                 className="flex-1 py-2 px-3 rounded-lg bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
                                                             >
@@ -476,10 +496,10 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
                         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                             Anda akan menjadikan <strong>{itemToPromote?.name}</strong> sebagai "Alumni of the Month". Berikan alasan singkat atau highlight prestasinya.
                         </p>
-                        
+
                         <div className="mb-4">
                             <InputLabel value="Alasan / Prestasi (Tampil di Homepage)" />
-                            <TextArea 
+                            <TextArea
                                 value={promoteReason}
                                 onChange={(e) => setPromoteReason(e.target.value)}
                                 rows="3"
@@ -492,7 +512,7 @@ export default function AlumniIndex({ auth, alumni = { data: [], links: [] }, fi
                             <button onClick={() => setShowPromoteModal(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-700">
                                 Batal
                             </button>
-                            <button 
+                            <button
                                 onClick={handlePromoteSubmit}
                                 disabled={isPromoting}
                                 className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-bold shadow-lg shadow-amber-500/30 flex items-center gap-2"

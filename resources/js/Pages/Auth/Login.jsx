@@ -20,94 +20,161 @@ export default function Login() {
     useEffect(() => setLoaded(true), []);
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-500">
+        <div className="min-h-screen flex bg-white dark:bg-slate-950 transition-colors duration-500">
             <Head title="Masuk" />
 
-            {/* --- BACKGROUND (Reused from Hero) --- */}
-            <div className="absolute inset-0 z-0 overflow-hidden">
-                 <img 
-                    src="/images/hero-bg.jpg" 
-                    alt="Background" 
-                    className={`w-full h-full object-cover opacity-20 dark:opacity-30 transition-all duration-1000 ease-out ${loaded ? 'scale-100 blur-0' : 'scale-110 blur-sm'}`}
-                />
-            </div>
-            <div className="absolute inset-0 z-0 bg-grid-slate dark:bg-grid-white opacity-40 pointer-events-none"></div>
-            <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-slate-50/80 to-slate-50 dark:from-transparent dark:via-slate-900/80 dark:to-slate-900"></div>
+            {/* --- LEFT SIDE: IMAGE & WELCOME (Desktop Only) --- */}
+            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-slate-900">
+                <div className={`absolute inset-0 z-0 transition-transform duration-[2000ms] ease-out ${loaded ? 'scale-105' : 'scale-100'}`}>
+                    <img
+                        src="/images/hero-bg.jpg"
+                        alt="Campus Life"
+                        className="w-full h-full object-cover opacity-60"
+                    />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent z-10"></div>
 
-            {/* --- LOGIN CARD --- */}
-            <div className="relative z-10 w-full max-w-md px-6">
-                <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-700 shadow-2xl rounded-3xl p-8 animate-fade-in-up">
-                    
-                    {/* Header */}
-                    <div className="text-center mb-8">
-                        <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
-                            <i className="fa-solid fa-graduation-cap text-3xl text-brand-600 group-hover:scale-110 transition-transform"></i>
-                        </Link>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Selamat Datang Kembali</h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">Masuk untuk mengakses jaringan alumni</p>
+                <div className="relative z-20 flex flex-col justify-end p-16 text-white h-full">
+                    <div className="mb-8">
+                        <div className="w-16 h-16 bg-brand-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-600/30">
+                            <i className="fa-solid fa-graduation-cap text-3xl"></i>
+                        </div>
+                        <h1 className="text-5xl font-black tracking-tight mb-4 leading-tight">
+                            Selamat Datang <br />
+                            <span className="text-brand-400">Alumni</span>
+                        </h1>
+                        <p className="text-lg text-slate-300 max-w-md leading-relaxed">
+                            Terhubung kembali dengan almamater, temukan peluang karir, dan bangun jaringan profesional Anda.
+                        </p>
                     </div>
 
-                    {/* Form */}
-                    <form onSubmit={submit} className="space-y-5">
-                        
+                    <div className="flex items-center gap-4 text-sm font-medium text-slate-400">
+                        <div className="flex -space-x-3">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="w-8 h-8 rounded-full bg-slate-700 border-2 border-slate-900 flex items-center justify-center text-[10px]">
+                                    <i className="fa-solid fa-user"></i>
+                                </div>
+                            ))}
+                        </div>
+                        <p>Bergabung dengan 1000+ Alumni lainnya</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* --- RIGHT SIDE: FORM --- */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-24 relative">
+                {/* Mobile Background (Subtle) */}
+                <div className="absolute inset-0 lg:hidden z-0">
+                    <div className="absolute inset-0 bg-slate-50 dark:bg-slate-950"></div>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,#3b82f615,transparent)]"></div>
+                </div>
+
+                <div className="w-full max-w-md relative z-10">
+                    {/* Mobile Header Logo */}
+                    <div className="lg:hidden text-center mb-8">
+                        <Link href="/" className="inline-flex items-center justify-center w-12 h-12 bg-brand-600 rounded-xl shadow-lg shadow-brand-600/30 mb-4">
+                            <i className="fa-solid fa-graduation-cap text-2xl text-white"></i>
+                        </Link>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Selamat Datang Kembali</h2>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">Masuk untuk mengakses akun Anda</p>
+                    </div>
+
+                    {/* Desktop Header Text */}
+                    <div className="hidden lg:block mb-10">
+                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Login Akun</h2>
+                        <p className="text-slate-500 dark:text-slate-400 mt-2">Masukan kredensial Anda untuk melanjutkan.</p>
+                    </div>
+
+                    <form onSubmit={submit} className="space-y-6">
                         {/* Email */}
                         <div>
-                            <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Email</label>
-                            <input
-                                type="email"
-                                value={data.email}
-                                onChange={(e) => setData('email', e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all dark:text-white"
-                                placeholder="email@alumni.ipb.ac.id"
-                            />
-                            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                                    <i className="fa-regular fa-envelope"></i>
+                                </div>
+                                <input
+                                    type="email"
+                                    value={data.email}
+                                    onChange={(e) => setData('email', e.target.value)}
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all dark:text-white font-medium"
+                                    placeholder="nama@email.com"
+                                />
+                            </div>
+                            {errors.email && <p className="text-red-500 text-xs mt-1.5 font-medium flex items-center gap-1"><i className="fa-solid fa-circle-exclamation"></i> {errors.email}</p>}
                         </div>
 
                         {/* Password */}
                         <div>
-                            <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Password</label>
-                            <input
-                                type="password"
-                                value={data.password}
-                                onChange={(e) => setData('password', e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all dark:text-white"
-                                placeholder="••••••••"
-                            />
-                            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Password</label>
+                                <Link href="/forgot-password" className="text-sm font-semibold text-brand-600 hover:text-brand-500 hover:underline">
+                                    Lupa Password?
+                                </Link>
+                            </div>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                                    <i className="fa-solid fa-lock"></i>
+                                </div>
+                                <input
+                                    type="password"
+                                    value={data.password}
+                                    onChange={(e) => setData('password', e.target.value)}
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all dark:text-white font-medium"
+                                    placeholder="••••••••"
+                                />
+                            </div>
+                            {errors.password && <p className="text-red-500 text-xs mt-1.5 font-medium flex items-center gap-1"><i className="fa-solid fa-circle-exclamation"></i> {errors.password}</p>}
                         </div>
 
-                        {/* Remember & Forgot */}
-                        <div className="flex items-center justify-between text-sm">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={data.remember}
-                                    onChange={(e) => setData('remember', e.target.checked)}
-                                    className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                                />
-                                <span className="text-slate-600 dark:text-slate-400">Ingat Saya</span>
+                        {/* Remember Me */}
+                        <div className="flex items-center">
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                                <div className="relative flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.remember}
+                                        onChange={(e) => setData('remember', e.target.checked)}
+                                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 transition-all checked:border-brand-500 checked:bg-brand-500 hover:border-brand-400"
+                                    />
+                                    <i className="fa-solid fa-check absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 text-xs pointer-events-none transition-opacity"></i>
+                                </div>
+                                <span className="text-sm text-slate-600 dark:text-slate-400 font-medium group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">Ingat Saya</span>
                             </label>
-                            <Link href="#" className="text-brand-600 hover:text-brand-500 font-medium">Lupa Password?</Link>
                         </div>
 
                         {/* Submit Button */}
                         <button
                             type="submit"
                             disabled={processing}
-                            className="w-full py-3.5 rounded-xl bg-brand-600 text-white font-bold shadow-lg shadow-brand-600/20 hover:bg-brand-500 hover:shadow-brand-600/40 hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full py-4 rounded-xl bg-brand-600 text-white font-bold text-lg shadow-xl shadow-brand-600/20 hover:bg-brand-500 hover:shadow-brand-600/40 hover:-translate-y-1 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
                         >
-                            {processing && <i className="fa-solid fa-circle-notch animate-spin"></i>}
-                            Masuk Akun
+                            {processing ? (
+                                <>
+                                    <i className="fa-solid fa-circle-notch animate-spin"></i>
+                                    Memproses...
+                                </>
+                            ) : (
+                                <>
+                                    Masuk Sekarang <i className="fa-solid fa-arrow-right"></i>
+                                </>
+                            )}
                         </button>
                     </form>
 
                     {/* Register Link */}
-                    <div className="mt-8 text-center pt-6 border-t border-slate-100 dark:border-white/5">
-                        <p className="text-slate-500 dark:text-slate-400 text-sm">
-                            Belum punya akun?{' '}
-                            <Link href="/register" className="text-brand-600 font-bold hover:underline">
+                    <div className="mt-8 text-center">
+                        <p className="text-slate-500 dark:text-slate-400">
+                            Belum memiliki akun?{' '}
+                            <Link href="/register" className="text-brand-600 font-bold hover:text-brand-500 hover:underline transition-colors">
                                 Daftar Alumni
                             </Link>
+                        </p>
+                    </div>
+
+                    <div className="mt-12 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
+                        <p className="text-xs text-slate-400">
+                            &copy; {new Date().getFullYear()} Alumni TPL. All rights reserved.
                         </p>
                     </div>
                 </div>

@@ -3,14 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\News;
+use App\Services\ActivityLogger;
+use App\Services\ImageUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class AdminNewsController extends Controller
 {
+    protected $imageUploadService;
+
+    public function __construct(ImageUploadService $imageUploadService)
+    {
+        $this->imageUploadService = $imageUploadService;
+    }
+
     public function index(Request $request)
     {
         $query = News::with('author')->latest();
@@ -49,12 +57,13 @@ class AdminNewsController extends Controller
             'title' => 'required|string|max:255',
             'category' => 'required|string',
             'content' => 'required',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('news', 'public');
+            // Upload and convert to WebP, max width 1200px
+            $imagePath = $this->imageUploadService->upload($request->file('image'), 'news', 1200);
         }
 
         News::create([
@@ -65,6 +74,13 @@ class AdminNewsController extends Controller
             'content' => $request->content,
             'image' => $imagePath,
         ]);
+        
+        // Log activity
+        ActivityLogger::log(
+            'ADMIN_CREATE_NEWS',
+            "Membuat berita: {$request->title}",
+            ['title' => $request->title, 'category' => $request->category]
+        );
 
         return redirect()->route('admin.news.index')->with('success', 'Berita berhasil diterbitkan.');
     }
@@ -85,7 +101,7 @@ class AdminNewsController extends Controller
             'title' => 'required|string|max:255',
             'category' => 'required|string',
             'content' => 'required',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         if ($request->title !== $news->title) {
@@ -93,11 +109,10 @@ class AdminNewsController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            // Hapus gambar lama jika ada
-            if ($news->image && Storage::disk('public')->exists($news->image)) {
-                Storage::disk('public')->delete($news->image);
-            }
-            $news->image = $request->file('image')->store('news', 'public');
+            // Delete old image
+            $this->imageUploadService->delete($news->image);
+            // Upload new image
+            $news->image = $this->imageUploadService->upload($request->file('image'), 'news', 1200);
         }
 
         $news->update([
@@ -105,6 +120,13 @@ class AdminNewsController extends Controller
             'category' => $request->category,
             'content' => $request->content,
         ]);
+        
+        // Log activity
+        ActivityLogger::log(
+            'ADMIN_UPDATE_NEWS',
+            "Memperbarui berita: {$news->title}",
+            ['news_id' => $news->id, 'title' => $news->title]
+        );
 
         return redirect()->route('admin.news.index')->with('success', 'Berita berhasil diperbarui.');
     }
@@ -112,12 +134,19 @@ class AdminNewsController extends Controller
     public function destroy($id)
     {
         $news = News::findOrFail($id);
+        $newsTitle = $news->title;
         
-        if ($news->image && Storage::disk('public')->exists($news->image)) {
-            Storage::disk('public')->delete($news->image);
-        }
+        // Delete image using service
+        $this->imageUploadService->delete($news->image);
         
         $news->delete();
+        
+        // Log activity
+        ActivityLogger::log(
+            'ADMIN_DELETE_NEWS',
+            "Menghapus berita: {$newsTitle}",
+            ['title' => $newsTitle]
+        );
 
         return redirect()->back()->with('success', 'Berita berhasil dihapus.');
     }

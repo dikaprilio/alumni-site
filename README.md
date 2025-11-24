@@ -181,6 +181,45 @@ Gunakan akun berikut untuk login pertama kali:
 * **Gambar Tidak Muncul:**
   Coba hapus folder `public/storage` lalu jalankan ulang `php artisan storage:link`.
 
+---
+
+## 🚀 Deployment ke Production
+
+Untuk panduan lengkap deployment ke Hostinger, lihat file **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
+
+### Quick Deploy
+
+**Linux/Mac:**
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+**Windows:**
+```cmd
+deploy.bat
+```
+
+### Manual Deploy
+
+```bash
+# 1. Install dependencies
+composer install --optimize-autoloader --no-dev
+
+# 2. Build assets
+npm run build
+
+# 3. Optimize
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# 4. Run migrations
+php artisan migrate --force
+```
+
+---
+
 ## 📝 Lisensi
 
 [MIT License](https://opensource.org/licenses/MIT)

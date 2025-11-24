@@ -4,9 +4,11 @@ import AdminLayout from '../../../Layouts/AdminLayout';
 import InputLabel from '../../../Components/InputLabel';
 import InputText from '../../../Components/InputText';
 import TextArea from '../../../Components/TextArea';
-import ImageCropperModal from '../../../Components/ImageCropperModal'; // Import Modal Cropper
+import ImageCropperModal from '../../../Components/ImageCropperModal';
+import { useToast } from '../../../Components/ToastContext';
 
 export default function EditEvent({ event }) {
+    const { addToast } = useToast();
     const { data, setData, processing, errors } = useForm({
         title: event.title || '',
         category: event.category || 'Webinar',
@@ -38,7 +40,7 @@ export default function EditEvent({ event }) {
     // 2. Handle Crop Complete
     const handleCropComplete = async (croppedBlob) => {
         const file = new File([croppedBlob], "event_banner_edit.jpg", { type: "image/jpeg" });
-        
+
         setData('image', file);
         setImagePreview(URL.createObjectURL(croppedBlob));
         setShowCropper(false);
@@ -46,20 +48,23 @@ export default function EditEvent({ event }) {
 
     const submit = (e) => {
         e.preventDefault();
-        router.post(route('admin.events.update', event.id), data);
+        router.post(route('admin.events.update', event.id), data, {
+            onSuccess: () => addToast('Event berhasil diperbarui.', 'success'),
+            onError: () => addToast('Gagal memperbarui event.', 'error'),
+        });
     };
 
     return (
         <AdminLayout>
             <Head title="Edit Event" />
-            
+
             {/* --- CROPPER MODAL --- */}
-            <ImageCropperModal 
+            <ImageCropperModal
                 show={showCropper}
                 onClose={() => setShowCropper(false)}
                 imageSrc={cropperImageSrc}
                 onCropComplete={handleCropComplete}
-                aspectRatio={16/9} // Banner Event (Landscape)
+                aspectRatio={16 / 9} // Banner Event (Landscape)
             />
 
             <div className="max-w-5xl mx-auto">
@@ -73,17 +78,17 @@ export default function EditEvent({ event }) {
                 </div>
 
                 <form onSubmit={submit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
+
                     {/* Left: Main Info */}
                     <div className="lg:col-span-2 space-y-6">
                         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
-                            
+
                             <div>
                                 <InputLabel htmlFor="title" value="Nama Event" />
-                                <InputText 
-                                    id="title" 
-                                    value={data.title} 
-                                    onChange={(e) => setData('title', e.target.value)} 
+                                <InputText
+                                    id="title"
+                                    value={data.title}
+                                    onChange={(e) => setData('title', e.target.value)}
                                     className="mt-1 font-bold text-lg"
                                 />
                                 {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
@@ -92,7 +97,7 @@ export default function EditEvent({ event }) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <InputLabel htmlFor="event_date" value="Tanggal & Waktu" />
-                                    <input 
+                                    <input
                                         type="datetime-local"
                                         id="event_date"
                                         value={data.event_date}
@@ -103,10 +108,10 @@ export default function EditEvent({ event }) {
                                 </div>
                                 <div>
                                     <InputLabel htmlFor="location" value="Lokasi / Link Meeting" />
-                                    <InputText 
-                                        id="location" 
-                                        value={data.location} 
-                                        onChange={(e) => setData('location', e.target.value)} 
+                                    <InputText
+                                        id="location"
+                                        value={data.location}
+                                        onChange={(e) => setData('location', e.target.value)}
                                         className="mt-1"
                                     />
                                     {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
@@ -115,7 +120,7 @@ export default function EditEvent({ event }) {
 
                             <div>
                                 <InputLabel htmlFor="description" value="Deskripsi Lengkap" />
-                                <TextArea 
+                                <TextArea
                                     id="description"
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
@@ -129,15 +134,15 @@ export default function EditEvent({ event }) {
 
                     {/* Right: Sidebar Settings */}
                     <div className="space-y-6">
-                        
+
                         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
                             <h3 className="font-bold text-sm border-b border-slate-100 dark:border-slate-800 pb-3">
                                 Detail Publikasi
                             </h3>
-                            
+
                             <div>
                                 <InputLabel htmlFor="category" value="Kategori Event" />
-                                <select 
+                                <select
                                     id="category"
                                     value={data.category}
                                     onChange={(e) => setData('category', e.target.value)}
@@ -154,8 +159,8 @@ export default function EditEvent({ event }) {
                             </div>
 
                             <div className="pt-2">
-                                <button 
-                                    type="submit" 
+                                <button
+                                    type="submit"
                                     disabled={processing}
                                     className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow-lg transition-all"
                                 >
@@ -166,7 +171,7 @@ export default function EditEvent({ event }) {
 
                         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
                             <InputLabel value="Banner / Poster Event" />
-                            
+
                             <div className="mt-2 relative group">
                                 <div className={`w-full aspect-video rounded-xl overflow-hidden border-2 border-dashed flex items-center justify-center relative transition-all ${imagePreview ? 'border-transparent' : 'border-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-700'}`}>
                                     {imagePreview ? (
