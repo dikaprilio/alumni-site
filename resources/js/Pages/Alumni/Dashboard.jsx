@@ -151,6 +151,10 @@ export default function Dashboard({ completeness, badges }) {
             value: !currentValue,
         }, {
             preserveScroll: true,
+            onSuccess: () => {
+                // Reload semua data setelah update privacy untuk memastikan data ter-update
+                router.reload();
+            },
         });
     };
 

@@ -148,6 +148,10 @@ export default function Edit({ alumni, user_name, allSkills = [] }) {
         e.preventDefault();
         post(route('alumni.update'), {
             preserveScroll: true,
+            onSuccess: () => {
+                // Reload data setelah update untuk refresh di dashboard
+                router.reload({ only: ['alumni', 'user_name'] });
+            },
         });
     };
 
