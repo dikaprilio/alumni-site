@@ -154,6 +154,7 @@ class AlumniProfileController extends Controller
         // PERBAIKAN: Hapus current_position & company_name dari validasi Update Profil Utama
         // User harus mengedit pekerjaan lewat fitur Job History
         $validated = $request->validate([
+            'name'              => 'required|string|max:255',
             'phone_number'      => 'required|string|max:20',
             'address'           => 'required|string|max:500',
             'bio'               => 'nullable|string|min:21|max:1000', // Minimum 21 chars to count for profile strength
@@ -161,6 +162,8 @@ class AlumniProfileController extends Controller
             'graduation_year'   => 'required|integer|min:1900|max:' . (date('Y') + 1),
             'major'             => 'nullable|string|max:100',
             'avatar'            => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'private_email'     => 'nullable|boolean',
+            'private_phone'     => 'nullable|boolean',
             // KEMBALI: validasi skills wajib ada agar sync aman
             'skills'            => 'array',
             'skills.*'          => 'exists:skills,id',
@@ -290,6 +293,28 @@ class AlumniProfileController extends Controller
         ActivityLogger::log('UPDATE_EMAIL', 'User changed their email address.');
 
         return back()->with('message', 'Email berhasil diperbarui. Silakan verifikasi ulang.');
+    }
+
+    public function updatePrivacy(Request $request)
+    {
+        $validated = $request->validate([
+            'type' => 'required|in:email,phone',
+            'value' => 'required|boolean',
+        ]);
+
+        $alumni = $request->user()->alumni;
+
+        if ($validated['type'] === 'email') {
+            $alumni->private_email = $validated['value'];
+        } else {
+            $alumni->private_phone = $validated['value'];
+        }
+
+        $alumni->save();
+
+        ActivityLogger::log('UPDATE_PRIVACY', "User updated privacy setting: {$validated['type']} = " . ($validated['value'] ? 'private' : 'public'));
+
+        return back()->with('message', 'Pengaturan privasi berhasil diperbarui.');
     }
     
     private function getBadges($score)

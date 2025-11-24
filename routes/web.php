@@ -184,6 +184,7 @@ Route::middleware(['auth', 'verified', 'redirect.admin'])->group(function () {
     Route::get('/alumni/settings', [AlumniProfileController::class, 'settings'])->name('alumni.settings');
     Route::post('/alumni/settings/password', [AlumniProfileController::class, 'updatePassword'])->name('alumni.update.password');
     Route::post('/alumni/settings/email', [AlumniProfileController::class, 'updateEmail'])->name('alumni.update.email');
+    Route::post('/alumni/privacy', [AlumniProfileController::class, 'updatePrivacy'])->name('alumni.privacy');
     Route::post('/alumni/jobs', [AlumniProfileController::class, 'addJobHistory'])->name('alumni.jobs.add');
     Route::delete('/alumni/jobs/{id}', [AlumniProfileController::class, 'deleteJobHistory'])->name('alumni.jobs.delete');
 
