@@ -76,3 +76,4 @@ fi
 echo -e "${GREEN}✅ Deployment completed successfully!${NC}"
 echo -e "${GREEN}🎉 Your application is ready for production!${NC}"
 
+

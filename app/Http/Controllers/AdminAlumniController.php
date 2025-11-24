@@ -189,8 +189,6 @@ class AdminAlumniController extends Controller
                 'nim' => $request->nim,
                 'graduation_year' => $request->graduation_year,
                 'major' => $request->major,
-                'place_of_birth' => $request->place_of_birth,
-                'date_of_birth' => $request->date_of_birth,
                 'address' => $request->address,
                 'phone_number' => $request->phone_number,
                 // 'current_position' => $request->current_position, // Removed
