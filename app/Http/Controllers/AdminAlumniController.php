@@ -168,6 +168,11 @@ class AdminAlumniController extends Controller
             'graduation_year' => 'required|integer|min:2000|max:' . (date('Y') + 1),
             'major' => 'required|string',
             'email' => 'nullable|email|unique:users,email',
+            'phone_number' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
+            'bio' => 'nullable|string|max:1000',
+            'current_position' => 'nullable|string|max:100',
+            'company_name' => 'nullable|string|max:100',
         ]);
 
         DB::beginTransaction();
@@ -247,9 +252,14 @@ class AdminAlumniController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'nim' => 'required|string|unique:alumnis,nim,' . $id,
-            'graduation_year' => 'required|integer',
+            'graduation_year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
             'major' => 'required|string',
             'email' => 'nullable|email|unique:users,email,' . ($alumni->user_id ?? 'NULL'),
+            'phone_number' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
+            'bio' => 'nullable|string|max:1000',
+            'current_position' => 'nullable|string|max:100',
+            'company_name' => 'nullable|string|max:100',
         ]);
 
         DB::beginTransaction();

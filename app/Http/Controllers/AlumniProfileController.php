@@ -188,6 +188,9 @@ class AlumniProfileController extends Controller
         } else {
             $alumni->skills()->detach();
         }
+        
+        // Refresh alumni relationship untuk update data di frontend
+        $user->load('alumni');
 
         ActivityLogger::log('UPDATE_PROFILE', 'User updated their profile.');
 
@@ -311,6 +314,9 @@ class AlumniProfileController extends Controller
         }
 
         $alumni->save();
+        
+        // Refresh alumni relationship untuk update data di frontend
+        $request->user()->load('alumni');
 
         ActivityLogger::log('UPDATE_PRIVACY', "User updated privacy setting: {$validated['type']} = " . ($validated['value'] ? 'private' : 'public'));
 

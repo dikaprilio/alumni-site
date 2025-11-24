@@ -21,6 +21,14 @@ export default function EditAlumni({ alumni }) {
         bio: alumni.bio || '',
     });
 
+    // Generate tahun dari tahun sekarang hingga 2005 (descending)
+    const currentYear = new Date().getFullYear();
+    const startYear = 2005;
+    const graduationYears = [];
+    for (let year = currentYear; year >= startYear; year--) {
+        graduationYears.push(year);
+    }
+
     const submit = (e) => {
         e.preventDefault();
         put(route('admin.alumni.update', alumni.id), {
@@ -179,15 +187,21 @@ export default function EditAlumni({ alumni }) {
 
                             <div>
                                 <InputLabel htmlFor="graduation_year" value="Tahun Lulus *" />
-                                <InputText
+                                <select
                                     id="graduation_year"
-                                    type="number"
                                     value={data.graduation_year}
                                     onChange={(e) => setData('graduation_year', e.target.value)}
-                                    className="mt-1"
-                                    placeholder="YYYY"
+                                    className="w-full border border-slate-300 dark:border-slate-600 rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all bg-white dark:bg-slate-700 dark:text-white mt-1 cursor-pointer"
                                     required
-                                />
+                                >
+                                    <option value="">-- Pilih Tahun Lulus --</option>
+                                    {graduationYears.map((year) => (
+                                        <option key={year} value={year}>
+                                            {year}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.graduation_year && <p className="text-red-500 text-xs mt-1">{errors.graduation_year}</p>}
                             </div>
 
                             <div className="md:col-span-2">
