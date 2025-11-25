@@ -176,7 +176,7 @@ class AdminAlumniController extends Controller
             'company_name' => 'nullable|string|max:100',
         ]);
 
-        DB::beginTransaction();
+        // Tidak menggunakan transaction seperti News/Events untuk kompatibilitas dengan Neon PostgreSQL
         try {
             $userId = null;
             if ($request->filled('email')) {
@@ -189,14 +189,16 @@ class AdminAlumniController extends Controller
                 $userId = $user->id;
             }
 
+            // Pastikan graduation_year adalah integer dan handle null values
             $alumni = Alumni::create([
                 'user_id' => $userId,
                 'name' => $request->name,
                 'nim' => $request->nim,
-                'graduation_year' => $request->graduation_year,
+                'graduation_year' => (int) $request->graduation_year,
                 'major' => $request->major,
-                'address' => $request->address,
-                'phone_number' => $request->phone_number,
+                'address' => $request->address ?? null,
+                'phone_number' => $request->phone_number ?? null,
+                'bio' => $request->bio ?? null,
                 // 'current_position' => $request->current_position, // Removed
                 // 'company_name' => $request->company_name, // Removed
             ]);
@@ -210,25 +212,27 @@ class AdminAlumniController extends Controller
                     'end_date' => null, // Active
                 ]);
             }
-
-            DB::commit();
-        
-        // Log activity
-        ActivityLogger::log(
-            'ADMIN_CREATE_ALUMNI', 
-            "Membuat data alumni: {$alumni->name} (NIM: {$alumni->nim})" . ($userId ? ' dengan akun user' : ' tanpa akun user'),
-            ['alumni_id' => $alumni->id, 'nim' => $alumni->nim, 'has_account' => (bool)$userId]
-        );
-        
-        return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil ditambahkan.');
-    } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (\Exception $e) {
             Log::error('AdminAlumniController@store Error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'request' => $request->all()
             ]);
             return back()->withErrors(['error' => 'Terjadi kesalahan saat menyimpan data. ' . $e->getMessage()]);
         }
+        
+        // Log activity (setelah commit berhasil, jangan sampai error logging menyebabkan rollback)
+        try {
+            ActivityLogger::log(
+                'ADMIN_CREATE_ALUMNI', 
+                "Membuat data alumni: {$alumni->name} (NIM: {$alumni->nim})" . ($userId ? ' dengan akun user' : ' tanpa akun user'),
+                ['alumni_id' => $alumni->id, 'nim' => $alumni->nim, 'has_account' => (bool)$userId]
+            );
+        } catch (\Exception $e) {
+            // Log error tapi jangan gagalkan response karena data sudah tersimpan
+            Log::warning('ActivityLogger failed in AdminAlumniController@store: ' . $e->getMessage());
+        }
+        
+        return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil ditambahkan.');
     }
 
     public function edit($id)
@@ -267,19 +271,20 @@ class AdminAlumniController extends Controller
             'company_name' => 'nullable|string|max:100',
         ]);
 
-        DB::beginTransaction();
+        // Tidak menggunakan transaction seperti News/Events untuk kompatibilitas dengan Neon PostgreSQL
         try {
-            $alumni->update([
+            // Update hanya field yang ada di request (handle null values dengan benar)
+            $updateData = [
                 'name' => $request->name,
                 'nim' => $request->nim,
-                'graduation_year' => $request->graduation_year,
+                'graduation_year' => (int) $request->graduation_year,
                 'major' => $request->major,
-                // 'current_position' => $request->current_position, // Removed
-                // 'company_name' => $request->company_name, // Removed
-                'address' => $request->address,
-                'phone_number' => $request->phone_number,
-                'bio' => $request->bio,
-            ]);
+                'address' => $request->address ?? null,
+                'phone_number' => $request->phone_number ?? null,
+                'bio' => $request->bio ?? null,
+            ];
+            
+            $alumni->update($updateData);
 
             // Update Job History
             if ($request->has('current_position') || $request->has('company_name')) {
@@ -330,20 +335,7 @@ class AdminAlumniController extends Controller
                     $alumni->update(['user_id' => $newUser->id]);
                 }
             }
-
-            DB::commit();
-        
-        // Log activity
-        ActivityLogger::log(
-            'ADMIN_UPDATE_ALUMNI',
-            "Memperbarui data alumni: {$alumni->name} (NIM: {$alumni->nim})",
-            ['alumni_id' => $alumni->id, 'nim' => $alumni->nim]
-        );
-        
-        return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil diperbarui.');
-
-    } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (\Exception $e) {
             Log::error('AdminAlumniController@update Error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'request' => $request->all(),
@@ -351,6 +343,20 @@ class AdminAlumniController extends Controller
             ]);
             return back()->withErrors(['error' => 'Gagal memperbarui data: ' . $e->getMessage()]);
         }
+        
+        // Log activity (setelah commit berhasil, jangan sampai error logging menyebabkan rollback)
+        try {
+            ActivityLogger::log(
+                'ADMIN_UPDATE_ALUMNI',
+                "Memperbarui data alumni: {$alumni->name} (NIM: {$alumni->nim})",
+                ['alumni_id' => $alumni->id, 'nim' => $alumni->nim]
+            );
+        } catch (\Exception $e) {
+            // Log error tapi jangan gagalkan response karena data sudah tersimpan
+            Log::warning('ActivityLogger failed in AdminAlumniController@update: ' . $e->getMessage());
+        }
+        
+        return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil diperbarui.');
     }
 
     public function destroy($id)
