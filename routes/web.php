@@ -8,8 +8,8 @@ use App\Http\Controllers\PublicNewsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminAlumniController;
-use App\Http\Controllers\AdminNewsController;
-use App\Http\Controllers\AdminEventController;
+use App\Http\Controllers\Admin\NewsController as AdminNewsController;
+use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\AdminOpportunityController; // Changed from AdminJobController
 use App\Http\Controllers\AlumniProfileController;
 use App\Http\Controllers\AdminSettingsController;

@@ -11,8 +11,6 @@ class AlumniDashboardController extends Controller
     // Tambahkan Request $request di parameter
     public function index(Request $request)
     {
-        // 1. Ambil user dari Request (lebih disarankan daripada Facade Auth)
-        // Tambahkan komentar /** @var ... */ agar IDE tahu ini adalah Model User
         /** @var \App\Models\User $user */
         $user = $request->user();
         $alumni = $request->user()->alumni;
