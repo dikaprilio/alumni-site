@@ -255,7 +255,7 @@ export default function Index() {
                             <div className="absolute inset-0 border border-dashed border-slate-400 dark:border-slate-600 rounded-full scale-[2] opacity-20 animate-spin-slow"></div>
 
                             <div className="relative z-10 bg-white dark:bg-slate-900 p-12 rounded-full border-2 border-brand-500 shadow-[0_0_50px_rgba(37,99,235,0.3)]">
-                                <img src="/images/ipb-logo.png" alt="IPB" className="w-24 h-24 object-contain opacity-20" /> {/* Placeholder text if image missing */}
+                                <img src="/images/logo.png" alt="TPL" className="w-24 h-24 object-contain opacity-20" /> {/* Placeholder text if image missing */}
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <span className="text-4xl font-black text-slate-900 dark:text-white">IPB</span>
                                 </div>
