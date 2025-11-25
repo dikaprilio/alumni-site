@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -82,7 +83,17 @@ class AdminSettingsController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => 'admin', // PENTING: Set role ke admin
+            'email_verified_at' => now(), // Auto-verify email untuk admin baru
         ]);
+
+        // Log activity
+        $newAdmin = User::where('email', $request->email)->first();
+        ActivityLogger::log(
+            'ADMIN_CREATE_ADMIN',
+            "Admin baru ditambahkan: {$request->name} ({$request->email})",
+            ['admin_id' => $newAdmin->id]
+        );
 
         return back()->with('success', 'Admin baru berhasil ditambahkan.');
     }
@@ -101,7 +112,17 @@ class AdminSettingsController extends Controller
             return back()->with('error', 'User ini terhubung dengan data alumni. Hapus data alumninya terlebih dahulu.');
         }
 
+        $adminName = $user->name;
+        $adminEmail = $user->email;
+        
         $user->delete();
+
+        // Log activity
+        ActivityLogger::log(
+            'ADMIN_DELETE_ADMIN',
+            "Admin dihapus: {$adminName} ({$adminEmail})",
+            ['deleted_admin_id' => $id]
+        );
 
         return back()->with('success', 'Admin berhasil dihapus.');
     }
