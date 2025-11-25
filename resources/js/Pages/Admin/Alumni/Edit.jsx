@@ -33,7 +33,14 @@ export default function EditAlumni({ alumni }) {
         e.preventDefault();
         put(route('admin.alumni.update', alumni.id), {
             onSuccess: () => addToast('Data alumni berhasil diperbarui.', 'success'),
-            onError: () => addToast('Gagal memperbarui data alumni.', 'error'),
+            onError: (errors) => {
+                // Display specific error messages
+                if (errors.error) {
+                    addToast(errors.error, 'error');
+                } else {
+                    addToast('Gagal memperbarui data alumni. Periksa inputan anda.', 'error');
+                }
+            },
         });
     };
 
@@ -219,6 +226,32 @@ export default function EditAlumni({ alumni }) {
                                     <option value="Manajemen Informatika">Manajemen Informatika</option>
                                     <option value="Teknik Komputer">Teknik Komputer</option>
                                 </select>
+                                {errors.major && <p className="text-red-500 text-xs mt-1">{errors.major}</p>}
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <InputLabel htmlFor="phone_number" value="Nomor Telepon / WA" />
+                                <InputText
+                                    id="phone_number"
+                                    value={data.phone_number}
+                                    onChange={(e) => setData('phone_number', e.target.value)}
+                                    className="mt-1"
+                                    placeholder="Contoh: 081234567890"
+                                />
+                                {errors.phone_number && <p className="text-red-500 text-xs mt-1">{errors.phone_number}</p>}
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <InputLabel htmlFor="address" value="Alamat" />
+                                <TextArea
+                                    id="address"
+                                    value={data.address}
+                                    onChange={(e) => setData('address', e.target.value)}
+                                    rows="2"
+                                    className="mt-1"
+                                    placeholder="Contoh: Jakarta, Indonesia"
+                                />
+                                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
                             </div>
 
                             <div className="md:col-span-2">
@@ -232,6 +265,7 @@ export default function EditAlumni({ alumni }) {
                                     placeholder="Contoh: Alumni angkatan 2021 yang sekarang bekerja sebagai Fullstack Developer..."
                                 />
                                 <p className="text-[10px] text-slate-400 mt-1">Opsional. Akan tampil di halaman profil publik.</p>
+                                {errors.bio && <p className="text-red-500 text-xs mt-1">{errors.bio}</p>}
                             </div>
                         </div>
                     </div>
@@ -258,6 +292,7 @@ export default function EditAlumni({ alumni }) {
                                     className="mt-1"
                                     placeholder="Contoh: Frontend Developer"
                                 />
+                                {errors.current_position && <p className="text-red-500 text-xs mt-1">{errors.current_position}</p>}
                             </div>
                             <div>
                                 <InputLabel htmlFor="company_name" value="Nama Perusahaan" />
@@ -268,6 +303,7 @@ export default function EditAlumni({ alumni }) {
                                     className="mt-1"
                                     placeholder="Contoh: PT GoTo Gojek Tokopedia"
                                 />
+                                {errors.company_name && <p className="text-red-500 text-xs mt-1">{errors.company_name}</p>}
                             </div>
                         </div>
                     </div>

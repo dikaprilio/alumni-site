@@ -149,8 +149,11 @@ export default function Edit({ alumni, user_name, allSkills = [] }) {
         post(route('alumni.update'), {
             preserveScroll: true,
             onSuccess: () => {
-                // Reload data setelah update untuk refresh di dashboard
-                router.reload({ only: ['alumni', 'user_name'] });
+                // Reload semua props termasuk auth untuk update di dashboard
+                router.reload({ 
+                    only: ['alumni', 'user_name', 'auth'],
+                    preserveState: false, // Force reload untuk memastikan data ter-update
+                });
             },
         });
     };

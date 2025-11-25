@@ -182,6 +182,11 @@ class AlumniProfileController extends Controller
         // Update alumni hanya dengan data yang valid
         $alumni->update(collect($validated)->except(['skills'])->toArray());
 
+        // Update user.name juga karena Dashboard menggunakan auth.user.name
+        if ($request->has('name')) {
+            $user->update(['name' => $validated['name']]);
+        }
+
         // Sync skills; jika request tidak mengirim 'skills' kita detach (supaya bisa hapus semua)
         if ($request->has('skills')) {
             $alumni->skills()->sync($request->input('skills'));
@@ -189,12 +194,13 @@ class AlumniProfileController extends Controller
             $alumni->skills()->detach();
         }
         
-        // Refresh alumni relationship untuk update data di frontend
-        $user->load('alumni');
+        // Refresh alumni relationship dengan semua relasi untuk update data di frontend
+        $user->load(['alumni.skills', 'alumni.jobHistories']);
 
         ActivityLogger::log('UPDATE_PROFILE', 'User updated their profile.');
 
-        return back()->with('message', 'Profil berhasil diperbarui!');
+        // Redirect ke dashboard untuk memastikan data ter-update
+        return redirect()->route('alumni.dashboard')->with('message', 'Profil berhasil diperbarui!');
     }
 
     // --- INDIVIDUAL ACTIONS (Legacy/Setup Support) ---
@@ -315,8 +321,8 @@ class AlumniProfileController extends Controller
 
         $alumni->save();
         
-        // Refresh alumni relationship untuk update data di frontend
-        $request->user()->load('alumni');
+        // Refresh alumni relationship dengan semua relasi untuk update data di frontend
+        $request->user()->load(['alumni.skills', 'alumni.jobHistories']);
 
         ActivityLogger::log('UPDATE_PRIVACY', "User updated privacy setting: {$validated['type']} = " . ($validated['value'] ? 'private' : 'public'));
 

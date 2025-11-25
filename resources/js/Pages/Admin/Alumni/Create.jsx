@@ -14,6 +14,7 @@ export default function CreateAlumni() {
         graduation_year: '',
         major: '',
         phone_number: '',
+        address: '',
         email: '',
         bio: '',
         current_position: '',
@@ -38,7 +39,14 @@ export default function CreateAlumni() {
         e.preventDefault();
         post(route('admin.alumni.store'), {
             onSuccess: () => addToast('Data alumni berhasil ditambahkan.', 'success'),
-            onError: () => addToast('Gagal menambahkan data alumni. Periksa inputan anda.', 'error'),
+            onError: (errors) => {
+                // Display specific error messages
+                if (errors.error) {
+                    addToast(errors.error, 'error');
+                } else {
+                    addToast('Gagal menambahkan data alumni. Periksa inputan anda.', 'error');
+                }
+            },
         });
     };
 
@@ -205,10 +213,74 @@ export default function CreateAlumni() {
                                 />
                                 {errors.phone_number && <p className="text-red-500 text-xs mt-1">{errors.phone_number}</p>}
                             </div>
+
+                            <div className="md:col-span-2">
+                                <InputLabel htmlFor="address" value="Alamat (Opsional)" />
+                                <TextArea
+                                    id="address"
+                                    value={data.address}
+                                    onChange={(e) => setData('address', e.target.value)}
+                                    rows="2"
+                                    className="mt-1"
+                                    placeholder="Contoh: Jakarta, Indonesia"
+                                />
+                                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <InputLabel htmlFor="bio" value="Bio Singkat (Opsional)" />
+                                <TextArea
+                                    id="bio"
+                                    value={data.bio}
+                                    onChange={(e) => setData('bio', e.target.value)}
+                                    rows="3"
+                                    className="mt-1"
+                                    placeholder="Contoh: Alumni angkatan 2021 yang sekarang bekerja sebagai Fullstack Developer..."
+                                />
+                                {errors.bio && <p className="text-red-500 text-xs mt-1">{errors.bio}</p>}
+                            </div>
                         </div>
                     </div>
 
-                    {/* SECTION 2: SETUP AKUN (OPSIONAL) */}
+                    {/* SECTION 2: DATA KARIR (OPSIONAL) */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 shadow-sm">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+                            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+                                <i className="fa-solid fa-briefcase"></i>
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">Karir Saat Ini</h3>
+                                <p className="text-xs text-slate-500">Isi jika alumni sudah bekerja.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <InputLabel htmlFor="current_position" value="Posisi / Jabatan" />
+                                <InputText
+                                    id="current_position"
+                                    value={data.current_position}
+                                    onChange={(e) => setData('current_position', e.target.value)}
+                                    className="mt-1"
+                                    placeholder="Contoh: Frontend Developer"
+                                />
+                                {errors.current_position && <p className="text-red-500 text-xs mt-1">{errors.current_position}</p>}
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="company_name" value="Nama Perusahaan" />
+                                <InputText
+                                    id="company_name"
+                                    value={data.company_name}
+                                    onChange={(e) => setData('company_name', e.target.value)}
+                                    className="mt-1"
+                                    placeholder="Contoh: PT GoTo Gojek Tokopedia"
+                                />
+                                {errors.company_name && <p className="text-red-500 text-xs mt-1">{errors.company_name}</p>}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SECTION 3: SETUP AKUN (OPSIONAL) */}
                     <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 md:p-8">
                         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-200 dark:border-slate-700">
                             <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
