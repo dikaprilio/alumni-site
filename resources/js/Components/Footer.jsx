@@ -67,27 +67,27 @@ export default function Footer() {
                         <h4 className="font-bold text-slate-900 dark:text-white mb-6">Tentang</h4>
                         <ul className="space-y-4 text-sm text-slate-500 dark:text-slate-400">
                             <li>
-                                <FooterLink href="https://vokasi.ipb.ac.id/tentang/sejarah" external>
+                                <FooterLink href="https://sv.ipb.ac.id/tentang/sejarah" external>
                                     Sejarah Prodi
                                 </FooterLink>
                             </li>
                             <li>
-                                <FooterLink href="https://vokasi.ipb.ac.id/tentang/visi-misi" external>
+                                <FooterLink href="https://sv.ipb.ac.id/tentang/visi-misi" external>
                                     Visi & Misi
                                 </FooterLink>
                             </li>
                             <li>
-                                <FooterLink href="https://vokasi.ipb.ac.id/tentang/dosen-staf" external>
+                                <FooterLink href="https://sv.ipb.ac.id/tentang/dosen-staf" external>
                                     Dosen & Staf
                                 </FooterLink>
                             </li>
                             <li>
-                                <FooterLink href="https://vokasi.ipb.ac.id/tentang/akreditasi" external>
+                                <FooterLink href="https://sv.ipb.ac.id/tentang/akreditasi" external>
                                     Akreditasi
                                 </FooterLink>
                             </li>
                             <li>
-                                <FooterLink href="https://vokasi.ipb.ac.id/tentang/fasilitas" external>
+                                <FooterLink href="https://sv.ipb.ac.id/tentang/fasilitas" external>
                                     Fasilitas Lab
                                 </FooterLink>
                             </li>
@@ -114,12 +114,12 @@ export default function Footer() {
                                 </FooterLink>
                             </li>
                             <li>
-                                <FooterLink href="https://vokasi.ipb.ac.id/kontak" external>
+                                <FooterLink href="https://sv.ipb.ac.id/kontak" external>
                                     Kontak Kami
                                 </FooterLink>
                             </li>
                             <li>
-                                <FooterLink href="https://vokasi.ipb.ac.id" external>
+                                <FooterLink href="https://sv.ipb.ac.id" external>
                                     Website Resmi
                                 </FooterLink>
                             </li>
