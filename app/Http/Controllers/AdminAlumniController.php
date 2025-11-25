@@ -9,6 +9,7 @@ use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -167,7 +168,7 @@ class AdminAlumniController extends Controller
             'nim' => 'required|string|unique:alumnis,nim',
             'graduation_year' => 'required|integer|min:2000|max:' . (date('Y') + 1),
             'major' => 'required|string',
-            'email' => 'nullable|email|unique:users,email',
+            'email' => 'nullable|email|unique:users,email|max:255',
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
             'bio' => 'nullable|string|max:1000',
@@ -222,6 +223,10 @@ class AdminAlumniController extends Controller
         return redirect()->route('admin.alumni.index')->with('success', 'Data alumni berhasil ditambahkan.');
     } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('AdminAlumniController@store Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
             return back()->withErrors(['error' => 'Terjadi kesalahan saat menyimpan data. ' . $e->getMessage()]);
         }
     }
@@ -254,7 +259,7 @@ class AdminAlumniController extends Controller
             'nim' => 'required|string|unique:alumnis,nim,' . $id,
             'graduation_year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
             'major' => 'required|string',
-            'email' => 'nullable|email|unique:users,email,' . ($alumni->user_id ?? 'NULL'),
+            'email' => 'nullable|email|max:255|unique:users,email,' . ($alumni->user_id ?? 'NULL'),
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
             'bio' => 'nullable|string|max:1000',
@@ -339,6 +344,11 @@ class AdminAlumniController extends Controller
 
     } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('AdminAlumniController@update Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all(),
+                'alumni_id' => $id
+            ]);
             return back()->withErrors(['error' => 'Gagal memperbarui data: ' . $e->getMessage()]);
         }
     }

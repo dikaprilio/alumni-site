@@ -152,8 +152,11 @@ export default function Dashboard({ completeness, badges }) {
         }, {
             preserveScroll: true,
             onSuccess: () => {
-                // Reload semua data setelah update privacy untuk memastikan data ter-update
-                router.reload();
+                // Reload semua props untuk memastikan data ter-update di frontend
+                // Karena auth adalah shared prop, perlu reload semua untuk memastikan ter-update
+                router.reload({
+                    only: ['auth', 'completeness', 'badges'],
+                });
             },
         });
     };
