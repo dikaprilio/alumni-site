@@ -101,7 +101,18 @@ export default function Header() {
 
                         <div className="relative z-10 flex items-center gap-1 px-2 py-1.5">
                             <NavLink href="/" active={url === '/'} isScrolled={isScrolled} isDark={isDark}>Home</NavLink>
-                            <NavLink href="https://tracerstudy.ipb.ac.id/" isScrolled={isScrolled} isDark={isDark}>Tracer Study</NavLink>
+                            <a 
+                                href="https://tracerstudy.ipb.ac.id/" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                                    isScrolled
+                                        ? 'text-slate-600 hover:bg-slate-100 hover:text-brand-600 dark:text-slate-300 dark:hover:bg-slate-800'
+                                        : 'text-slate-700 hover:bg-white/50 hover:text-brand-700 dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white'
+                                }`}
+                            >
+                                Tracer Study
+                            </a>
                             <NavLink href="/directory" active={url.startsWith('/directory')} isScrolled={isScrolled} isDark={isDark}>Alumni</NavLink>
                             <NavLink href="/opportunities" active={url.startsWith('/opportunities')} isScrolled={isScrolled} isDark={isDark} id="nav-opportunities">Karir</NavLink>
                             <NavLink href="/news" active={url.startsWith('/news')} isScrolled={isScrolled} isDark={isDark}>Berita</NavLink>

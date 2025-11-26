@@ -27,6 +27,9 @@ Route::get('/events/{id}', [PublicNewsController::class, 'showEvent'])->name('pu
 Route::get('/directory', [PublicAlumniController::class, 'index'])->name('public.alumni');
 Route::get('/directory/{id}', [PublicAlumniController::class, 'show'])->name('public.alumni.show');
 
+// PUBLIC OPPORTUNITIES ROUTES (Admin & Public bisa view)
+Route::get('/opportunities', [OpportunityController::class, 'index'])->name('public.opportunities');
+
 Route::get('/', function () {
 
     // 1. Fetch Alumni Acak untuk Card
@@ -188,8 +191,7 @@ Route::middleware(['auth', 'verified', 'redirect.admin'])->group(function () {
     Route::post('/alumni/jobs', [AlumniProfileController::class, 'addJobHistory'])->name('alumni.jobs.add');
     Route::delete('/alumni/jobs/{id}', [AlumniProfileController::class, 'deleteJobHistory'])->name('alumni.jobs.delete');
 
-    // OPPORTUNITIES (JOBS & MENTORING)
-    Route::get('/opportunities', [OpportunityController::class, 'index'])->name('opportunities.index');
+    // OPPORTUNITIES (JOBS & MENTORING) - Create & Delete (View sudah di public route)
     Route::post('/opportunities', [OpportunityController::class, 'store'])->name('opportunities.store');
     Route::delete('/opportunities/{id}', [OpportunityController::class, 'destroy'])->name('opportunities.destroy');
 });

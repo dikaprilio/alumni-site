@@ -5,7 +5,8 @@ import CreateModal from './CreateModal';
 import OpportunityCard from '../../Components/OpportunityCard';
 
 function OpportunitiesIndex({ opportunities }) {
-    const { auth } = usePage().props;
+    const { auth, seo } = usePage().props;
+    const appName = seo?.app_name || 'Alumni Site';
     const [activeTab, setActiveTab] = useState('JOB'); // JOB or MENTORING
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,7 +23,11 @@ function OpportunitiesIndex({ opportunities }) {
 
     return (
         <>
-            <Head title="Opportunities" />
+            <Head>
+                <title>Peluang Karir & Mentoring - {appName}</title>
+                <meta name="description" content="Temukan peluang karir dan mentoring dari alumni Teknik Pertanian IPB. Lowongan kerja, program mentoring, dan kesempatan networking untuk alumni." />
+                <meta name="keywords" content="lowongan kerja, karir, mentoring, alumni IPB, peluang kerja, networking" />
+            </Head>
 
             <div className="pt-32 pb-20">
                 

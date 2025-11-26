@@ -48,6 +48,14 @@ class HandleInertiaRequests extends Middleware
                 'message' => fn () => $request->session()->get('message'),
                 'status' => fn () => $request->session()->get('status'),
             ],
+
+            // 4. SEO Meta Data
+            'seo' => [
+                'app_name' => config('app.name'),
+                'app_url' => config('app.url'),
+                'description' => 'Platform alumni Teknik Pertanian IPB - Hubungkan dengan alumni, temukan peluang karir, dan berbagi pengalaman.',
+                'keywords' => 'alumni IPB, Teknik Pertanian, TPL, tracer study, karir, networking, alumni network',
+            ],
         ];
     }
 }
