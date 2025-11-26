@@ -321,13 +321,39 @@ php artisan key:generate
 
 ### 2.4 Setup Database
 
+**⚠️ PENTING - CHECK CONSTRAINTS TERLEBIH DAHULU:**
+
+Sebelum run migration, pastikan tidak ada data yang melanggar constraint:
+
 ```bash
-# Run migrations
+# Check constraint violations
+php artisan db:check-constraints
+```
+
+Jika ada violations, fix terlebih dahulu:
+- Review file `fix_constraint_violations.sql` untuk cleanup script
+- Atau gunakan SQL script langsung: `psql -U your_user -d your_database -f fix_constraint_violations.sql`
+
+**Setelah semua clean, baru run migrations:**
+
+```bash
+# Run migrations (termasuk cache table untuk rate limiting)
 php artisan migrate --force
 
 # (Opsional) Seed data awal
 php artisan db:seed --force
 ```
+
+**⚠️ PENTING:** Migration akan membuat tabel `cache` dan `cache_locks` yang diperlukan untuk:
+- Rate limiting (throttle middleware)
+- Session storage (jika menggunakan database)
+- Application cache
+
+**Migration juga akan:**
+- Enforce 1:1 relationship antara Users dan Alumnis (unique constraint pada `user_id`)
+- Fix composite key pada tabel `alumni_skill` (composite primary key)
+
+Pastikan migration berjalan dengan sukses. Jika ada error, cek log: `storage/logs/laravel.log`
 
 ### 2.5 Setup Storage dan Permissions
 

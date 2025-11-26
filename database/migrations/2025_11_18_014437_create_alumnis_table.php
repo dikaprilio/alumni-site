@@ -14,9 +14,10 @@ return new class extends Migration
         Schema::create('alumnis', function (Blueprint $table) {
             $table->id();
             
-            // Relasi ke User (bisa null jika user dihapus)
+            // Relasi ke User (1:1 enforced - bisa null jika user dihapus)
             $table->foreignId('user_id')
                   ->nullable()
+                  ->unique() // Enforce 1:1 relationship (satu user hanya bisa punya satu alumni)
                   ->constrained('users')
                   ->onDelete('set null');
 

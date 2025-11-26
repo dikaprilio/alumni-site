@@ -16,9 +16,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminAlumniController extends Controller
 {
-    /**
-     * PRIVATE HELPER: Pusat logic filter & Sorting
-     */
+
     private function getFilteredQuery(Request $request)
     {
         $query = Alumni::with('user');
