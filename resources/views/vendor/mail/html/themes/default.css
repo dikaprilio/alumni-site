@@ -44,10 +44,12 @@ a img {
 
 h1 {
     color: #0f172a;
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 700;
     margin-top: 0;
+    margin-bottom: 16px;
     text-align: left;
+    line-height: 1.3;
 }
 
 h2 {
@@ -104,17 +106,33 @@ img {
 /* Header */
 
 .header {
-    padding: 30px 0;
+    padding: 40px 0;
     text-align: center;
-    background: linear-gradient(135deg, #F52A91 0%, #D9117A 100%);
+    background: linear-gradient(135deg, #F52A91 0%, #D9117A 50%, #BE0060 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
 }
 
 .header a {
     color: #ffffff;
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
     text-decoration: none;
     letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Logo */
@@ -144,10 +162,10 @@ img {
     -premailer-cellspacing: 0;
     -premailer-width: 570px;
     background-color: #ffffff;
-    border-color: #e8e5ef;
-    border-radius: 8px;
+    border-color: #e2e8f0;
+    border-radius: 16px;
     border-width: 1px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     margin: 0 auto;
     padding: 0;
     width: 570px;
@@ -160,13 +178,21 @@ img {
 /* Subcopy */
 
 .subcopy {
-    border-top: 1px solid #e8e5ef;
-    margin-top: 25px;
-    padding-top: 25px;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 32px;
+    padding-top: 24px;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    padding: 20px;
 }
 
 .subcopy p {
-    font-size: 14px;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.6;
+    margin: 0;
+    font-family: 'Courier New', monospace;
+    word-break: break-all;
 }
 
 /* Footer */
@@ -218,7 +244,7 @@ img {
 
 .content-cell {
     max-width: 100vw;
-    padding: 40px 32px;
+    padding: 48px 40px;
 }
 
 /* Buttons */
@@ -227,7 +253,7 @@ img {
     -premailer-cellpadding: 0;
     -premailer-cellspacing: 0;
     -premailer-width: 100%;
-    margin: 30px auto;
+    margin: 40px auto;
     padding: 0;
     text-align: center;
     width: 100%;
@@ -245,24 +271,28 @@ img {
 
 .button-blue,
 .button-primary {
-    background-color: #F52A91;
-    border-bottom: 10px solid #F52A91;
-    border-left: 24px solid #F52A91;
-    border-right: 24px solid #F52A91;
-    border-top: 10px solid #F52A91;
-    border-radius: 8px;
-    font-weight: 600;
+    background: linear-gradient(135deg, #F52A91 0%, #D9117A 100%);
+    border-bottom: 12px solid #F52A91;
+    border-left: 32px solid #F52A91;
+    border-right: 32px solid #F52A91;
+    border-top: 12px solid #F52A91;
+    border-radius: 12px;
+    font-weight: 700;
     font-size: 16px;
-    box-shadow: 0 4px 6px -1px rgba(245, 42, 145, 0.3);
+    letter-spacing: 0.02em;
+    box-shadow: 0 8px 16px -4px rgba(245, 42, 145, 0.4), 0 4px 6px -2px rgba(245, 42, 145, 0.2);
+    transition: all 0.3s ease;
 }
 
 .button-blue:hover,
 .button-primary:hover {
-    background-color: #D9117A;
+    background: linear-gradient(135deg, #D9117A 0%, #BE0060 100%);
     border-bottom-color: #D9117A;
     border-left-color: #D9117A;
     border-right-color: #D9117A;
     border-top-color: #D9117A;
+    box-shadow: 0 12px 24px -4px rgba(245, 42, 145, 0.5), 0 6px 8px -2px rgba(245, 42, 145, 0.3);
+    transform: translateY(-2px);
 }
 
 .button-green,
@@ -286,18 +316,22 @@ img {
 /* Panels */
 
 .panel {
-    border-left: #2d3748 solid 4px;
-    margin: 21px 0;
+    border-left: #F52A91 solid 4px;
+    margin: 24px 0;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .panel-content {
-    background-color: #edf2f7;
-    color: #718096;
-    padding: 16px;
+    background: linear-gradient(135deg, #FFF0F7 0%, #FFE0F0 100%);
+    color: #1e293b;
+    padding: 20px;
+    border-radius: 0 8px 8px 0;
 }
 
 .panel-content p {
-    color: #718096;
+    color: #334155;
+    margin: 0;
 }
 
 .panel-item {
