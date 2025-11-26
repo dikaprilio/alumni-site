@@ -5,7 +5,8 @@ import CreateModal from './CreateModal';
 import OpportunityCard from '../../Components/OpportunityCard';
 
 function OpportunitiesIndex({ opportunities = [] }) {
-    const { auth, seo } = usePage().props;
+    const pageProps = usePage().props || {};
+    const { auth = {}, seo = {} } = pageProps;
     const appName = seo?.app_name || 'Alumni Site';
     const [activeTab, setActiveTab] = useState('JOB'); // JOB or MENTORING
     const [search, setSearch] = useState('');
@@ -27,8 +28,7 @@ function OpportunitiesIndex({ opportunities = [] }) {
 
     return (
         <>
-            <Head>
-                <title>Peluang Karir & Mentoring - {appName}</title>
+            <Head title={`Peluang Karir & Mentoring - ${appName}`}>
                 <meta name="description" content="Temukan peluang karir dan mentoring dari alumni Teknik Pertanian IPB. Lowongan kerja, program mentoring, dan kesempatan networking untuk alumni." />
                 <meta name="keywords" content="lowongan kerja, karir, mentoring, alumni IPB, peluang kerja, networking" />
             </Head>
@@ -49,7 +49,7 @@ function OpportunitiesIndex({ opportunities = [] }) {
                             </h1>
                         </div>
 
-                        {auth.user && (
+                        {auth?.user && (
                             <button
                                 onClick={() => setIsModalOpen(true)}
                                 className="px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-widest hover:bg-brand-600 dark:hover:bg-brand-400 hover:text-white transition-all shadow-lg"
@@ -116,7 +116,7 @@ function OpportunitiesIndex({ opportunities = [] }) {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-l border-slate-200 dark:border-slate-800">
                         {filteredOpportunities.length > 0 ? (
                             filteredOpportunities.map((op, idx) => (
-                                <OpportunityCard key={op.id} opportunity={op} currentUser={auth.user} index={idx} />
+                                <OpportunityCard key={op.id} opportunity={op} currentUser={auth?.user} index={idx} />
                             ))
                         ) : (
                             <div className="col-span-full py-32 text-center border-r border-b border-slate-200 dark:border-slate-800">
