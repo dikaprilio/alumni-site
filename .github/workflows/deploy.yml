@@ -33,6 +33,10 @@ jobs:
           # Masuk ke folder project
           cd /var/www/alumni-site
 
+          # Stash atau discard perubahan lokal pada build artifacts
+          git stash || true
+          git checkout -- public/build/manifest.json 2>/dev/null || true
+
           # Tarik kodingan terbaru
           git pull origin main
 
