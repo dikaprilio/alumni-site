@@ -35,21 +35,25 @@
         <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
 
         {{-- Canonical URL --}}
-        <link rel="canonical" href="{{ config('app.url') }}{{ request()->path() }}">
+        @if(request()->path() !== '/')
+        <link rel="canonical" href="{{ config('app.url') }}/{{ request()->path() }}">
+        @else
+        <link rel="canonical" href="{{ config('app.url') }}">
+        @endif
 
         {{-- Structured Data (JSON-LD) --}}
         <script type="application/ld+json">
-        {
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            "name": "{{ config('app.name') }}",
-            "url": "{{ config('app.url') }}",
-            "logo": "{{ config('app.url') }}/images/logo.png",
-            "description": "Platform alumni Teknik Pertanian IPB - Hubungkan dengan alumni, temukan peluang karir, dan berbagi pengalaman.",
-            "sameAs": [
-                "https://tracerstudy.ipb.ac.id/"
+        {!! json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'Organization',
+            'name' => config('app.name'),
+            'url' => config('app.url'),
+            'logo' => config('app.url') . '/images/logo.png',
+            'description' => 'Platform alumni Teknik Pertanian IPB - Hubungkan dengan alumni, temukan peluang karir, dan berbagi pengalaman.',
+            'sameAs' => [
+                'https://tracerstudy.ipb.ac.id/'
             ]
-        }
+        ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}
         </script>
 
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
