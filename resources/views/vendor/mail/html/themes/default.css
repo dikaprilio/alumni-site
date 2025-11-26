@@ -98,13 +98,14 @@ img {
 /* Header */
 
 .header {
-    padding: 25px 0;
+    padding: 30px 0;
     text-align: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .header a {
-    color: #3d4852;
-    font-size: 19px;
+    color: #ffffff;
+    font-size: 24px;
     font-weight: bold;
     text-decoration: none;
 }
@@ -137,9 +138,9 @@ img {
     -premailer-width: 570px;
     background-color: #ffffff;
     border-color: #e8e5ef;
-    border-radius: 2px;
+    border-radius: 8px;
     border-width: 1px;
-    box-shadow: 0 2px 0 rgba(0, 0, 150, 0.025), 2px 4px 0 rgba(0, 0, 150, 0.015);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin: 0 auto;
     padding: 0;
     width: 570px;
@@ -210,7 +211,7 @@ img {
 
 .content-cell {
     max-width: 100vw;
-    padding: 32px;
+    padding: 40px 32px;
 }
 
 /* Buttons */
@@ -238,10 +239,13 @@ img {
 .button-blue,
 .button-primary {
     background-color: #3b82f6;
-    border-bottom: 8px solid #3b82f6;
-    border-left: 18px solid #3b82f6;
-    border-right: 18px solid #3b82f6;
-    border-top: 8px solid #3b82f6;
+    border-bottom: 10px solid #3b82f6;
+    border-left: 24px solid #3b82f6;
+    border-right: 24px solid #3b82f6;
+    border-top: 10px solid #3b82f6;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 16px;
 }
 
 .button-green,
