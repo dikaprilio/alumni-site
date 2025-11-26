@@ -35,11 +35,7 @@
         <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
 
         {{-- Canonical URL --}}
-        @if(request()->path() !== '/')
-        <link rel="canonical" href="{{ config('app.url') }}/{{ request()->path() }}">
-        @else
-        <link rel="canonical" href="{{ config('app.url') }}">
-        @endif
+        <link rel="canonical" href="{{ config('app.url') }}{{ request()->path() !== '/' ? '/' . request()->path() : '' }}">
 
         {{-- Structured Data (JSON-LD) --}}
         <script type="application/ld+json">
