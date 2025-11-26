@@ -56,7 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail
         // sebelum redirect ke halaman berikutnya.
         $user = $this;
         dispatch(function () use ($user) {
-            $user->notify(new \Illuminate\Auth\Notifications\VerifyEmail);
+            $user->notify(new \App\Notifications\CustomVerifyEmail);
         })->afterResponse();
     }
 }
