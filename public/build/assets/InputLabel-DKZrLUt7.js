@@ -1,1 +1,0 @@
-import{j as e}from"./app-B_Mbdn19.js";function r({children:t,required:s}){return e.jsxs("label",{className:"block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide",children:[t," ",s&&e.jsx("span",{className:"text-red-500",children:"*"})]})}export{r as I};
