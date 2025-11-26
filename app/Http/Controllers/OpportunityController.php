@@ -11,9 +11,10 @@ class OpportunityController extends Controller
 {
     public function index()
     {
-        $opportunities = Opportunity::with('alumni.user')
+        $opportunities = Opportunity::with(['alumni.user', 'alumni'])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->values();
 
         return Inertia::render('Opportunities/Index', [
             'opportunities' => $opportunities

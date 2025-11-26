@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from '@inertiajs/react';
 
 export default function OpportunityCard({ opportunity, currentUser, index }) {
+    if (!opportunity) return null;
+    
     const isJob = opportunity.type === 'JOB';
 
     return (
@@ -59,7 +61,8 @@ export default function OpportunityCard({ opportunity, currentUser, index }) {
             <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-slate-800">
                 <a
                     href={(() => {
-                        const contact = opportunity.contact_info;
+                        const contact = opportunity.contact_info || '';
+                        if (!contact) return '#';
                         if (contact.includes('@')) return `mailto:${contact}`;
                         if (/^(\+62|62|08)/.test(contact)) {
                             const cleanNumber = contact.replace(/\D/g, '');
@@ -75,7 +78,7 @@ export default function OpportunityCard({ opportunity, currentUser, index }) {
                     Apply Now <i className="fa-solid fa-arrow-right"></i>
                 </a>
 
-                {currentUser?.alumni?.id === opportunity.alumni_id && (
+                {currentUser?.alumni?.id === (opportunity.alumni_id || opportunity.alumni?.id) && (
                     <Link
                         href={route('opportunities.destroy', opportunity.id)}
                         method="delete"

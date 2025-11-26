@@ -4,20 +4,24 @@ import PublicLayout from '../../Layouts/PublicLayout';
 import CreateModal from './CreateModal';
 import OpportunityCard from '../../Components/OpportunityCard';
 
-function OpportunitiesIndex({ opportunities }) {
+function OpportunitiesIndex({ opportunities = [] }) {
     const { auth, seo } = usePage().props;
     const appName = seo?.app_name || 'Alumni Site';
     const [activeTab, setActiveTab] = useState('JOB'); // JOB or MENTORING
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // Ensure opportunities is always an array
+    const opportunitiesList = Array.isArray(opportunities) ? opportunities : [];
+
     // Client-side filtering
-    const filteredOpportunities = opportunities.filter(op => {
+    const filteredOpportunities = opportunitiesList.filter(op => {
+        if (!op) return false;
         const matchesTab = op.type === activeTab;
         const matchesSearch = search === '' || 
-            op.title.toLowerCase().includes(search.toLowerCase()) ||
-            op.company_name?.toLowerCase().includes(search.toLowerCase()) ||
-            op.description.toLowerCase().includes(search.toLowerCase());
+            (op.title && op.title.toLowerCase().includes(search.toLowerCase())) ||
+            (op.company_name && op.company_name.toLowerCase().includes(search.toLowerCase())) ||
+            (op.description && op.description.toLowerCase().includes(search.toLowerCase()));
         return matchesTab && matchesSearch;
     });
 
