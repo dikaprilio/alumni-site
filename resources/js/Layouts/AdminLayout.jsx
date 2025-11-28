@@ -325,7 +325,7 @@ export default function AdminLayout({ children }) {
                     {/* Mobile Menu Button & Logo (LG Hidden) */}
                     <div className="flex items-center gap-3 lg:hidden">
                         <div className="w-8 h-8 bg-gradient-to-br from-brand-600 to-brand-700 rounded-lg flex items-center justify-center shadow-lg shadow-brand-500/30">
-                            <img src="images/logo.png" alt="Logo" className="w-5 h-5 object-contain" />
+                            <img src="/images/logo.png" alt="Logo" className="w-5 h-5 object-contain" />
                         </div>
                         <span className="font-bold text-slate-900 dark:text-white tracking-tight">Alumni<span className="text-brand-600">TPL</span></span>
                     </div>

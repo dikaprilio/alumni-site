@@ -78,3 +78,4 @@ echo -e "${GREEN}🎉 Your application is ready for production!${NC}"
 
 
 
+

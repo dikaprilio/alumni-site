@@ -27,12 +27,12 @@ export default function AdminLogin({ status }) {
 
             {/* Background Grid Effect */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-            
+
             {/* Radial Gradient */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_800px_at_50%_200px,#3b82f615,transparent)]"></div>
 
             <div className="w-full max-w-md bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl p-8 relative z-10">
-                
+
                 {/* Header */}
                 <div className="text-center mb-8">
                     <div className="w-12 h-12 bg-blue-600/20 text-blue-500 rounded-lg flex items-center justify-center mx-auto mb-4 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
@@ -62,7 +62,7 @@ export default function AdminLogin({ status }) {
                             value={data.email}
                             className="mt-1 block w-full bg-slate-950 border-slate-700 text-white focus:border-blue-500 focus:ring-blue-500/20 placeholder-slate-600"
                             autoComplete="username"
-                            isFocused={true}
+                            autoFocus
                             onChange={(e) => setData('email', e.target.value)}
                             placeholder="admin@example.com"
                         />
