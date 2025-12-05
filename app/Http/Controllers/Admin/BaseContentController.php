@@ -19,7 +19,7 @@ abstract class BaseContentController extends Controller
         $this->imageUploadService = $imageUploadService;
     }
 
-    // Abstract methods that child classes must implement
+    // metod abstrak polymorphism
     abstract protected function getModel();
     abstract protected function getModelName();
     abstract protected function getRoutePrefix();
