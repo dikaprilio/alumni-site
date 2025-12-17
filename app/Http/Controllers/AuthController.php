@@ -170,8 +170,11 @@ class AuthController extends Controller
             'name' => $alumni->name, 
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'alumni', // Default role
         ]);
+        
+        // SECURITY: Role is explicitly set after creation (not mass-assigned)
+        $user->role = 'alumni';
+        $user->save();
 
         // 3. Link User ke Alumni
         $alumni->user_id = $user->id;

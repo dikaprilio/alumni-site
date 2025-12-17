@@ -35,7 +35,9 @@ class Alumni extends Model
         'featured_at' => 'datetime',
     ];
 
-    protected $with = ['user'];
+    // SECURITY: Removed 'user' from $with to prevent auto-loading PII
+    // Load user relation explicitly only where needed (e.g., admin views)
+    protected $with = [];
 
     // Tambahkan 'current_job' ke output JSON
     protected $appends = ['profile_completeness', 'current_job', 'current_position', 'company_name', 'missing_fields'];

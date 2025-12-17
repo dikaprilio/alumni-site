@@ -79,13 +79,16 @@ class AdminSettingsController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'admin', // PENTING: Set role ke admin
-            'email_verified_at' => now(), // Auto-verify email untuk admin baru
         ]);
+        
+        // SECURITY: Role is explicitly set after creation (not mass-assigned)
+        $user->role = 'admin';
+        $user->email_verified_at = now(); // Auto-verify email for admin
+        $user->save();
 
         // Log activity
         $newAdmin = User::where('email', $request->email)->first();
@@ -101,7 +104,8 @@ class AdminSettingsController extends Controller
     // Hapus Admin
     public function destroyAdmin($id)
     {
-        if ($id == Auth::id()) {
+        // SECURITY: Use strict comparison to prevent type juggling
+        if ((int) $id === Auth::id()) {
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
 

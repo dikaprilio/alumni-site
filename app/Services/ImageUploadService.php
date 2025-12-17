@@ -26,9 +26,19 @@ class ImageUploadService
      * @param int|null $width
      * @param int|null $height
      * @return string The relative path to the saved image
+     * @throws \InvalidArgumentException If file is not a valid image type
      */
     public function upload(UploadedFile $file, string $path, ?int $width = null, ?int $height = null): string
     {
+        // SECURITY: Defense in depth - validate MIME type regardless of controller validation
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        
+        if (!in_array($file->getMimeType(), $allowedMimes, true)) {
+            throw new \InvalidArgumentException(
+                'Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed. Received: ' . $file->getMimeType()
+            );
+        }
+
         // Create unique filename
         $filename = Str::uuid() . '.webp';
         $fullPath = $path . '/' . $filename;

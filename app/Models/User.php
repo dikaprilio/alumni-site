@@ -15,7 +15,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
-        'role',
+        // SECURITY: 'role' removed from $fillable to prevent privilege escalation
+        // Role must be set explicitly in controllers/services only
         'has_seen_tour',
     ];
 

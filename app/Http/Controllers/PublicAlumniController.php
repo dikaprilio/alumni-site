@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alumni;
+use App\Http\Resources\AlumniResource;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -13,24 +14,23 @@ class PublicAlumniController extends Controller
     {
         $query = Alumni::with('skills')->whereNotNull('avatar');
 
-        // 1. SEARCH (REVISI: CASE-INSENSITIVE & ROBUST)
+        // 1. SEARCH (REFACTORED: Type-safe query builder with DB::raw)
         if ($request->has('search')) {
-            // Bersihkan spasi ekstra & ubah input user ke huruf kecil
+            // Clean extra spaces & convert to lowercase
             $search = trim($request->input('search'));
             $term = strtolower($search); 
 
             $query->where(function($q) use ($term) {
-                // Teknik 'whereRaw' dengan 'LOWER()' memastikan pencarian tidak peduli kapitalisasi
-                // Ini bekerja aman di MySQL, PostgreSQL, dan SQLite
-                $q->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
-                  // Cari di Job History (Position & Company)
+                // Refactored from whereRaw to use Laravel's type-safe query builder
+                $q->where(DB::raw('LOWER(name)'), 'like', "%{$term}%")
+                  // Search in Job History (Position & Company)
                   ->orWhereHas('jobHistories', function($jq) use ($term) {
-                      $jq->whereRaw('LOWER(position) LIKE ?', ["%{$term}%"])
-                         ->orWhereRaw('LOWER(company_name) LIKE ?', ["%{$term}%"]);
+                      $jq->where(DB::raw('LOWER(position)'), 'like', "%{$term}%")
+                         ->orWhere(DB::raw('LOWER(company_name)'), 'like', "%{$term}%");
                   })
-                  // Cari juga di dalam relasi Skills
+                  // Search in Skills
                   ->orWhereHas('skills', function($sq) use ($term) {
-                      $sq->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"]);
+                      $sq->where(DB::raw('LOWER(name)'), 'like', "%{$term}%");
                   });
             });
         }
@@ -39,7 +39,7 @@ class PublicAlumniController extends Controller
         if ($request->has('category') && $request->category !== 'All') {
             $cat = $request->category;
             
-            // Keyword Mapping yang sudah kita buat sebelumnya
+            // Keyword Mapping
             $jobKeywords = [
                 'Engineering' => ['developer', 'engineer', 'programmer', 'stack', 'it', 'tech', 'software', 'web', 'mobile', 'android', 'ios', 'devops', 'sre', 'cloud'],
                 'Data & AI'   => ['data', 'analyst', 'scientist', 'ai', 'machine', 'learning', 'intelligence', 'bot', 'gpt'],
@@ -54,10 +54,9 @@ class PublicAlumniController extends Controller
                 $keywords = $jobKeywords[$cat];
                 $query->where(function($q) use ($keywords) {
                     foreach ($keywords as $word) {
-                        // Kita juga pakai LOWER disini untuk konsistensi
-                        // Cari di Job History
+                        // Refactored from whereRaw to type-safe query builder
                         $q->orWhereHas('jobHistories', function($jq) use ($word) {
-                            $jq->whereRaw('LOWER(position) LIKE ?', ["%{$word}%"]);
+                            $jq->where(DB::raw('LOWER(position)'), 'like', "%{$word}%");
                         });
                     }
                 });
@@ -68,28 +67,21 @@ class PublicAlumniController extends Controller
         $alumni = $query->inRandomOrder()->paginate(12)->withQueryString();
 
         return Inertia::render('Directory', [
-            'alumni' => $alumni,
+            // SECURITY FIX: Use AlumniResource to enforce PII privacy at API level
+            'alumni' => AlumniResource::collection($alumni),
             'filters' => $request->only(['search', 'category']),
         ]);
     }
 
     public function show($id)
     {
-        // Method show tetap sama seperti revisi terakhir (dengan logika privasi)
-        $alumni = Alumni::with(['skills', 'jobHistories', 'user']) 
-            // ->whereNotNull('avatar')
+        $alumni = Alumni::with(['skills', 'jobHistories']) 
             ->findOrFail($id);
 
-        $contactEmail = $alumni->user ? $alumni->user->email : null;
-
-        if ($alumni->private_email) $contactEmail = null;
-        if ($alumni->private_phone) $alumni->phone_number = null;
-
-        $alumni->email = $contactEmail;
-        $alumni->unsetRelation('user'); 
-
+        // SECURITY FIX: Use AlumniResource - privacy is enforced at the resource level
+        // No need to manually unset relations or check privacy flags here
         return Inertia::render('Alumni/Detail', [
-            'alumni' => $alumni
+            'alumni' => new AlumniResource($alumni)
         ]);
     }
 }

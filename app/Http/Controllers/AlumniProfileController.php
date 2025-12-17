@@ -297,11 +297,16 @@ class AlumniProfileController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $request->user()->id],
         ]);
-        $request->user()->update(['email' => $validated['email'], 'email_verified_at' => null]);
+        
+        $user = $request->user();
+        $user->update(['email' => $validated['email'], 'email_verified_at' => null]);
+        
+        // SECURITY: Send verification email for new address
+        $user->sendEmailVerificationNotification();
 
         ActivityLogger::log('UPDATE_EMAIL', 'User changed their email address.');
 
-        return back()->with('message', 'Email berhasil diperbarui. Silakan verifikasi ulang.');
+        return back()->with('message', 'Email berhasil diperbarui. Link verifikasi telah dikirim ke email baru Anda.');
     }
 
     public function updatePrivacy(Request $request)

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -178,12 +179,20 @@ class AdminAlumniController extends Controller
         try {
             $userId = null;
             if ($request->filled('email')) {
+                // SECURITY: Generate random temporary password instead of default 'password'
+                $tempPassword = Str::random(16);
+                
                 $user = User::create([
                     'name' => $request->name,
                     'email' => $request->email,
-                    'password' => Hash::make('password'),
-                    'role' => 'alumni',
+                    'password' => Hash::make($tempPassword),
                 ]);
+                
+                // SECURITY: Role is explicitly set after creation (not mass-assigned)
+                $user->role = 'alumni';
+                // email_verified_at left as null - user must verify email to set their own password
+                $user->save();
+                
                 $userId = $user->id;
             }
 
@@ -196,7 +205,8 @@ class AdminAlumniController extends Controller
                 'major' => $request->major,
                 'address' => $request->address ?? null,
                 'phone_number' => $request->phone_number ?? null,
-                'bio' => $request->bio ?? null,
+                // SECURITY: Sanitize bio to prevent XSS
+                'bio' => $request->bio ? clean($request->bio) : null,
                 // 'current_position' => $request->current_position, // Removed
                 // 'company_name' => $request->company_name, // Removed
             ]);
@@ -279,7 +289,8 @@ class AdminAlumniController extends Controller
                 'major' => $request->major,
                 'address' => $request->address ?? null,
                 'phone_number' => $request->phone_number ?? null,
-                'bio' => $request->bio ?? null,
+                // SECURITY: Sanitize bio to prevent XSS
+                'bio' => $request->bio ? clean($request->bio) : null,
             ];
             
             $alumni->update($updateData);
@@ -323,12 +334,19 @@ class AdminAlumniController extends Controller
                         'name' => $request->name,
                     ]);
                 } else {
+                    // SECURITY: Generate random temporary password instead of default 'password'
+                    $tempPassword = Str::random(16);
+                    
                     $newUser = User::create([
                         'name' => $request->name,
                         'email' => $request->email,
-                        'password' => Hash::make('password'),
-                        'role' => 'alumni',
+                        'password' => Hash::make($tempPassword),
                     ]);
+                    
+                    // SECURITY: Role is explicitly set after creation (not mass-assigned)
+                    $newUser->role = 'alumni';
+                    // email_verified_at left as null - user must verify email to set their own password
+                    $newUser->save();
                     
                     $alumni->update(['user_id' => $newUser->id]);
                 }

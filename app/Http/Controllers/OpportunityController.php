@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Opportunity;
+use App\Http\Resources\OpportunityResource;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -11,13 +12,14 @@ class OpportunityController extends Controller
 {
     public function index()
     {
-        $opportunities = Opportunity::with(['alumni.user', 'alumni'])
+        // SECURITY: Only load alumni relation, not alumni.user
+        $opportunities = Opportunity::with(['alumni'])
             ->orderBy('created_at', 'desc')
-            ->get()
-            ->values();
+            ->get();
 
         return Inertia::render('Opportunities/Index', [
-            'opportunities' => $opportunities
+            // SECURITY: Use Resource to limit exposed data
+            'opportunities' => OpportunityResource::collection($opportunities)
         ]);
     }
 

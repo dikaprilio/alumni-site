@@ -37,11 +37,11 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user() ? $request->user()->load(['alumni.skills', 'alumni.jobHistories']) : null,
             ],
 
-            // 2. Share Ziggy Routes
-            'ziggy' => fn () => array_merge(
-                (new Ziggy)->toArray(),
-                ['location' => $request->url()]
-            ),
+            // 2. Share Ziggy Routes (filtering configured in config/ziggy.php)
+            'ziggy' => fn () => [
+                ...(new Ziggy)->toArray(),
+                'location' => $request->url(),
+            ],
 
             // 3. Flash Messages
             'flash' => [
@@ -53,8 +53,8 @@ class HandleInertiaRequests extends Middleware
             'seo' => [
                 'app_name' => config('app.name'),
                 'app_url' => config('app.url'),
-                'description' => 'Platform alumni Teknik Pertanian IPB - Hubungkan dengan alumni, temukan peluang karir, dan berbagi pengalaman.',
-                'keywords' => 'alumni IPB, Teknik Pertanian, TPL, tracer study, karir, networking, alumni network',
+                'description' => 'Platform alumni Teknologi Rekayasa Perangkat Lunak IPB - Hubungkan dengan alumni, temukan peluang karir, dan berbagi pengalaman.',
+                'keywords' => 'alumni IPB, Teknik Rekayasa Perangkat Lunak, TPL, tracer study, karir, networking, alumni network',
             ],
         ];
     }
