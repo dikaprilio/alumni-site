@@ -63,12 +63,16 @@ class PublicAlumniController extends Controller
             }
         }
 
-        // Pagination
+        // Pagination - Use through() to preserve pagination structure while transforming items
         $alumni = $query->inRandomOrder()->paginate(12)->withQueryString();
+        
+        // SECURITY FIX: Transform each item through AlumniResource while preserving pagination
+        $alumni->through(function ($item) {
+            return (new AlumniResource($item))->resolve();
+        });
 
         return Inertia::render('Directory', [
-            // SECURITY FIX: Use AlumniResource to enforce PII privacy at API level
-            'alumni' => AlumniResource::collection($alumni),
+            'alumni' => $alumni,
             'filters' => $request->only(['search', 'category']),
         ]);
     }
@@ -79,9 +83,9 @@ class PublicAlumniController extends Controller
             ->findOrFail($id);
 
         // SECURITY FIX: Use AlumniResource - privacy is enforced at the resource level
-        // No need to manually unset relations or check privacy flags here
+        // Resolve the resource to get the transformed array
         return Inertia::render('Alumni/Detail', [
-            'alumni' => new AlumniResource($alumni)
+            'alumni' => (new AlumniResource($alumni))->resolve()
         ]);
     }
 }

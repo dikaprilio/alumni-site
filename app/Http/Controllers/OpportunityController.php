@@ -17,9 +17,13 @@ class OpportunityController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // SECURITY FIX: Transform each item through OpportunityResource
+        $transformed = $opportunities->map(function ($item) {
+            return (new OpportunityResource($item))->resolve();
+        });
+
         return Inertia::render('Opportunities/Index', [
-            // SECURITY: Use Resource to limit exposed data
-            'opportunities' => OpportunityResource::collection($opportunities)
+            'opportunities' => $transformed
         ]);
     }
 
